@@ -38,16 +38,8 @@
       ]
     },
     {
-      "name" : "fwd_metadata_t",
-      "id" : 3,
-      "fields" : [
-        ["l2ptr", 32, false],
-        ["out_bd", 24, false]
-      ]
-    },
-    {
       "name" : "standard_metadata",
-      "id" : 4,
+      "id" : 3,
       "fields" : [
         ["ingress_port", 9, false],
         ["egress_spec", 9, false],
@@ -98,13 +90,6 @@
       "id" : 3,
       "header_type" : "ipv4_t",
       "metadata" : false,
-      "pi_omit" : true
-    },
-    {
-      "name" : "fwd_metadata",
-      "id" : 4,
-      "header_type" : "fwd_metadata_t",
-      "metadata" : true,
       "pi_omit" : true
     }
   ],
@@ -193,7 +178,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 154,
+        "line" : 173,
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
@@ -209,7 +194,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 167,
+        "line" : 80,
         "column" : 4,
         "source_fragment" : "verify_checksum(true, ..."
       },
@@ -266,7 +251,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 193,
+        "line" : 151,
         "column" : 8,
         "source_fragment" : "update_checksum(true, ..."
       },
@@ -322,24 +307,13 @@
   "learn_lists" : [],
   "actions" : [
     {
-      "name" : "my_drop",
+      "name" : "NoAction",
       "id" : 0,
       "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "drop",
-          "parameters" : [],
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 64,
-            "column" : 4,
-            "source_fragment" : "mark_to_drop()"
-          }
-        }
-      ]
+      "primitives" : []
     },
     {
-      "name" : "my_drop",
+      "name" : "drop",
       "id" : 1,
       "runtime_data" : [],
       "primitives" : [
@@ -348,58 +322,23 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 64,
-            "column" : 4,
+            "line" : 104,
+            "column" : 8,
             "source_fragment" : "mark_to_drop()"
           }
         }
       ]
     },
     {
-      "name" : "set_l2ptr",
+      "name" : "ipv4_forward",
       "id" : 2,
       "runtime_data" : [
         {
-          "name" : "l2ptr",
-          "bitwidth" : 32
-        }
-      ],
-      "primitives" : [
-        {
-          "op" : "assign",
-          "parameters" : [
-            {
-              "type" : "field",
-              "value" : ["fwd_metadata", "l2ptr"]
-            },
-            {
-              "type" : "runtime_data",
-              "value" : 0
-            }
-          ],
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 95,
-            "column" : 8,
-            "source_fragment" : "meta.fwd_metadata.l2ptr = l2ptr"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "set_bd_dmac_intf",
-      "id" : 3,
-      "runtime_data" : [
-        {
-          "name" : "bd",
-          "bitwidth" : 24
-        },
-        {
-          "name" : "dmac",
+          "name" : "dstAddr",
           "bitwidth" : 48
         },
         {
-          "name" : "intf",
+          "name" : "port",
           "bitwidth" : 9
         }
       ],
@@ -409,18 +348,37 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["fwd_metadata", "out_bd"]
+              "value" : ["standard_metadata", "egress_spec"]
             },
             {
               "type" : "runtime_data",
-              "value" : 0
+              "value" : 1
+            }
+          ],
+          "source_info" : {
+            "filename" : "ipv4_forward.p4",
+            "line" : 108,
+            "column" : 8,
+            "source_fragment" : "standard_metadata.egress_spec = port"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ethernet", "srcAddr"]
+            },
+            {
+              "type" : "field",
+              "value" : ["ethernet", "dstAddr"]
             }
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
             "line" : 109,
             "column" : 8,
-            "source_fragment" : "meta.fwd_metadata.out_bd = bd"
+            "source_fragment" : "hdr.ethernet.srcAddr = hdr.ethernet.dstAddr"
           }
         },
         {
@@ -432,33 +390,14 @@
             },
             {
               "type" : "runtime_data",
-              "value" : 1
+              "value" : 0
             }
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
             "line" : 110,
             "column" : 8,
-            "source_fragment" : "hdr.ethernet.dstAddr = dmac"
-          }
-        },
-        {
-          "op" : "assign",
-          "parameters" : [
-            {
-              "type" : "field",
-              "value" : ["standard_metadata", "egress_spec"]
-            },
-            {
-              "type" : "runtime_data",
-              "value" : 2
-            }
-          ],
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 111,
-            "column" : 8,
-            "source_fragment" : "standard_metadata.egress_spec = intf"
+            "source_fragment" : "hdr.ethernet.dstAddr = dstAddr"
           }
         },
         {
@@ -498,57 +437,9 @@
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 112,
+            "line" : 111,
             "column" : 8,
             "source_fragment" : "hdr.ipv4.ttl = hdr.ipv4.ttl - 1"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "my_drop",
-      "id" : 4,
-      "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "drop",
-          "parameters" : [],
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 64,
-            "column" : 4,
-            "source_fragment" : "mark_to_drop()"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "rewrite_mac",
-      "id" : 5,
-      "runtime_data" : [
-        {
-          "name" : "smac",
-          "bitwidth" : 48
-        }
-      ],
-      "primitives" : [
-        {
-          "op" : "assign",
-          "parameters" : [
-            {
-              "type" : "field",
-              "value" : ["ethernet", "srcAddr"]
-            },
-            {
-              "type" : "runtime_data",
-              "value" : 0
-            }
-          ],
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 136,
-            "column" : 8,
-            "source_fragment" : "hdr.ethernet.srcAddr = smac"
           }
         }
       ]
@@ -560,20 +451,20 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 90,
+        "line" : 102,
         "column" : 8,
         "source_fragment" : "ingress"
       },
-      "init_table" : "ipv4_da_lpm",
+      "init_table" : "node_2",
       "tables" : [
         {
-          "name" : "ipv4_da_lpm",
+          "name" : "ipv4_lpm",
           "id" : 0,
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 97,
+            "line" : 114,
             "column" : 10,
-            "source_fragment" : "ipv4_da_lpm"
+            "source_fragment" : "ipv4_lpm"
           },
           "key" : [
             {
@@ -588,12 +479,13 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [2, 0],
-          "actions" : ["set_l2ptr", "my_drop"],
-          "base_default_next" : "mac_da",
+          "action_ids" : [2, 1, 0],
+          "actions" : ["ipv4_forward", "drop", "NoAction"],
+          "base_default_next" : null,
           "next_tables" : {
-            "set_l2ptr" : "mac_da",
-            "my_drop" : "mac_da"
+            "ipv4_forward" : null,
+            "drop" : null,
+            "NoAction" : null
           },
           "default_entry" : {
             "action_id" : 0,
@@ -601,95 +493,49 @@
             "action_data" : [],
             "action_entry_const" : false
           }
-        },
-        {
-          "name" : "mac_da",
-          "id" : 1,
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 114,
-            "column" : 10,
-            "source_fragment" : "mac_da"
-          },
-          "key" : [
-            {
-              "match_type" : "exact",
-              "target" : ["fwd_metadata", "l2ptr"],
-              "mask" : null
-            }
-          ],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [3, 1],
-          "actions" : ["set_bd_dmac_intf", "my_drop"],
-          "base_default_next" : null,
-          "next_tables" : {
-            "set_bd_dmac_intf" : null,
-            "my_drop" : null
-          },
-          "default_entry" : {
-            "action_id" : 1,
-            "action_const" : false,
-            "action_data" : [],
-            "action_entry_const" : false
-          }
         }
       ],
       "action_profiles" : [],
-      "conditionals" : []
+      "conditionals" : [
+        {
+          "name" : "node_2",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "ipv4_forward.p4",
+            "line" : 128,
+            "column" : 12,
+            "source_fragment" : "hdr.ipv4.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["ipv4", "$valid$"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x01"
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "ipv4_lpm"
+        }
+      ]
     },
     {
       "name" : "egress",
       "id" : 1,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 131,
+        "line" : 138,
         "column" : 8,
         "source_fragment" : "egress"
       },
-      "init_table" : "send_frame",
-      "tables" : [
-        {
-          "name" : "send_frame",
-          "id" : 2,
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 138,
-            "column" : 10,
-            "source_fragment" : "send_frame"
-          },
-          "key" : [
-            {
-              "match_type" : "exact",
-              "target" : ["fwd_metadata", "out_bd"],
-              "mask" : null
-            }
-          ],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [5, 4],
-          "actions" : ["rewrite_mac", "my_drop"],
-          "base_default_next" : null,
-          "next_tables" : {
-            "rewrite_mac" : null,
-            "my_drop" : null
-          },
-          "default_entry" : {
-            "action_id" : 4,
-            "action_const" : false,
-            "action_data" : [],
-            "action_entry_const" : false
-          }
-        }
-      ],
+      "init_table" : null,
+      "tables" : [],
       "action_profiles" : [],
       "conditionals" : []
     }
