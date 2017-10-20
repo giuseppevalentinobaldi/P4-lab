@@ -178,7 +178,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 173,
+        "line" : 171,
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
@@ -251,7 +251,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 151,
+        "line" : 149,
         "column" : 8,
         "source_fragment" : "update_checksum(true, ..."
       },
@@ -455,7 +455,7 @@
         "column" : 8,
         "source_fragment" : "ingress"
       },
-      "init_table" : "node_2",
+      "init_table" : "ipv4_lpm",
       "tables" : [
         {
           "name" : "ipv4_lpm",
@@ -496,41 +496,14 @@
         }
       ],
       "action_profiles" : [],
-      "conditionals" : [
-        {
-          "name" : "node_2",
-          "id" : 0,
-          "source_info" : {
-            "filename" : "ipv4_forward.p4",
-            "line" : 128,
-            "column" : 12,
-            "source_fragment" : "hdr.ipv4.isValid()"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : "==",
-              "left" : {
-                "type" : "field",
-                "value" : ["ipv4", "$valid$"]
-              },
-              "right" : {
-                "type" : "hexstr",
-                "value" : "0x01"
-              }
-            }
-          },
-          "false_next" : null,
-          "true_next" : "ipv4_lpm"
-        }
-      ]
+      "conditionals" : []
     },
     {
       "name" : "egress",
       "id" : 1,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 138,
+        "line" : 136,
         "column" : 8,
         "source_fragment" : "egress"
       },

@@ -76,7 +76,22 @@ parser ParserImpl(packet_in packet,
 *************************************************************************/
 
 control verifyChecksum(inout headers hdr, inout metadata meta) {   
-    apply {  }
+    apply { 
+    verify_checksum(true,
+            { hdr.ipv4.version,
+                hdr.ipv4.ihl,
+                hdr.ipv4.diffserv,
+                hdr.ipv4.totalLen,
+                hdr.ipv4.identification,
+                hdr.ipv4.flags,
+                hdr.ipv4.fragOffset,
+                hdr.ipv4.ttl,
+                hdr.ipv4.protocol,
+                hdr.ipv4.srcAddr,
+                hdr.ipv4.dstAddr
+            },
+            hdr.ipv4.hdrChecksum, HashAlgorithm.csum16);
+     }
 }
 
 
@@ -110,9 +125,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-        if (hdr.ipv4.isValid()) {
-            ipv4_lpm.apply();
-        }
+        ipv4_lpm.apply();
     }
 }
 
@@ -174,3 +187,4 @@ egress(),
 computeChecksum(),
 DeparserImpl()
 ) main;
+
