@@ -239,7 +239,7 @@
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
-      "order" : ["ethernet", "ipv4"]
+      "order" : ["ethernet", "ipv4", "tcp"]
     }
   ],
   "meter_arrays" : [],
