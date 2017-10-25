@@ -82,7 +82,7 @@ parser ParserImpl(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
-	        TYPE_TCP: parse_tcp;
+            TYPE_TCP: parse_tcp;
             default: accept;
         }
     }
