@@ -1,3 +1,3 @@
 from scapy.all import *
 
-sniff(iface = "veth7", prn = lambda x: hexdump(x))
+sniff(iface = "eth0", prn = lambda x: hexdump(x))
