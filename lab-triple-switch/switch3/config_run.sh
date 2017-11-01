@@ -11,7 +11,7 @@ setup_config(){
 	sysctl -w net.ipv4.ip_forward=0
 	/etc/init.d/procps restart
 	echo "> Start the service!!"
-	./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 --log-console /behavioral-model/targets/$1/$2.json --pcap &
+	./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 -i 2@eth2 --log-console /behavioral-model/targets/$1/$2.json --pcap &
 	sleep 10
 	echo "> no Ready!!"
 	/behavioral-model/tools/runtime_CLI.py --json /behavioral-model/targets/$1/$2.json < /behavioral-model/targets/$1/$4.txt
