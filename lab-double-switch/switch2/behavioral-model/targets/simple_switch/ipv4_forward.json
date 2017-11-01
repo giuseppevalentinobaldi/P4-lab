@@ -38,8 +38,25 @@
       ]
     },
     {
-      "name" : "standard_metadata",
+      "name" : "tcp_t",
       "id" : 3,
+      "fields" : [
+        ["srcPort", 16, false],
+        ["dstPort", 16, false],
+        ["seqNo", 32, false],
+        ["ackNo", 32, false],
+        ["dataOffset", 4, false],
+        ["res", 3, false],
+        ["ecn", 3, false],
+        ["ctrl", 6, false],
+        ["window", 16, false],
+        ["checksum", 16, false],
+        ["urgentPtr", 16, false]
+      ]
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 4,
       "fields" : [
         ["ingress_port", 9, false],
         ["egress_spec", 9, false],
@@ -89,6 +106,13 @@
       "name" : "ipv4",
       "id" : 3,
       "header_type" : "ipv4_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "tcp",
+      "id" : 4,
+      "header_type" : "tcp_t",
       "metadata" : false,
       "pi_omit" : true
     }
@@ -162,6 +186,39 @@
           ],
           "transitions" : [
             {
+              "value" : "0x06",
+              "mask" : null,
+              "next_state" : "parse_tcp"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "protocol"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_tcp",
+          "id" : 2,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "tcp"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
               "value" : "default",
               "mask" : null,
               "next_state" : null
@@ -178,11 +235,11 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 171,
+        "line" : 208,
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
-      "order" : ["ethernet", "ipv4"]
+      "order" : ["ethernet", "ipv4", "tcp"]
     }
   ],
   "meter_arrays" : [],
@@ -194,7 +251,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 80,
+        "line" : 104,
         "column" : 4,
         "source_fragment" : "verify_checksum(true, ..."
       },
@@ -251,7 +308,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 149,
+        "line" : 173,
         "column" : 8,
         "source_fragment" : "update_checksum(true, ..."
       },
@@ -302,6 +359,59 @@
           "value" : ["ipv4", "dstAddr"]
         }
       ]
+    },
+    {
+      "name" : "calc_1",
+      "id" : 2,
+      "source_info" : {
+        "filename" : "ipv4_forward.p4",
+        "line" : 187,
+        "column" : 8,
+        "source_fragment" : "update_checksum(true, ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["tcp", "srcPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "dstPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "seqNo"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "ackNo"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "dataOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "res"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "ecn"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "ctrl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "window"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "urgentPtr"]
+        }
+      ]
     }
   ],
   "learn_lists" : [],
@@ -322,7 +432,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 104,
+            "line" : 128,
             "column" : 8,
             "source_fragment" : "mark_to_drop()"
           }
@@ -333,6 +443,10 @@
       "name" : "ipv4_forward",
       "id" : 2,
       "runtime_data" : [
+        {
+          "name" : "srcAddr",
+          "bitwidth" : 48
+        },
         {
           "name" : "dstAddr",
           "bitwidth" : 48
@@ -352,12 +466,12 @@
             },
             {
               "type" : "runtime_data",
-              "value" : 1
+              "value" : 2
             }
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 108,
+            "line" : 132,
             "column" : 8,
             "source_fragment" : "standard_metadata.egress_spec = port"
           }
@@ -370,15 +484,15 @@
               "value" : ["ethernet", "srcAddr"]
             },
             {
-              "type" : "field",
-              "value" : ["ethernet", "dstAddr"]
+              "type" : "runtime_data",
+              "value" : 0
             }
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 109,
+            "line" : 133,
             "column" : 8,
-            "source_fragment" : "hdr.ethernet.srcAddr = hdr.ethernet.dstAddr"
+            "source_fragment" : "hdr.ethernet.srcAddr = srcAddr"
           }
         },
         {
@@ -390,12 +504,12 @@
             },
             {
               "type" : "runtime_data",
-              "value" : 0
+              "value" : 1
             }
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 110,
+            "line" : 134,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dstAddr = dstAddr"
           }
@@ -437,7 +551,7 @@
           ],
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 111,
+            "line" : 135,
             "column" : 8,
             "source_fragment" : "hdr.ipv4.ttl = hdr.ipv4.ttl - 1"
           }
@@ -451,7 +565,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 102,
+        "line" : 126,
         "column" : 8,
         "source_fragment" : "ingress"
       },
@@ -462,7 +576,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "ipv4_forward.p4",
-            "line" : 114,
+            "line" : 138,
             "column" : 10,
             "source_fragment" : "ipv4_lpm"
           },
@@ -503,7 +617,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 136,
+        "line" : 160,
         "column" : 8,
         "source_fragment" : "egress"
       },
@@ -527,6 +641,13 @@
       "target" : ["ipv4", "hdrChecksum"],
       "type" : "generic",
       "calculation" : "calc_0"
+    },
+    {
+      "name" : "cksum_1",
+      "id" : 2,
+      "target" : ["tcp", "checksum"],
+      "type" : "generic",
+      "calculation" : "calc_1"
     }
   ],
   "force_arith" : [],

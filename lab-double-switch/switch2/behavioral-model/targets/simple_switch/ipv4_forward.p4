@@ -3,6 +3,7 @@
 #include <v1model.p4>
 
 const bit<16> TYPE_IPV4 = 0x800;
+const bit<8> TYPE_TCP = 6;
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -33,6 +34,20 @@ header ipv4_t {
     ip4Addr_t dstAddr;
 }
 
+header tcp_t {
+    bit<16>   srcPort;
+    bit<16>   dstPort;
+    bit<32>   seqNo;
+    bit<32>   ackNo;
+    bit<4>    dataOffset;
+    bit<3>    res;
+    bit<3>    ecn;
+    bit<6>    ctrl;
+    bit<16>   window;
+    bit<16>   checksum;
+    bit<16>   urgentPtr;
+}
+
 struct metadata {
     /* empty */
 }
@@ -40,6 +55,7 @@ struct metadata {
 struct headers {
     ethernet_t   ethernet;
     ipv4_t       ipv4;
+    tcp_t        tcp;
 }
 
 /*************************************************************************
@@ -65,6 +81,14 @@ parser ParserImpl(packet_in packet,
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            TYPE_TCP: parse_tcp;
+            default: accept;
+        }
+    }
+
+    state parse_tcp {
+        packet.extract(hdr.tcp);
         transition accept;
     }
 
@@ -104,9 +128,9 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         mark_to_drop();
     }
     
-    action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
+    action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {
         standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+        hdr.ethernet.srcAddr = srcAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
@@ -125,7 +149,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-            ipv4_lpm.apply();
+        ipv4_lpm.apply();
     }
 }
 
@@ -172,6 +196,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
+        packet.emit(hdr.tcp);
     }
 }
 
@@ -187,4 +212,3 @@ egress(),
 computeChecksum(),
 DeparserImpl()
 ) main;
-
