@@ -1,7 +1,7 @@
 #!/bin/bash
 # Switch starter
 echo "> Compile program P4_14!!"
-p4c-bmv2 --json /behavioral-model/targets/simple_router/ipv4_forward_P4_14.json /behavioral-model/targets/simple_router/ipv4_forward_P4_14.p4
+p4c-bm2-ss --p4v 14 /behavioral-model/targets/simple_router/ipv4_forward_P4_14.p4 -o /behavioral-model/targets/simple_router/ipv4_forward_P4_14.json
 echo "> Configure the switch!!"
 sysctl -w net.ipv4.ip_forward=0
 /etc/init.d/procps restart
