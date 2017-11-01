@@ -1,11 +1,11 @@
 #!/bin/bash
 # Switch starter
-echo "> Compilo Programma P4_14!!"
+echo "> Compile program P4_14!!"
 p4c-bmv2 --json /behavioral-model/targets/simple_router/ipv4_forward_P4_14.json /behavioral-model/targets/simple_router/ipv4_forward_P4_14.p4
-echo "> Configuro lo switch!!"
+echo "> Configure the switch!!"
 sysctl -w net.ipv4.ip_forward=0
 /etc/init.d/procps restart
-echo Starto il servizio
+echo "> Start the service!!"
 ./behavioral-model/targets/simple_router/simple_router -i 0@eth0 -i 1@eth1 --log-console /behavioral-model/targets/simple_router/ipv4_forward_P4_14.json --pcap &
 sleep 10
 echo "> no Ready!!"

@@ -184,6 +184,22 @@ control computeChecksum(
                 hdr.ipv4.dstAddr
             },
             hdr.ipv4.hdrChecksum, HashAlgorithm.csum16);
+        
+        update_checksum(true,
+            { hdr.tcp.srcPort, 
+                hdr.tcp.dstPort,
+                hdr.tcp.seqNo,
+                hdr.tcp.ackNo,
+                hdr.tcp.dataOffset,
+                hdr.tcp.res,
+                hdr.tcp.ecn,
+                hdr.tcp.ctrl,
+                hdr.tcp.window,
+                hdr.tcp.urgentPtr,
+                hdr.ipv4.srcAddr,
+                hdr.ipv4.dstAddr               
+            },
+            hdr.tcp.checksum, HashAlgorithm.csum16);
     }
 }
 

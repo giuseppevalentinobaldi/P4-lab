@@ -235,7 +235,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "ipv4_forward.p4",
-        "line" : 195,
+        "line" : 208,
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
@@ -357,6 +357,59 @@
         {
           "type" : "field",
           "value" : ["ipv4", "dstAddr"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_1",
+      "id" : 2,
+      "source_info" : {
+        "filename" : "ipv4_forward.p4",
+        "line" : 187,
+        "column" : 8,
+        "source_fragment" : "update_checksum(true, ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["tcp", "srcPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "dstPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "seqNo"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "ackNo"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "dataOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "res"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "ecn"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "ctrl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "window"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tcp", "urgentPtr"]
         }
       ]
     }
@@ -588,6 +641,13 @@
       "target" : ["ipv4", "hdrChecksum"],
       "type" : "generic",
       "calculation" : "calc_0"
+    },
+    {
+      "name" : "cksum_1",
+      "id" : 2,
+      "target" : ["tcp", "checksum"],
+      "type" : "generic",
+      "calculation" : "calc_1"
     }
   ],
   "force_arith" : [],
