@@ -24,7 +24,7 @@ case $dovar in
      	setup_config simple_router ipv4_forward_P4_14 14 commands_P4_14
         ;;
      2)      
-		setup_config simple_switch ipv4_forward 16 commands
+	setup_config simple_switch ipv4_forward 16 commands
         ;;
      3)
      	setup_config simple_switch heavy_hitter 14 commands_heavy_hitter
