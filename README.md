@@ -13,13 +13,14 @@ In this repository there are 3 laboratory. In each laboratory there are two kind
 ![lab-triple-switch](https://github.com/giuseppevalentinobaldi/P4-lab/blob/master/res/lab-triple-switch.png)
 
 Let's look now inside the client folder, this is composed of the following files:
+
 /
 
-+-- run_config.sh
+├── run_config.sh
 
-+-- client.py
+├── client.py
 
-+-- udp_client.py
+├── udp_client.py
 
 Instead, the server contains the following files:
 
