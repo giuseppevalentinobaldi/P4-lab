@@ -50,7 +50,7 @@ lstart
 ```
 while switching off the laboratory just launch the following command:
 ```
-lcloese
+lclose
 ```
 waits for all machines to start and for each of them execute the following command:
 ```
