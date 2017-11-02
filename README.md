@@ -54,6 +54,6 @@ lclose
 ```
 waits for all machines to start and for each of them execute the following command:
 ```
-./config_run.sh
+./run_config.sh
 ```
 wait for the rules to be loaded in P4 switches and have fun.
