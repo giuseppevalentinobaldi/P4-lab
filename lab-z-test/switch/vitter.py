@@ -50,10 +50,14 @@ def x(packet):
             if notFirst:
                 resevoir[P] = packet
             notFirst = True
-            while (pow((t + 1 - n), s + 1) / pow((t + 1), s + 1)) > V:
+            while (factorial(t+1-n+s)*factorial(t)) / (factorial(t-n)*factorial(t+1+s)) > V:
                 s = s + 1
                 print("loop")
             P = s
+            if s > 0:
+                s=s-1
+            else: 
+                packet(x)
         else :
             s = s - 1
         for e in resevoir:
