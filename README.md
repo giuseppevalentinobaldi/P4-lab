@@ -25,3 +25,21 @@ Instead, the server contains the following files:
     ├── run_config.sh
     ├── server.py
     └── udp_server.py
+    
+Finally, the files contained in the switch:
+
+    /
+    ├── /behavioral-model
+    |       └── /targets
+    |               ├──/simple_router
+    |               |       ├── commands_P4_14.txt
+    |               |       └── ipv4_forward_P4_14.p4 
+    |               └──/simple_switch
+    |                       ├──/includes
+    |                       |       ├── headers.p4
+    |                       |       └── parser.p4
+    |                       ├── commands.txt
+    |                       ├── commands_heavy_hitter.txt
+    |                       ├── heavy_hitter.p4
+    |                       └── ipv4_forward.p4
+    └── run_config.sh
