@@ -43,3 +43,9 @@ Finally, the files contained in the switch:
     |                       ├── heavy_hitter.p4
     |                       └── ipv4_forward.p4
     └── run_config.sh
+
+To launch one of the 3 laboratories, just install [[https://github.com/Kidel/Kathara|Kathará]], place it in the root folder of the lab with the terminal and run the following command:
+```
+lstart
+
+```
