@@ -1,5 +1,5 @@
 from scapy.all import *
-import logging, re, random, sys
+import logging, re, random, sys, math
 
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 N, n, t = 3, 0, 0
@@ -50,14 +50,14 @@ def x(packet):
             if notFirst:
                 resevoir[P] = packet
             notFirst = True
-            while (factorial(t+1-n+s)*factorial(t)) / (factorial(t-n)*factorial(t+1+s)) > V:
+            while (math.factorial(t + 1 - n + s) * math.factorial(t)) / (math.factorial(t - n) * math.factorial(t + 1 + s)) > V:
                 s = s + 1
                 print("loop")
             P = s
             if s > 0:
-                s=s-1
+                s = s - 1
             else: 
-                packet(x)
+                resevoir[P] = packet
         else :
             s = s - 1
         for e in resevoir:
