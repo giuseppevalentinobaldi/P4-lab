@@ -1,5 +1,4 @@
 # P4-lab
-my lab
 
 * lab-single-switch:
 ![lab-single-switch](https://github.com/giuseppevalentinobaldi/P4-lab/blob/master/res/lab-single-switch.png)
