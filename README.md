@@ -48,8 +48,12 @@ To launch one of the 3 laboratories, just install [Kathará](https://github.com/
 ```
 lstart
 ```
+while switching off the laboratory just launch the following command:
+```
+lcloese
+```
 waits for all machines to start and for each of them execute the following command:
 ```
 ./config_run.sh
 ```
-
+wait for the rules to be loaded in P4 switches and have fun.
