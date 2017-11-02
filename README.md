@@ -16,7 +16,9 @@ Let's look now inside the client folder, this is composed of the following files
 
 ./
 +-- run_config.sh
+|
 +-- client.py
+|
 +-- udp_client.py
 
 Instead, the server contains the following files:
