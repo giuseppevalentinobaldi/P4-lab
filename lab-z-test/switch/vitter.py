@@ -52,18 +52,29 @@ def x(packet):
             r = random.randint(0, n - 1)
             if num > 1:
                 resevoir[r] = packet
-            notFirst = True
-            quot = num / t 
-            while quot > V:
-                s = s + 1
-                t = t + 1
-                num = num + 1
-                quot = quot * num / t 
-                print("loop")
-            print(V)
-            print(quot)
-            if s > 0:
-                s = s - 1
+                quot = num / t 
+                while quot > V:
+                    s = s + 1
+                    t = t + 1
+                    num = num + 1
+                    quot = quot * num / t 
+                    print("loop")
+                print(V)
+                print(quot)
+            else:
+                quot = num / t 
+                while quot > V:
+                    s = s + 1
+                    t = t + 1
+                    num = num + 1
+                    quot = quot * num / t 
+                    print("loop")
+                print(V)
+                print(quot)
+                if s == 0:
+                    resevoir[r] = packet
+                else:
+                    s = s - 1                
         else :
             s = s - 1
         for e in resevoir:

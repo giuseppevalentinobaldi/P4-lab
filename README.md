@@ -15,14 +15,14 @@ In this repository there are 3 laboratory. In each laboratory there are two kind
 Let's look now inside the client folder, this is composed of the following files:
 ```
     /
-    ├── run_config.sh
+    ├── config_run.sh
     ├── client.py
     └── udp_client.py
 ``` 
 Instead, the server contains the following files:
 ```
     /
-    ├── run_config.sh
+    ├── config_run.sh
     ├── server.py
     └── udp_server.py
 ```    
@@ -42,7 +42,7 @@ Finally, the files contained in the switch:
     |                       ├── commands_heavy_hitter.txt
     |                       ├── heavy_hitter.p4
     |                       └── ipv4_forward.p4
-    └── run_config.sh
+    └── config_run.sh
 ```
 To launch one of the 3 laboratories, just install [Kathará](https://github.com/Kidel/Kathara), place it in the root folder of the lab with the terminal and run the following command:
 ```
@@ -54,6 +54,6 @@ lclose
 ```
 waits for all machines to start and for each of them execute the following command:
 ```
-./run_config.sh
+./config_run.sh
 ```
 wait for the rules to be loaded in P4 switches and have fun.
