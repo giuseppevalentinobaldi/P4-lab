@@ -33,7 +33,7 @@ def packet_callback_x(packet):
         if packet[IP].dport == 80:
             x(packet)
             
-V, s, num= 0, 0, 0.0
+V, s, num = 0, 0, 0.0
 
 def x(packet):
     global N, n, t, resevoir, V, s, num
