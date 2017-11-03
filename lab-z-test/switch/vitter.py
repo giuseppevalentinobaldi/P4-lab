@@ -33,31 +33,37 @@ def packet_callback_x(packet):
         if packet[IP].dport == 80:
             x(packet)
             
-V, P, s, notFirst = 0, 0, 0, False
+V, s, num, notFirst = 0, 0, 0.0, False
 
 def x(packet):
-    global N, n, t, resevoir, V, P, s, notFirst
+    global N, n, t, resevoir, V, P, s, notFirst, num
     if n < N:
         resevoir[n] = packet
         n = n + 1
     else:
         if t == 0:
-            t = n + 1
-            V = random.randint(0, n - 1)
+            t = float(n + 1)
+            num = num + 1
         else:
             t = t + 1
+            num = num + 1
         if s == 0 :
+            V = random.uniform(0, 1)
+            r = random.randint(0, n - 1)
             if notFirst:
-                resevoir[P] = packet
+                resevoir[r] = packet
             notFirst = True
-            while (math.factorial(t + 1 - n + s) * math.factorial(t)) / (math.factorial(t - n) * math.factorial(t + 1 + s)) > V:
+            quot = num / t 
+            while quot > V:
                 s = s + 1
+                t = t + 1
+                num = num + 1
+                quot = quot * num / t 
                 print("loop")
-            P = s
+            print(V)
+            print(quot)
             if s > 0:
                 s = s - 1
-            else: 
-                resevoir[P] = packet
         else :
             s = s - 1
         for e in resevoir:
