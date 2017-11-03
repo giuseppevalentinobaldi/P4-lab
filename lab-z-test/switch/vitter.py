@@ -33,16 +33,16 @@ def packet_callback_x(packet):
         if packet[IP].dport == 80:
             x(packet)
             
-V, s, num, notFirst = 0, 0, 0.0, False
+V, s, num= 0, 0, 0.0
 
 def x(packet):
-    global N, n, t, resevoir, V, P, s, notFirst, num
+    global N, n, t, resevoir, V, s, num
     if n < N:
         resevoir[n] = packet
         n = n + 1
     else:
         if t == 0:
-            t = float(n + 1)
+            t = n + 1
             num = num + 1
         else:
             t = t + 1
@@ -50,7 +50,7 @@ def x(packet):
         if s == 0 :
             V = random.uniform(0, 1)
             r = random.randint(0, n - 1)
-            if notFirst:
+            if num > 1:
                 resevoir[r] = packet
             notFirst = True
             quot = num / t 
