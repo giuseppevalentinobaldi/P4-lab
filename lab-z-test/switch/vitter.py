@@ -32,9 +32,9 @@ def r(packet):
             t = n + 1
         else:
             t = t + 1
-        random_m = random.uniform(0, t - 1)
-        if random_m < n:
-            resevoir[random_m] = packet
+        M = random.randint(0, t - 1)
+        if M < n:
+            resevoir[M] = packet
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
@@ -86,7 +86,7 @@ def x(packet):
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
 """
-alg Z è solo una beta non è ancora utilizzabile
+alg Z e' solo una beta non e' ancora utilizzabile
 """ 
 def z(packet):
     global N, n, t, resevoir, V, s, num
