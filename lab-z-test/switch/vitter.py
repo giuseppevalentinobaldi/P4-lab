@@ -17,6 +17,8 @@ def packet_callback(packet):
                 r(packet)
             elif alg == "x": 
                 x(packet)
+            elif alg == "z": 
+                z(packet)
             else:
                 print ("Missing or incorrect parameter")
                 sys.exit(0)
@@ -90,35 +92,41 @@ alg Z e' solo una beta non e' ancora utilizzabile
 """ 
 def z(packet):
     global N, n, t, resevoir, V, s, num
-    W = math.exp(-math.log(random.uniform(0, 1) / n))
-    term = t - n + 1
-    while True:
-        U = random.uniform(0, 1)
-        Y = t * (W - 1)
-        s = Y
-        lhs = math.exp(math.log((U * (math.exp(((t + 1) / term), 2)) * (term + s)) / (t + Y)) / n)
-        rhs = (((t + Y) / (term + s)) * term) / t;
-        if lhs <= rhs:
-            W = rhs / lhs
-            break
-        y = (((U * (t + 1)) / term) * (t + s + 1)) / (t + Y)
-        if n < s: 
-            denom = t 
-            numer_lim = term + s
+    thresh = 22 * N
+    if t < thresh:
+        x(packet)
+    else:
+        if s > 0:
+            s = s -1
         else:
-            denom = t - n + s 
-            numer_lim = t + 1
-        for numer in range (t +s, numer_lim, -1):
-            y= (y * numer)/denom
-            denom = denom -1
-        W = math.exp(-math.log(random.uniform(0, 1) / n))
-        if math.exp(math.log(y)/n) <= (t+Y)/t :
-            break
-    #skippo s record
-    M = random.randint(0, n - 1)
-    resevoir[M] = packet
-    t = t + s + 1
-    term = term + s + 1  
+            M = random.randint(0, n - 1)
+            resevoir[M] = packet
+            W = pow(random.uniform(0, 1), -1/n)
+            term = t - n + 1
+            while True:
+                U = random.uniform(0, 1)
+                Y = t * (W - 1)
+                s = Y
+                lhs = pow((U * (pow(((t + 1) / term), 2)) * (term + s)) / (t + Y), 1/n)
+                rhs = (((t + Y) / (term + s)) * term) / t;
+                if lhs <= rhs:
+                    W = rhs / lhs
+                    break
+                y = (((U * (t + 1)) / term) * (t + s + 1)) / (t + Y)
+                if n < s: 
+                    denom = t 
+                    numer_lim = term + s
+                else:
+                    denom = t - n + s 
+                    numer_lim = t + 1
+                for numer in range (int(t + s), int(numer_lim), -1):
+                    y = (y * numer) / denom
+                    denom = denom - 1
+                W = pow(random.uniform(0, 1), -1/n)
+                if pow(y, 1/n) <= (t + Y) / t :
+                    break
+            t = t + s + 1
+            term = term + s + 1  
     
 def main(argv):
     global alg
