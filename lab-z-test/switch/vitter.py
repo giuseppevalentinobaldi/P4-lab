@@ -67,7 +67,6 @@ def x(packet):
                     quot = quot * num / t 
                 print("Skip: " + `s`)
                 print("Probability V: " + `V`)
-                print("H(s): " + `quot`)
             else:
                 quot = num / t 
                 while quot > V:
@@ -75,7 +74,6 @@ def x(packet):
                     t = t + 1
                     num = num + 1
                     quot = quot * num / t 
-                print("Skip: " + `s`)
                 print("Probability V: " + `V`)
                 print("H(s): " + `quot`)
                 if s == 0:
@@ -84,6 +82,7 @@ def x(packet):
                     s = s - 1                
         else :
             s = s - 1
+        print("Skip: " + `s`)
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
@@ -92,23 +91,26 @@ def z(packet):
     global N, n, t, resevoir, V, s, num
     thresh = 22 * N
     if t < thresh:
+        print("Algorithm X")
         x(packet)
     else:
+        print("Algorithm Z")
         if s > 0:
-            s = s -1
+            s = s - 1
         else:
             M = random.randint(0, n - 1)
             resevoir[M] = packet
-            W = pow(random.uniform(0, 1), -1/n)
+            W = pow(random.uniform(0, 1), -1 / n)
             term = t - n + 1
             while True:
                 U = random.uniform(0, 1)
                 Y = t * (W - 1)
-                s = Y
-                lhs = pow((U * (pow(((t + 1) / term), 2)) * (term + s)) / (t + Y), 1/n)
+                s = int (Y)
+                lhs = pow((U * (pow(((t + 1) / term), 2)) * (term + s)) / (t + Y), 1 / n)
                 rhs = (((t + Y) / (term + s)) * term) / t;
                 if lhs <= rhs:
                     W = rhs / lhs
+                    print ("Mod")
                     break
                 y = (((U * (t + 1)) / term) * (t + s + 1)) / (t + Y)
                 if n < s: 
@@ -120,11 +122,16 @@ def z(packet):
                 for numer in range (int(t + s), int(numer_lim), -1):
                     y = (y * numer) / denom
                     denom = denom - 1
-                W = pow(random.uniform(0, 1), -1/n)
-                if pow(y, 1/n) <= (t + Y) / t :
+                W = pow(random.uniform(0, 1), -1 / n)
+                if pow(y, 1 / n) <= (t + Y) / t :
+                    print ("Break")
                     break
             t = t + s + 1
-            term = term + s + 1  
+            term = term + s + 1
+        print("Skip: " + `s`)    
+        for e in resevoir:
+            print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
+        print("------------------------ next step ------------------------")  
     
 def main(argv):
     global alg
