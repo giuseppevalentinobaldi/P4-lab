@@ -2,7 +2,7 @@ from scapy.all import *
 import logging, re, random, sys, math
 
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-alg, N, n, t , V, s, num = "", 3, 0, 0, 0, 0, 0.0
+alg, N, n, t , V, s, num, term = "", 3, 0, 0, 0, 0, 0.0, 0
 resevoir = [None] * N
 counter = 1
 
@@ -88,7 +88,7 @@ def x(packet):
         print("------------------------ next step ------------------------")
 
 def z(packet):
-    global N, n, t, resevoir, V, s, num
+    global N, n, t, resevoir, V, s, num, term
     thresh = 22 * N
     if t < thresh:
         print("Algorithm X")
@@ -101,7 +101,8 @@ def z(packet):
             M = random.randint(0, n - 1)
             resevoir[M] = packet
             W = pow(random.uniform(0, 1), -1 / n)
-            term = t - n + 1
+            if term == 0:
+                term = t - n + 1
             while True:
                 U = random.uniform(0, 1)
                 Y = t * (W - 1)
