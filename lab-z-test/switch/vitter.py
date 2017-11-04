@@ -87,9 +87,7 @@ def x(packet):
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
-"""
-alg Z e' solo una beta non e' ancora utilizzabile
-""" 
+
 def z(packet):
     global N, n, t, resevoir, V, s, num
     thresh = 22 * N
