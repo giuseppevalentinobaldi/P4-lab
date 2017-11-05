@@ -1,3 +1,15 @@
+#!/usr/bin/python
+
+'''
+Random Sampling with a Reservoir
+JEFFREY SCOTT VITTER
+
+@authors: Giuseppe Valentino Baldi, Marco Lorini
+@contact: giuseppevalentinobaldi@gmail.com, marck_91@hotmail.it 
+@version: 1.0.0
+@license: MIT (http://opensource.org/licenses/MIT)
+'''
+
 from scapy.all import *
 import logging, re, random, sys, math
 
@@ -28,12 +40,11 @@ def r(packet):
     if n < N:
         resevoir[n] = packet
         n = n + 1
+        if n == N:
+            t = n
         print("------------------------ next step ------------------------")
     else:
-        if t == 0:
-            t = n + 1
-        else:
-            t = t + 1
+        t = t + 1
         M = random.randint(0, t - 1)
         if M < n:
             resevoir[M] = packet
@@ -52,7 +63,6 @@ def calculateS(V):
     print("Skip: " + `s`)
     print("Probability V: " + `V`)
     
-
 def x(packet):
     global N, n, t, resevoir, s, num
     if n < N:
