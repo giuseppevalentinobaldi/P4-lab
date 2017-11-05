@@ -2,7 +2,7 @@ from scapy.all import *
 import logging, re, random, sys, math
 
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-alg, N, n, t , V, s, num, term = "", 3, 0, 0, 0, 0, 0.0, 0
+alg, N, n, t, s, num, term = "", 3, 0, 0, 0, 0.0, 0
 resevoir = [None] * N
 counter = 1
 
@@ -40,47 +40,43 @@ def r(packet):
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
+        
+def calculateS(V):
+    global t, s, num
+    quot = num / t 
+    while quot > V:
+        s = s + 1
+        t = t + 1
+        num = num + 1
+        quot = quot * num / t 
+    print("Skip: " + `s`)
+    print("Probability V: " + `V`)
+    
 
 def x(packet):
-    global N, n, t, resevoir, V, s, num
+    global N, n, t, resevoir, s, num
     if n < N:
         resevoir[n] = packet
         n = n + 1
+        if n == N:
+            t = n
         print("------------------------ next step ------------------------")
     else:
-        if t == 0:
-            t = n + 1
-            num = num + 1
-        else:
+        if s == 0:
             t = t + 1
             num = num + 1
-        if s == 0 :
             V = random.uniform(0, 1)
             M = random.randint(0, n - 1)
             if num > 1:
                 resevoir[M] = packet
-                quot = num / t 
-                while quot > V:
-                    s = s + 1
-                    t = t + 1
-                    num = num + 1
-                    quot = quot * num / t 
-                print("Skip: " + `s`)
-                print("Probability V: " + `V`)
+                calculateS(V)
             else:
-                quot = num / t 
-                while quot > V:
-                    s = s + 1
-                    t = t + 1
-                    num = num + 1
-                    quot = quot * num / t 
-                print("Probability V: " + `V`)
-                print("H(s): " + `quot`)
+                calculateS(V)
                 if s == 0:
                     resevoir[M] = packet
                 else:
                     s = s - 1                
-        else :
+        else:
             s = s - 1
         print("Skip: " + `s`)
         for e in resevoir:
@@ -88,7 +84,7 @@ def x(packet):
         print("------------------------ next step ------------------------")
 
 def z(packet):
-    global N, n, t, resevoir, V, s, num, term
+    global N, n, t, resevoir, s, term
     thresh = 22 * N
     if t < thresh:
         print("Algorithm X")
