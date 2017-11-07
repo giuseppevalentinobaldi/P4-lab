@@ -4,7 +4,7 @@
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
-
+const bit<16> N = 3;
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -15,8 +15,11 @@ typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 typedef bit<16> value_t;
 typedef bit<32> index_t;
+typedef bit<1> boolean_t;
 
 struct custom_metadata_t {
+	boolean_t srcCorrect;
+	bit<32> random;
     bit<16> hash_val1;
     bit<16> count_val1;
 }
@@ -101,7 +104,6 @@ parser ParserImpl(packet_in packet,
     }
 }
 
-
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
@@ -125,16 +127,19 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
      }
 }
 
-
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 1) reg;
+    register<value_t>((index_t) 1) reg;   
     
     action drop() {
         mark_to_drop();
+    }
+    
+    action set_check(boolean_t check){
+    	meta.custom_metadata.srcCorrect = check;
     }
     
     action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {  	
@@ -142,6 +147,18 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         hdr.ethernet.srcAddr = srcAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+    }
+    
+    table check_src {
+        key = {
+            hdr.ipv4.srcAddr: lpm;
+        }
+        actions = {
+            set_check;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
     }
     
     table ipv4_lpm {
@@ -159,16 +176,43 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-    	if(hdr.ipv4.srcAddr == "10.0.0.2"){
-        	//hash(meta.custom_metadata.hash_val1, HashAlgorithm.csum16, (bit<16>)0, { hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, hdr.ipv4.protocol, hdr.tcp.srcPort, hdr.tcp.dstPort }, (bit<32>)16);
+    	check_src.apply();
+    	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1){
+        	//hash(meta.custom_metadata.hash_val1, HashAlgorithm.csum16, (bit<16>)0, { hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, hdr.ipv4.protocol, hdr.tcp.srcPort, hdr.tcp.dstPort }, (bit<32>)16);       		
         	meta.custom_metadata.hash_val1 = 16w0;
         	reg.read(meta.custom_metadata.count_val1, (bit<32>)meta.custom_metadata.hash_val1);
-        	meta.custom_metadata.count_val1 = meta.custom_metadata.count_val1 + 16w1;
-        	reg.write((bit<32>)meta.custom_metadata.hash_val1, (bit<16>)meta.custom_metadata.count_val1);
+        	if(meta.custom_metadata.count_val1 < N){
+        		meta.custom_metadata.count_val1 = meta.custom_metadata.count_val1 + 16w1;
+        		reg.write((bit<32>)meta.custom_metadata.hash_val1, (bit<16>)meta.custom_metadata.count_val1);
+        		//stores it in the Reservoir!!! 
+        	}
+        	else{
+        		random(meta.custom_metadata.random, 32w0, (bit<32>)meta.custom_metadata.count_val1);
+        		meta.custom_metadata.count_val1 = meta.custom_metadata.count_val1 + 16w1;
+        		reg.write((bit<32>)meta.custom_metadata.hash_val1, (bit<16>)meta.custom_metadata.count_val1);
+        		if(meta.custom_metadata.random < N){
+        			//stores it in the Reservoir!!!
+        		}
+        	}
         }
     	ipv4_lpm.apply();
     }
 }
+
+/*alg z in python
+*def r(packet):
+*    global N, n, t, resevoir
+*    if n < N:
+*        resevoir[n] = packet
+*        n = n + 1
+*        if n == N:
+*            t = n
+*    else:
+*        t = t + 1
+*        M = random.randint(0, t - 1)
+*        if M < n:
+*            resevoir[M] = packet
+*/
 
 /*************************************************************************
 ****************  E G R E S S   P R O C E S S I N G   *******************

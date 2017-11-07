@@ -9,6 +9,7 @@ function setup_config(){
 	/etc/init.d/procps restart
 	echo "> Start the service!!"
 	if [ $5 = "debug" ]; then
+		echo "prova"
 		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 --log-console /behavioral-model/targets/$1/$2.json --pcap &
 	else
 		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 /behavioral-model/targets/$1/$2.json --pcap &
