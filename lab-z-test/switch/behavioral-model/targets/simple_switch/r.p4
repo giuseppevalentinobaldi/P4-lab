@@ -4,7 +4,7 @@
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
-const bit<32> N = 3;
+const bit<16> N = 3;
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -190,7 +190,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         		random(meta.custom_metadata.random, 32w0, (bit<32>)meta.custom_metadata.count_val1);
         		meta.custom_metadata.count_val1 = meta.custom_metadata.count_val1 + 16w1;
         		reg.write((bit<32>)meta.custom_metadata.hash_val1, (bit<16>)meta.custom_metadata.count_val1);
-        		if(meta.custom_metadata.random < N){
+        		if(meta.custom_metadata.random < (bit<32>)N){
         			//stores it in the Reservoir!!!
         		}
         	}
