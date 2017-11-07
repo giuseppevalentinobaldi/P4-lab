@@ -3,6 +3,7 @@
 echo "1 - to run simple router base forwarding"
 echo "2 - to run simple switch base forwarding"
 echo "3 - to run simple switch heavy hitter"
+echo "4 - to run simple switch heavy hitter 16"
 read -p 'What do you want to do ?: ' dovar
 setup_config(){
 	echo "> Compile program P4!!"
@@ -28,6 +29,9 @@ case $dovar in
         ;;
      3)
      	setup_config simple_switch heavy_hitter 14 commands_heavy_hitter
+        ;; 
+     4)
+     	setup_config simple_switch heavy_hitter-16 16 commands_heavy_hitter
         ;; 
      *)
         echo "> Error!! -->command not find "

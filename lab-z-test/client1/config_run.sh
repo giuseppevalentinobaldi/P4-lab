@@ -9,6 +9,8 @@ function configure_machine(){
 	cd /scapy
 	python setup.py install
 	cd /
+	echo "> fix L4!!"
+	ethtool --offload  eth0  rx off  tx off
 	echo "> Ready!!"
 }
 

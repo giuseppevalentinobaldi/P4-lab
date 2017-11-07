@@ -3,6 +3,7 @@
 '''
 Random Sampling with a Reservoir
 JEFFREY SCOTT VITTER
+@see: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.94.1689&rep=rep1&type=pdf
 
 @authors: Giuseppe Valentino Baldi, Marco Lorini
 @contact: giuseppevalentinobaldi@gmail.com, marck_91@hotmail.it 
@@ -14,7 +15,7 @@ from scapy.all import *
 import logging, re, random, sys, math
 
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-alg, N, n, t, s, num, term = "", 3, 0, 0, 0, 0.0, 0
+alg, N, n, t, s, num, term, W = "", 3, 0, 0, 0, 0.0, 0, 0.0
 resevoir = [None] * N
 counter = 1
 
@@ -94,7 +95,7 @@ def x(packet):
         print("------------------------ next step ------------------------")
 
 def z(packet):
-    global N, n, t, resevoir, s, term
+    global N, n, t, resevoir, s, term,W
     thresh = 22 * N
     if t < thresh:
         print("Algorithm X")
@@ -106,14 +107,14 @@ def z(packet):
         else:
             M = random.randint(0, n - 1)
             resevoir[M] = packet
-            W = pow(random.uniform(0, 1), -1 / n)
             if term == 0:
                 term = t - n + 1
+                W = math.exp(-math.log(random.uniform(0, 1)) / n)
             while True:
                 U = random.uniform(0, 1)
                 Y = t * (W - 1)
                 s = int (Y)
-                lhs = pow((U * (pow(((t + 1) / term), 2)) * (term + s)) / (t + Y), 1 / n)
+                lhs = math.exp(math.log(((U * pow(((t + 1) / term), 2)) * (term + s)) / (t + Y)) / n) 
                 rhs = (((t + Y) / (term + s)) * term) / t;
                 if lhs <= rhs:
                     W = rhs / lhs
@@ -129,8 +130,8 @@ def z(packet):
                 for numer in range (int(t + s), int(numer_lim), -1):
                     y = (y * numer) / denom
                     denom = denom - 1
-                W = pow(random.uniform(0, 1), -1 / n)
-                if pow(y, 1 / n) <= (t + Y) / t :
+                W = math.exp(-math.log(random.uniform(0, 1)) / n)
+                if math.exp(math.log(y) / n) <= (t + Y) / t :
                     print ("Break")
                     break
             t = t + s + 1
