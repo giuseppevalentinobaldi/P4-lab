@@ -9,10 +9,10 @@ function setup_config(){
 	/etc/init.d/procps restart
 	echo "> Start the service!!"
 	if [ $5 = "debug" ]; then
-        ./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 --log-console /behavioral-model/targets/$1/$2.json --pcap &
-    else
-        ./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 /behavioral-model/targets/$1/$2.json --pcap &
-    fi
+		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 --log-console /behavioral-model/targets/$1/$2.json --pcap &
+	else
+		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 /behavioral-model/targets/$1/$2.json --pcap &
+	fi
 	sleep 10
 	echo "> no Ready!!"
 	/behavioral-model/tools/runtime_CLI.py --json /behavioral-model/targets/$1/$2.json < /behavioral-model/targets/$1/$4.txt
