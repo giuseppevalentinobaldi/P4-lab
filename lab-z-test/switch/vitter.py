@@ -95,7 +95,7 @@ def x(packet):
         print("------------------------ next step ------------------------")
 
 def z(packet):
-    global N, n, t, resevoir, s, term,W
+    global N, n, t, resevoir, s, term, W
     thresh = 22 * N
     if t < thresh:
         print("Algorithm X")
