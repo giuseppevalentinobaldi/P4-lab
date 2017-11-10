@@ -9,8 +9,7 @@ function setup_config(){
 	/etc/init.d/procps restart
 	echo "> Start the service!!"
 	if [ $5 = "debug" ]; then
-		echo "prova"
-		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 -i 2@eth2 --log-console /behavioral-model/targets/$1/$2.json --pcap &
+		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 -i 2@eth2 --nanolog ipc:///tmp/bm-0-log.ipc --log-console /behavioral-model/targets/$1/$2.json --pcap &
 	else
 		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 -i 2@eth2 /behavioral-model/targets/$1/$2.json --pcap &
 	fi
@@ -35,7 +34,7 @@ function configure_machine(){
      	setup_config simple_switch copy_to_cpu 14 commands debug
         ;;
      2)
-		setup_config simple_switch r 16 commands_r debug
+		setup_config simple_switch r 16 commands_r nodebug
         ;;
      *)
         echo "> Error!! -->command not find "
