@@ -43,10 +43,6 @@ struct custom_metadata_t {
     bit<8> f1;
 }
 
-struct custom_clone_packet_t{
-	bit<1024> packet_clone;
-}
-
 header ethernet_t {
     macAddr_t dstAddr;
     macAddr_t srcAddr;
@@ -173,10 +169,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
     
-    action set_port(egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-    }
-    
     table check_src {
         key = {
             hdr.ipv4.srcAddr: lpm;
@@ -203,46 +195,26 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         default_action = NoAction();
     }
     
-    table resubmit_set_port {
-        key = {
-            meta.custom_metadata.f1: exact;
-        }
-        actions = {
-            set_port;
-            NoAction;
-        }
-        size = 128;
-        default_action = NoAction();
-    }
-    
     apply {
     	check_src.apply();
     	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1 && meta.custom_metadata.f1 != 8w1){
-        	//hash(meta.custom_metadata.hash_val1, HashAlgorithm.csum16, (bit<16>)0, { hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, hdr.ipv4.protocol, hdr.tcp.srcPort, hdr.tcp.dstPort }, (bit<32>)16);       		
         	meta.custom_metadata.index = 16w0;
         	reg.read(meta.custom_metadata.value, (bit<32>)meta.custom_metadata.index);
         	if(meta.custom_metadata.value < N){
         		meta.custom_metadata.value = meta.custom_metadata.value + 16w1;
         		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
-				meta.custom_metadata.f1 = 8w1;
-				resubmit<tuple<standard_metadata_t, custom_metadata_t>>({ standard_metadata, meta.custom_metadata });
+				clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
         	}
         	else{
         		random(meta.custom_metadata.random, (bit<32>)32w0, (bit<32>)meta.custom_metadata.value);
         		meta.custom_metadata.value = meta.custom_metadata.value + 16w1;
         		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
         		if(meta.custom_metadata.random < (bit<32>)N){
-        			meta.custom_metadata.f1 = 8w1;
-        			resubmit<tuple<standard_metadata_t, custom_metadata_t>>({ standard_metadata, meta.custom_metadata });
+					clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
         		}
         	}
         }
-        if(meta.custom_metadata.f1 == 8w1){
-        	resubmit_set_port.apply();
-        }
-        else{
-        	ipv4_lpm.apply();
-    	}
+        ipv4_lpm.apply();
     }
 }
 

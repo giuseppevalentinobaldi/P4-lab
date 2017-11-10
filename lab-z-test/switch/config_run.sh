@@ -15,7 +15,11 @@ function setup_config(){
 	fi
 	sleep 10
 	echo "> no Ready!!"
-	/behavioral-model/tools/runtime_CLI.py --json /behavioral-model/targets/$1/$2.json < /behavioral-model/targets/$1/$4.txt
+	if [ $6 = "sswitch_CLI" ]; then
+		/behavioral-model/targets/$1/$6 /behavioral-model/targets/$1/$2.json < /behavioral-model/targets/$1/$4.txt
+	else
+		/behavioral-model/targets/$1/$6 --json /behavioral-model/targets/$1/$2.json < /behavioral-model/targets/$1/$4.txt
+	fi
 }
 
 function configure_machine(){
@@ -31,10 +35,10 @@ function configure_machine(){
 	read -p 'What do you want to do ?: ' dovar
 	case $dovar in
      1)
-     	setup_config simple_switch copy_to_cpu 14 commands debug
+     	setup_config simple_switch copy_to_cpu 14 commands debug sswitch_CLI
         ;;
      2)
-		setup_config simple_switch r 16 commands_r nodebug
+		setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
         ;;
      *)
         echo "> Error!! -->command not find "
