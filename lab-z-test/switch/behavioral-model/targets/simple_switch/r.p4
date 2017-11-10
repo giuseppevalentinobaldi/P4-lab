@@ -238,7 +238,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
 }
 
-/*alg z in python
+/*alg r in python
 *def r(packet):
 *    global N, n, t, resevoir
 *    if n < N:
