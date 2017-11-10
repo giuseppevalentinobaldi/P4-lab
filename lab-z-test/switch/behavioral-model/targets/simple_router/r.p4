@@ -238,10 +238,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         	}
         }
         if(meta.custom_metadata.f1 == 8w1){
-        	ipv4_lpm.apply();
+        	resubmit_set_port.apply();
         }
         else{
-    		resubmit_set_port.apply();
+        	ipv4_lpm.apply();
     	}
     }
 }
