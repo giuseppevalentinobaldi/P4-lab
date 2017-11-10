@@ -17,11 +17,24 @@ typedef bit<16> value_t;
 typedef bit<32> index_t;
 typedef bit<1> boolean_t;
 
+struct intrinsic_metadata_t {
+    bit<4>  mcast_grp;
+    bit<4>  egress_rid;
+    bit<16> mcast_hash;
+    bit<32> lf_field_list;
+    bit<16> resubmit_flag;
+}
+
 struct custom_metadata_t {
 	boolean_t srcCorrect;
 	bit<32> random;
-    bit<16> hash_val1;
-    bit<16> count_val1;
+    bit<16> index;
+    bit<16> value;
+    bit<8> f1;
+}
+
+struct custom_clone_packet_t{
+	bit<1024> packet_clone;
 }
 
 header ethernet_t {
@@ -60,7 +73,8 @@ header tcp_t {
 }
 
 struct metadata {
-	custom_metadata_t custom_metadata;  
+	custom_metadata_t custom_metadata;
+	intrinsic_metadata_t intrinsic_metadata;
 }
 
 struct headers {
@@ -132,7 +146,7 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 1) reg;   
+    register<value_t>((index_t) 1) reg; 
     
     action drop() {
         mark_to_drop();
@@ -147,6 +161,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         hdr.ethernet.srcAddr = srcAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+    }
+    
+    action set_port(egressSpec_t port) {
+        standard_metadata.egress_spec = port;
     }
     
     table check_src {
@@ -175,27 +193,48 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         default_action = NoAction();
     }
     
+    table resubmit_set_port {
+        key = {
+            meta.custom_metadata.f1: exact;
+        }
+        actions = {
+            set_port;
+            NoAction;
+        }
+        size = 128;
+        default_action = NoAction();
+    }
+    
     apply {
     	check_src.apply();
-    	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1){
+    	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1 && meta.custom_metadata.f1 != 8w1){
         	//hash(meta.custom_metadata.hash_val1, HashAlgorithm.csum16, (bit<16>)0, { hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, hdr.ipv4.protocol, hdr.tcp.srcPort, hdr.tcp.dstPort }, (bit<32>)16);       		
-        	meta.custom_metadata.hash_val1 = 16w0;
-        	reg.read(meta.custom_metadata.count_val1, (bit<32>)meta.custom_metadata.hash_val1);
-        	if(meta.custom_metadata.count_val1 < N){
-        		meta.custom_metadata.count_val1 = meta.custom_metadata.count_val1 + 16w1;
-        		reg.write((bit<32>)meta.custom_metadata.hash_val1, (bit<16>)meta.custom_metadata.count_val1);
-        		//stores it in the Reservoir!!! 
+        	meta.custom_metadata.index = 16w0;
+        	reg.read(meta.custom_metadata.value, (bit<32>)meta.custom_metadata.index);
+        	if(meta.custom_metadata.value < N){
+        		meta.custom_metadata.value = meta.custom_metadata.value + 16w1;
+        		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
+				meta.custom_metadata.f1 = 8w1;
+				resubmit<tuple<standard_metadata_t, custom_metadata_t>>({ standard_metadata, meta.custom_metadata });
+        		meta.custom_metadata.f1 = 8w0;
         	}
         	else{
-        		random(meta.custom_metadata.random, 32w0, (bit<32>)meta.custom_metadata.count_val1);
-        		meta.custom_metadata.count_val1 = meta.custom_metadata.count_val1 + 16w1;
-        		reg.write((bit<32>)meta.custom_metadata.hash_val1, (bit<16>)meta.custom_metadata.count_val1);
+        		random(meta.custom_metadata.random, 32w0, (bit<32>)meta.custom_metadata.value);
+        		meta.custom_metadata.value = meta.custom_metadata.value + 16w1;
+        		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
         		if(meta.custom_metadata.random < (bit<32>)N){
-        			//stores it in the Reservoir!!!
+        			meta.custom_metadata.f1 = 8w1;
+        			resubmit<tuple<standard_metadata_t, custom_metadata_t>>({ standard_metadata, meta.custom_metadata });
+        			meta.custom_metadata.f1 = 8w0;
         		}
         	}
         }
-    	ipv4_lpm.apply();
+        if(meta.custom_metadata.f1 == 8w1){
+        	resubmit_set_port.apply();
+        }
+        else{
+    		ipv4_lpm.apply();
+    	}
     }
 }
 
@@ -218,8 +257,9 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 ****************  E G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
 
-control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    apply {  }
+control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {   
+    apply {
+     }
 }
 
 /*************************************************************************
@@ -247,7 +287,6 @@ control computeChecksum(
             hdr.ipv4.hdrChecksum, HashAlgorithm.csum16);
     }
 }
-
 
 /*************************************************************************
 ***********************  D E P A R S E R  *******************************

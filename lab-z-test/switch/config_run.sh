@@ -10,9 +10,9 @@ function setup_config(){
 	echo "> Start the service!!"
 	if [ $5 = "debug" ]; then
 		echo "prova"
-		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 --log-console /behavioral-model/targets/$1/$2.json --pcap &
+		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 -i 2@eth2 --log-console /behavioral-model/targets/$1/$2.json --pcap &
 	else
-		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 /behavioral-model/targets/$1/$2.json --pcap &
+		./behavioral-model/targets/$1/$1 -i 0@eth0 -i 1@eth1 -i 2@eth2 /behavioral-model/targets/$1/$2.json --pcap &
 	fi
 	sleep 10
 	echo "> no Ready!!"
@@ -32,7 +32,7 @@ function configure_machine(){
 	read -p 'What do you want to do ?: ' dovar
 	case $dovar in
      1)
-     	setup_config simple_switch copy_to_cpu 14 commands nodebug
+     	setup_config simple_switch copy_to_cpu 14 commands debug
         ;;
      2)
 		setup_config simple_switch r 16 commands_r debug
