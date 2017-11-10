@@ -226,7 +226,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
 				meta.custom_metadata.f1 = 8w1;
 				resubmit<tuple<standard_metadata_t, custom_metadata_t>>({ standard_metadata, meta.custom_metadata });
-        		meta.custom_metadata.f1 = 8w0;
         	}
         	else{
         		random(meta.custom_metadata.random, (bit<32>)32w0, (bit<32>)meta.custom_metadata.value);
@@ -235,15 +234,14 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         		if(meta.custom_metadata.random < (bit<32>)N){
         			meta.custom_metadata.f1 = 8w1;
         			resubmit<tuple<standard_metadata_t, custom_metadata_t>>({ standard_metadata, meta.custom_metadata });
-        			meta.custom_metadata.f1 = 8w0;
         		}
         	}
         }
         if(meta.custom_metadata.f1 == 8w1){
-        	resubmit_set_port.apply();
+        	ipv4_lpm.apply();
         }
         else{
-    		ipv4_lpm.apply();
+    		resubmit_set_port.apply();
     	}
     }
 }
