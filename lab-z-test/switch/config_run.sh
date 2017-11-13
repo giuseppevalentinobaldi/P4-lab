@@ -30,15 +30,12 @@ function configure_machine(){
 	cd /scapy
 	python setup.py install
 	cd /
-	echo "1 - to run simple switch copy to cpu"
-	echo "2 - to run simple switch alg r"
-	read -p 'What do you want to do ?: ' dovar
-	case $dovar in
+	case $1 in
      1)
      	setup_config simple_switch copy_to_cpu 14 commands debug sswitch_CLI
         ;;
      2)
-		setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
+	setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
         ;;
      *)
         echo "> Error!! -->command not find "
@@ -47,4 +44,4 @@ function configure_machine(){
 	echo "> Ready!!"
 }
 
-configure_machine
+configure_machine $1
