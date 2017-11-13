@@ -9,10 +9,12 @@ q = Queue.Queue(N)
 def print_resevoir():
     global q
     tmp = Queue.Queue(N)
+    print("=====================================================")
     while not (q.empty()) :
         pkt=q.get()
         tmp.put(pkt)
-        print("\n{} ----HTTP----> {}:{}:\n{}\n-------------------------------------------------------".format(pkt[IP].src, pkt[IP].dst, pkt[IP].dport, str(bytes(pkt[TCP].payload))))
+        print("\n{} ----HTTP----> {}:{}:\n{}".format(pkt[IP].src, pkt[IP].dst, pkt[IP].dport, str(bytes(pkt[TCP].payload))))
+    print("=====================================================")
     q=tmp
 
 def resevoir(packet):
