@@ -205,52 +205,47 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 	//verify src
 	check_src.apply();
 	if(meta.mymeta.srcCorrect == 1){
-		reg.read(t, 32w0); // read from register index 0 (t)
-	
-		if(t < N){
-			t = t + 32w1;
-			reg.write(32w0, t);
-			//clone
+	    reg.read(t, 32w0); // read from register index 0 (t)
+	    if(t < N){
+	        t = t + 32w1;
+		reg.write(32w0, t);
+		clone3(CloneType.I2E, 32w100, { standard_metadata });
+	    }
+	    else{
+		t = t + 32w1;
+		reg.write(32w0, t);
+		reg.read(quot, 32w1); // read from register index 1 (quot)
+		reg.read(v, 32w2); // read from register index 2 (v)
+		if(quot == 0 && v == 0){
+		    random(v, 32w0, t * NUM);
+		    quot = (t / N);
+		    if(quot > v){
 			clone3(CloneType.I2E, 32w100, { standard_metadata });
+			// reset quot and v
+			reg.write(32w1, 0);
+			reg.write(32w2, 0);
+		    }
+		    else{
+			reg.write(32w1, quot);
+			reg.write(32w2, v);
+		    }
 		}
 		else{
-			t = t + 32w1;
-			reg.write(32w0, t);
-			reg.read(quot, 32w1); // read from register index 1 (quot)
-			reg.read(v, 32w2); // read from register index 2 (v)
-			if(quot == 0 && v == 0){
-				random(v, 32w0, t * NUM);
-				quot = (t - NUM);
-				if(quot > v){
-					// clone
-					clone3(CloneType.I2E, 32w100, { standard_metadata });
-					// reset quot and v
-					reg.write(32w1, 0);
-					reg.write(32w2, 0);
-				}
-				else{
-					reg.write(32w1, quot);
-					reg.write(32w2, v);
-				}
-			}
-			else{
-				quot = quot * (t- NUM);
-				if(quot > v){
-					// clone
-					clone3(CloneType.I2E, 32w100, { standard_metadata });
-					// reset quot and v
-					reg.write(32w1, 0);
-					reg.write(32w2, 0);
-				}
-				else{
-					reg.write(32w1, quot);
-				}
-			}
+		    quot = quot * (t / N);
+		    if(quot > v){
+			clone3(CloneType.I2E, 32w100, { standard_metadata });
+		  	// reset quot and v
+			reg.write(32w1, 0);
+			reg.write(32w2, 0);
+		    }
+		    else{
+			reg.write(32w1, quot);
+		    }
 		}
+	    }
 	}
 	// apply table ipv4_lpm
     	ipv4_lpm.apply();
-
     }
 }
 
