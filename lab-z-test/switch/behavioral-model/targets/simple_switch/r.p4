@@ -215,21 +215,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
 }
 
-/*alg r in python
-*def r(packet):
-*    global N, n, t, resevoir
-*    if n < N:
-*        resevoir[n] = packet
-*        n = n + 1
-*        if n == N:
-*            t = n
-*    else:
-*        t = t + 1
-*        M = random.randint(0, t - 1)
-*        if M < n:
-*            resevoir[M] = packet
-*/
-
 /*************************************************************************
 ****************  E G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
