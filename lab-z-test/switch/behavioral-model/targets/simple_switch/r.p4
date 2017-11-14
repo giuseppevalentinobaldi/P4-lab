@@ -157,7 +157,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     action set_check(boolean_t check){
-    	meta.custom_metadata.srcCorrect = check;
+    	meta.mymeta.srcCorrect = check;
     }
     
     action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {  	
@@ -195,19 +195,19 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     apply {
     	check_src.apply();
-    	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1){
+    	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
             reg.read(t, 32w0);
             if(t < N){
                 t = t + 32w1;
         	reg.write(32w0, t);
-		clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
+		clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
             }
             else{
         	random(M, 32w0, t);
         	t = t + 32w1;
         	reg.write(32w0, t);
         	if(M < N){
-		    clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
+		    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
         	}
             }
         }
