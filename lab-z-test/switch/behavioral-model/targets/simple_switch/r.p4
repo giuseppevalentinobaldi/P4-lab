@@ -4,7 +4,7 @@
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
-const bit<16> N = 3;
+const bit<32> N = 3;
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -13,7 +13,7 @@ const bit<16> N = 3;
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
-typedef bit<16> value_t;
+typedef bit<32> value_t;
 typedef bit<32> index_t;
 typedef bit<1> boolean_t;
 
@@ -32,15 +32,11 @@ struct intrinsic_metadata_t {
     bit<13> mcast_hash;
     bit<16> egress_rid;
     bit<32> lf_field_list;
-	bit<3> priority;
+    bit<3> priority;
 }
 
-struct custom_metadata_t {
-	boolean_t srcCorrect;
-	bit<32> random;
-    bit<16> index;
-    bit<16> value;
-    bit<8> f1;
+struct mymeta_t {
+    boolean_t srcCorrect;
 }
 
 header ethernet_t {
@@ -79,7 +75,7 @@ header tcp_t {
 }
 
 struct metadata {
-	custom_metadata_t custom_metadata;
+	mymeta_t mymeta;
 	intrinsic_metadata_t intrinsic_metadata;
 }
 
@@ -152,7 +148,9 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 1) reg; 
+    register<value_t>((index_t) 1) reg;
+    bit<32> t;
+    bit<32> M; 
     
     action drop() {
         mark_to_drop();
@@ -197,22 +195,21 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     apply {
     	check_src.apply();
-    	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1 && meta.custom_metadata.f1 != 8w1){
-        	meta.custom_metadata.index = 16w0;
-        	reg.read(meta.custom_metadata.value, (bit<32>)meta.custom_metadata.index);
-        	if(meta.custom_metadata.value < N){
-        		meta.custom_metadata.value = meta.custom_metadata.value + 16w1;
-        		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
-				clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
+    	if(hdr.ipv4.totalLen >= 16w400 && meta.custom_metadata.srcCorrect == 1){
+            reg.read(t, 32w0);
+            if(t < N){
+                t = t + 32w1;
+        	reg.write(32w0, t);
+		clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
+            }
+            else{
+        	random(M, 32w0, t);
+        	t = t + 32w1;
+        	reg.write(32w0, t);
+        	if(M < N){
+		    clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
         	}
-        	else{
-        		random(meta.custom_metadata.random, (bit<32>)32w0, (bit<32>)meta.custom_metadata.value);
-        		meta.custom_metadata.value = meta.custom_metadata.value + 16w1;
-        		reg.write((bit<32>)meta.custom_metadata.index, (bit<16>)meta.custom_metadata.value);
-        		if(meta.custom_metadata.random < (bit<32>)N){
-					clone3<tuple<standard_metadata_t, custom_metadata_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.custom_metadata });
-        		}
-        	}
+            }
         }
         ipv4_lpm.apply();
     }
