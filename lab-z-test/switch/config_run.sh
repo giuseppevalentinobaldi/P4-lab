@@ -35,7 +35,10 @@ function configure_machine(){
      	setup_config simple_switch copy_to_cpu 14 commands debug sswitch_CLI
         ;;
      2)
-	setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
+		setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
+        ;;
+     3)
+		setup_config simple_switch x 16 commands_x nodebug sswitch_CLI
         ;;
      *)
         echo "> Error!! -->command not find "

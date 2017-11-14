@@ -15,10 +15,10 @@ const bit<32> N = 3;
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
+typedef bit<1> boolean_t;
 typedef bit<32> value_t;
 typedef bit<32> index_t;
 
-// intrinsic_metadata
 struct intrinsic_metadata_t {
     bit<1>  resubmit_flag;
     bit<48> ingress_global_tstamp;
@@ -35,6 +35,10 @@ struct intrinsic_metadata_t {
     bit<16> egress_rid;
     bit<32> lf_field_list;
     bit<3> priority;
+}
+
+struct mymeta_t {
+    boolean_t srcCorrect;
 }
 
 header ethernet_t {
@@ -74,6 +78,7 @@ header tcp_t {
 
 struct metadata {
     intrinsic_metadata_t intrinsic_metadata;
+    mymeta_t mymeta;
 }
 
 struct headers {
@@ -153,23 +158,39 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 
     bit<32> t;
     bit<32> quot;
-    bit<32> app_quot;
     bit<32> v;
 
     action drop() {
         mark_to_drop();
     }
     
-    action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {
+    action set_check(boolean_t check){
+    	meta.mymeta.srcCorrect = check;
+    }
+    
+    action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {  	
         standard_metadata.egress_spec = port;
         hdr.ethernet.srcAddr = srcAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
     
+    table check_src {
+        key = {
+            hdr.ipv4.srcAddr: lpm;
+        }
+        actions = {
+            set_check;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+    
     table ipv4_lpm {
         key = {
-            hdr.ipv4.dstAddr: lpm;
+            hdr.ipv4.srcAddr: exact;
+            hdr.ipv4.dstAddr: exact;
         }
         actions = {
             ipv4_forward;
@@ -181,51 +202,54 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-	// apply table ipv4_lpm
-    	ipv4_lpm.apply();
-
-	// algorithm X
-	reg.read(t, 32w0); // read from register index 0 (t)
-	if(t < N){
-		t = t + 32w1;
-		reg.write(32w0, t);
-		//clone
-		clone3(CloneType.I2E, 32w100, { standard_metadata });
-	}
-	else{
-		t = t + 32w1;
-		reg.write(32w0, t);
-		reg.read(quot, 32w1); // read from register index 1 (quot)
-		reg.read(v, 32w2); // read from register index 2 (v)
-		if(quot == 0 && v == 0){
-			random(v, 32w0, t * NUM);
-			quot = (t - NUM);
-			if(quot > v){
-				// clone
-				clone3(CloneType.I2E, 32w100, { standard_metadata });
-				// reset quot and v
-				reg.write(32w1, 0);
-				reg.write(32w2, 0);
-			}
-			else{
-				reg.write(32w1, quot);
-				reg.write(32w2, v);
-			}
+	//verify src
+	check_src.apply();
+	if(meta.mymeta.srcCorrect == 1){
+		reg.read(t, 32w0); // read from register index 0 (t)
+	
+		if(t < N){
+			t = t + 32w1;
+			reg.write(32w0, t);
+			//clone
+			clone3(CloneType.I2E, 32w100, { standard_metadata });
 		}
 		else{
-			quot = quot * (t- NUM);
-			if(quot > v){
-				// clone
-				clone3(CloneType.I2E, 32w100, { standard_metadata });
-				// reset quot and v
-				reg.write(32w1, 0);
-				reg.write(32w2, 0);
+			t = t + 32w1;
+			reg.write(32w0, t);
+			reg.read(quot, 32w1); // read from register index 1 (quot)
+			reg.read(v, 32w2); // read from register index 2 (v)
+			if(quot == 0 && v == 0){
+				random(v, 32w0, t * NUM);
+				quot = (t - NUM);
+				if(quot > v){
+					// clone
+					clone3(CloneType.I2E, 32w100, { standard_metadata });
+					// reset quot and v
+					reg.write(32w1, 0);
+					reg.write(32w2, 0);
+				}
+				else{
+					reg.write(32w1, quot);
+					reg.write(32w2, v);
+				}
 			}
 			else{
-				reg.write(32w1, quot);
+				quot = quot * (t- NUM);
+				if(quot > v){
+					// clone
+					clone3(CloneType.I2E, 32w100, { standard_metadata });
+					// reset quot and v
+					reg.write(32w1, 0);
+					reg.write(32w2, 0);
+				}
+				else{
+					reg.write(32w1, quot);
+				}
 			}
 		}
 	}
+	// apply table ipv4_lpm
+    	ipv4_lpm.apply();
 
     }
 }

@@ -17,10 +17,11 @@ function run(){
 	echo "> Run reservoir configuration!!"
 	sudo docker exec netkit_1000_reservoir /config_run.sh
 	echo "> Run switch configuration!!"
-	#/config_run.sh 1 run copy_to_cpu.p4
-	#/config_run.sh 2 run r.p4
-	#/config_run.sh 3 run x.p4
-	sudo docker exec netkit_1000_switch /config_run.sh 2
+	echo "1 - to run simple router copy to cpu"
+	echo "2 - to run simple switch r"
+	echo "3 - to run simple switch x"
+	read -p 'What do you want to do ?: ' dovar
+	sudo docker exec netkit_1000_switch /config_run.sh $dovar
 }
 
 run
