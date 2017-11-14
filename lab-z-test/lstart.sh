@@ -4,7 +4,8 @@
 trap ctrl_c INT
 
 function ctrl_c() {
-        echo "> exit!!"
+	echo ""
+    echo "> exit!!"
 	lclean
 }
 

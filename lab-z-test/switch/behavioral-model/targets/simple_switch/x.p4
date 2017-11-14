@@ -123,7 +123,6 @@ parser ParserImpl(packet_in packet,
 
 }
 
-
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
@@ -146,7 +145,6 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
             hdr.ipv4.hdrChecksum, HashAlgorithm.csum16);
      }
 }
-
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
@@ -204,7 +202,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     apply {
 	//verify src
 	check_src.apply();
-	if(meta.mymeta.srcCorrect == 1){
+	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
 	    reg.read(t, 32w0); // read from register index 0 (t)
 	    if(t < N){
 	        t = t + 32w1;
@@ -218,7 +216,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 		reg.read(v, 32w2); // read from register index 2 (v)
 		if(quot == 0 && v == 0){
 		    random(v, 32w0, t * NUM);
-		    quot = (t / N);
+		    quot = (2*t - NUM);
 		    if(quot > v){
 			clone3(CloneType.I2E, 32w100, { standard_metadata });
 			// reset quot and v
@@ -231,7 +229,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 		    }
 		}
 		else{
-		    quot = quot * (t / N);
+		    quot = quot + (2*t - NUM);
 		    if(quot > v){
 			clone3(CloneType.I2E, 32w100, { standard_metadata });
 		  	// reset quot and v
@@ -282,7 +280,6 @@ control computeChecksum(
             hdr.ipv4.hdrChecksum, HashAlgorithm.csum16);
     }
 }
-
 
 /*************************************************************************
 ***********************  D E P A R S E R  *******************************
