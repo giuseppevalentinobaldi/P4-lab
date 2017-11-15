@@ -41,8 +41,8 @@ function configure_machine(){
 		setup_config simple_switch x 16 commands_x nodebug sswitch_CLI
         ;;
      *)
-        echo "> Error!! -->command not find "
-        echo "> Run of default --> R"
+        echo "> Error!! --> Command not find"
+        echo "> Run of default!! --> R"
         setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
         ;;
 	esac
