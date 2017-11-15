@@ -14,17 +14,20 @@ function run(){
     sudo true
     lstart
     echo "> Run client configuration!!"
-    nohup docker exec netkit_1000_client /config_run.sh </dev/null &>/dev/null &
+    sudo docker exec netkit_1000_client /config_run.sh </dev/null &>/dev/null &
+    wait
     echo "> Run server configuration!!"
-    nohup docker exec netkit_1000_server /config_run.sh </dev/null &>/dev/null &
+    sudo nohup docker exec netkit_1000_server /config_run.sh </dev/null &>/dev/null &
+    wait
     echo "> Run reservoir configuration!!"
-    nohup docker exec netkit_1000_reservoir /config_run.sh </dev/null &>/dev/null &
+    sudo nohup docker exec netkit_1000_reservoir /config_run.sh </dev/null &>/dev/null &
+    wait
     echo "> Run switch configuration!!"
     echo "1 - to run copy to cpu"
     echo "2 - to run r"
     echo "3 - to run x"
     read -p 'What do you want to do ?: ' dovar
-    nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
+    sudo nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
     sleep 15
     echo "> ready!!"
     while true; do 
