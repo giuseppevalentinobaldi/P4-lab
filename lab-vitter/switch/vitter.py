@@ -19,6 +19,7 @@ alg, N, n, t, s, num, term, W = "", 3, 0, 0, 0, 0.0, 0, 0.0
 resevoir = [None] * N
 counter = 1
 
+
 def packet_callback(packet):
     global counter, alg
     if packet[TCP].payload:
@@ -36,6 +37,7 @@ def packet_callback(packet):
                 print ("Missing or incorrect parameter")
                 sys.exit(0)
 
+
 def r(packet):
     global N, n, t, resevoir
     if n < N:
@@ -52,6 +54,7 @@ def r(packet):
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
+
         
 def calculateS(V):
     global t, s, num
@@ -63,6 +66,7 @@ def calculateS(V):
         quot = quot * num / t 
     print("Skip: " + `s`)
     print("Probability V: " + `V`)
+
     
 def x(packet):
     global N, n, t, resevoir, s, num
@@ -93,6 +97,7 @@ def x(packet):
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")
+
 
 def z(packet):
     global N, n, t, resevoir, s, term, W
@@ -140,12 +145,14 @@ def z(packet):
         for e in resevoir:
             print("\n{} ----HTTP----> {}:{}:\n{}".format(e[IP].src, e[IP].dst, e[IP].dport, str(bytes(e[TCP].payload))))
         print("------------------------ next step ------------------------")  
+
     
 def main(argv):
     global alg
     alg = argv
     print ("Run algorithm " + (alg.capitalize()))
-    sniff(filter="tcp", prn=packet_callback, store=0)
+    sniff(iface="eth2", filter="tcp", prn=packet_callback, store=0)
+
 
 if __name__ == "__main__":
    main(sys.argv[1])

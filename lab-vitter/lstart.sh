@@ -23,7 +23,7 @@ function run(){
     echo "3 - to run simple switch x"
     read -p 'What do you want to do ?: ' dovar
     sudo nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
-    sleep 10
+    sleep 15
     echo "> ready!!"
     echo "Press crtl + c for terminate lab"
     wait

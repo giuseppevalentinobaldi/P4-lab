@@ -32,7 +32,7 @@ function configure_machine(){
 	cd /
 	case $1 in
      1)
-     	setup_config simple_switch copy_to_cpu 14 commands debug sswitch_CLI
+     	setup_config simple_switch copy_to_cpu 16 commands nodebug sswitch_CLI
         ;;
      2)
 		setup_config simple_switch r 16 commands_r nodebug sswitch_CLI
