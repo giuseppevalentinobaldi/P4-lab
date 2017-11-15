@@ -11,7 +11,7 @@ function ctrl_c() {
 }
 
 function run(){
-	sudo true
+    sudo true
     lstart
     echo "> Run client configuration!!"
     nohup docker exec netkit_1000_client /config_run.sh </dev/null &>/dev/null &
