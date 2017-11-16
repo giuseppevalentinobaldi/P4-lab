@@ -12,15 +12,13 @@ class Server():
         self.cs.bind((self.ip, self.port))
         self.cs.listen(listen)
     
-    def client_thread(conn):
-        conn.send("> Welcome to the Server!!\n")
-    
+    def client_thread(self, conn):
         while True:
-            data = self.recv()
+            data = conn.recv(self.buffer)
             if not data:
                 break
-            self.send("ack")
-        self.close()
+            conn.send(bytes("ack", "utf-8"))
+        conn.close()
     
     def accept_connection(self):
         self.conn, self.addr = self.cs.accept()

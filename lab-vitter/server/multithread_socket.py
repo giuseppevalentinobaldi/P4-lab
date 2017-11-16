@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from server import Server
-from _thread import start_new_thread
+import threading
 
 
 def main():
     server = Server("20.0.0.2", 5005, 1024, 5, None, None, None)
     while True:
         conn = server.accept_connection()
-        start_new_thread(server.client_thread, (conn))
+        threading.Thread(target=server.client_thread, args=(conn,),).start()
     server.close()
 
 

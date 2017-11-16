@@ -12,10 +12,9 @@ class Client():
         self.cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.cs.connect((self.ip, self.port))
         
-    def client_thread(number_msg):
-        counter = number_msg
+    def client_thread(self, msg):
+        counter = msg
         while counter > 0:
-            time.sleep(random.randint(0,10)) # 0 to 10 sec
             self.send()
             print (self.recv())
             counter = counter -1
