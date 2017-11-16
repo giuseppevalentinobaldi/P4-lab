@@ -1,20 +1,34 @@
+#!/usr/bin/env python
 import socket
 
  
 class Server():
     
-    def __init__(self, ip, port, buffer, encode, cs, conn, addr):
+    def __init__(self, ip, port, buffer, listen, cs, conn, addr):
         self.ip = ip
         self.port = port
         self.buffer = buffer
-        self.encode = encode
         self.cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.cs.bind((self.ip, self.port))
-        self.cs.listen(1)
+        self.cs.listen(listen)
+    
+    def client_thread(conn):
+        conn.send("> Welcome to the Server!!\n")
+    
+        while True:
+            data = self.recv()
+            if not data:
+                break
+            self.send("ack")
+        self.close()
+    
+    def accept_connection(self):
         self.conn, self.addr = self.cs.accept()
+        print("[-] Connected to " + self.addr[0] + ":" + str(self.addr[1]))
+        return self.conn
         
-    def send(self):
-        self.conn.send(bytes("ack", self.encode))
+    def send(self, msg):
+        self.conn.send(bytes(msg, "utf-8"))
         
     def recv(self):
         packet = self.conn.recv(self.buffer)
@@ -40,22 +54,19 @@ class Server():
     
     def setBuffer(self, buffer):
         self.buffer = buffer
-        
-    def getEncode(self):
-        return self.encode
-    
-    def setEncode(self, encode):
-        self.encode = encode
+
 
 def main():
-    server = Server("20.0.0.2", 5005, 1024, "utf-8", None, None, None)
-    while 1:
+    server = Server("20.0.0.2", 5005, 1024, 5, None, None, None)
+    server.accept_connection()
+    while True:
         data = server.recv()
         if not data: 
             break
         print ("received ", data)
-        server.send()
+        server.send("ack")
     conn.close()
+
 
 if __name__ == "__main__":
     main()

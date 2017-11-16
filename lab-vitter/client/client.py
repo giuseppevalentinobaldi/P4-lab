@@ -1,26 +1,35 @@
-import socket, string, random
+#!/usr/bin/env python
+import socket, string, random, time
 
  
 class Client():
     
-    def __init__(self, name, ip, port, buffer, encode, cs):
+    def __init__(self, name, ip, port, buffer, cs):
         self.name = name
         self.ip = ip
         self.port = port
         self.buffer = buffer
-        self.encode = encode 
         self.cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.cs.connect((self.ip, self.port))
         
+    def client_thread(number_msg):
+        counter = number_msg
+        while counter > 0:
+            time.sleep(random.randint(0,10)) # 0 to 10 sec
+            self.send()
+            print (self.recv())
+            counter = counter -1
+        self.close()
+        
     def send(self):
-        self.cs.send(bytes(self.name +" send: "+ self.randomMessage(), self.encode))
+        self.cs.send(bytes(self.name + " send: " + self.randomMessage(), "utf-8"))
         
     def recv(self):
         packet = self.cs.recv(self.buffer)
         return packet.decode()
     
     def randomMessage(self):
-        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(1024)) 
+        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(512)) 
     
     def close(self):
         self.cs.close()
@@ -48,15 +57,10 @@ class Client():
     
     def setBuffer(self, buffer):
         self.buffer = buffer
-        
-    def getEncode(self):
-        return self.encode
-    
-    def setEncode(self, encode):
-        self.encode = encode
+
 
 def main():
-    client = Client("giuseppe-firefox", "20.0.0.2", 5005, 1024, "utf-8", None)
+    client = Client("giuseppe-firefox", "20.0.0.2", 5005, 1024, None)
     check = True
     while check:
         cond = input('Send packet flow? (y/n): ')
@@ -66,6 +70,7 @@ def main():
         else:
             check = False
     client.close()
+
 
 if __name__ == "__main__":
     main()
