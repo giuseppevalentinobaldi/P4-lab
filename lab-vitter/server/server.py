@@ -63,7 +63,7 @@ def main():
             break
         print ("received ", data)
         server.send("ack")
-    conn.close()
+    server.close()
 
 
 if __name__ == "__main__":
