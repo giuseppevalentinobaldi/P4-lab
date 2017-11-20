@@ -12,23 +12,23 @@ def print_resevoir():
     tmp = Queue.Queue(N)
     print("=====================================================")
     while not (q.empty()) :
-        pkt = q.get()
-        tmp.put(pkt)
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        print("{}\n{} ----HTTP----> {}:{}:\n{}".format(st, pkt[IP].src, pkt[IP].dst, pkt[IP].dport, str(bytes(pkt[TCP].payload))))
+        tup = q.get()
+        tmp.put(tup)
+        print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
     print("=====================================================")
     q = tmp
 
 
 def resevoir(packet):
     global q
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
     if q.qsize() < N:
-        q.put(packet)
+        q.put((st, packet))
         print_resevoir()
     else:
         q.get()
-        q.put(packet)
+        q.put((st, packet))
         print_resevoir()
 
 
