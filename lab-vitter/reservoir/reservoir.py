@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from scapy.all import *
-import Queue, datetime
+import Queue, datetime, time
 
 N = 3
 q = Queue.Queue(N)
@@ -14,6 +14,7 @@ def print_resevoir():
     while not (q.empty()) :
         pkt = q.get()
         tmp.put(pkt)
+        ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         print("{}\n{} ----HTTP----> {}:{}:\n{}".format(st, pkt[IP].src, pkt[IP].dst, pkt[IP].dport, str(bytes(pkt[TCP].payload))))
     print("=====================================================")
