@@ -7,7 +7,7 @@ function configure_machine(){
 	ln -s /usr/bin/tcpdump /usr/sbin/tcpdump
 	echo "> install scapy!!"
 	cd /scapy
-	python setup.py install
+	python3 setup.py install
 	cd /
 	echo "> fix L4!!"
 	ethtool --offload  eth0  rx off  tx off

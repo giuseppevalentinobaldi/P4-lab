@@ -9,24 +9,34 @@
 """
 Utility functions for IPv6.
 """
-from __future__ import absolute_import
-import random
-import socket
-import struct
 
-from scapy.config import conf
-import scapy.consts
-from scapy.data import *
-from scapy.utils import *
-from scapy.compat import *
-from scapy.pton_ntop import *
-from scapy.volatile import RandMAC
-from scapy.error import warning
-from functools import reduce
-from scapy.modules.six.moves import range
+import itertools
+from .config import conf
+from .data import *
+from .utils import *
+
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K(object):
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0  
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 
 
-def construct_source_candidate_set(addr, plen, laddr):
+
+def construct_source_candidate_set(addr, plen, laddr, loname):
     """
     Given all addresses assigned to a specific interface ('laddr' parameter),
     this function returns the "candidate set" associated with 'addr/plen'.
@@ -55,25 +65,24 @@ def construct_source_candidate_set(addr, plen, laddr):
 
     cset = []
     if in6_isgladdr(addr) or in6_isuladdr(addr):
-        cset = (x for x in laddr if x[1] == IPV6_ADDR_GLOBAL)
+        cset = [ x for x in laddr if x[1] == IPV6_ADDR_GLOBAL ]
     elif in6_islladdr(addr):
-        cset = (x for x in laddr if x[1] == IPV6_ADDR_LINKLOCAL)
+        cset = [ x for x in laddr if x[1] == IPV6_ADDR_LINKLOCAL ]
     elif in6_issladdr(addr):
-        cset = (x for x in laddr if x[1] == IPV6_ADDR_SITELOCAL)
+        cset = [ x for x in laddr if x[1] == IPV6_ADDR_SITELOCAL ]
     elif in6_ismaddr(addr):
         if in6_ismnladdr(addr):
-            cset = [('::1', 16, scapy.consts.LOOPBACK_INTERFACE)]
+            cset = [('::1', 16, loname)]
         elif in6_ismgladdr(addr):
-            cset = (x for x in laddr if x[1] == IPV6_ADDR_GLOBAL)
+            cset = [ x for x in laddr if x[1] == IPV6_ADDR_GLOBAL ]
         elif in6_ismlladdr(addr):
-            cset = (x for x in laddr if x[1] == IPV6_ADDR_LINKLOCAL)
+            cset = [ x for x in laddr if x[1] == IPV6_ADDR_LINKLOCAL ]
         elif in6_ismsladdr(addr):
-            cset = (x for x in laddr if x[1] == IPV6_ADDR_SITELOCAL)
+            cset = [ x for x in laddr if x[1] == IPV6_ADDR_SITELOCAL ]
     elif addr == '::' and plen == 0:
-        cset = (x for x in laddr if x[1] == IPV6_ADDR_GLOBAL)
-    cset = [x[0] for x in cset]
-    # TODO convert the cmd use into a key
-    cset.sort(key=cmp_to_key(cset_sort)) # Sort with global addresses first
+        cset = [ x for x in laddr if x[1] == IPV6_ADDR_GLOBAL ]
+    cset = [ x[0] for x in cset ]
+    cset.sort(key = cmp_to_key(cset_sort)) # Sort with global addresses first
     return cset            
 
 def get_source_addr_from_candidate_set(dst, candidate_set):
@@ -158,6 +167,46 @@ def get_source_addr_from_candidate_set(dst, candidate_set):
     return candidate_set[0]
 
 
+def find_ifaddr2(addr, plen, laddr):
+    dstAddrType = in6_getAddrType(addr)
+    
+    if dstAddrType == IPV6_ADDR_UNSPECIFIED: # Shouldn't happen as dst addr
+        return None
+
+    if dstAddrType == IPV6_ADDR_LOOPBACK: 
+        return None
+
+    #tmp = [[]] + map(lambda (x,y,z): (in6_getAddrType(x), x, y, z), laddr)
+    tmp = [[]] + map(lambda a: (in6_getAddrType(a[0]), a[0], a[1], a[2]), laddr)
+    #def filterSameScope(l, t):
+    #    if (t[0] & dstAddrType & IPV6_ADDR_SCOPE_MASK) == 0:
+    #        l.append(t)
+    #    return l
+    #sameScope = reduce(filterSameScope, tmp)
+    sameScope = itertools.chain(*[ t for t in tmp if (t[0] & dstAddrType & IPV6_ADDR_SCOPE_MASK) == 0 ])
+    
+    l =  len(sameScope) 
+    if l == 1:  # Only one address for our scope
+        return sameScope[0][1]
+
+    elif l > 1: # Muliple addresses for our scope
+        #stfAddr = filter(lambda x: x[0] & IPV6_ADDR_6TO4, sameScope)
+        stfAddr = [ x for x in sameScope if x[0] & IPV6_ADDR_6TO4 ]
+        #nativeAddr = filter(lambda x: not (x[0] & IPV6_ADDR_6TO4), sameScope)
+        nativeAddr = [ x for x in sameScope if not (x[0] & IPV6_ADDR_6TO4) ]
+
+        if not (dstAddrType & IPV6_ADDR_6TO4): # destination is not 6to4
+           if len(nativeAddr) != 0:
+               return nativeAddr[0][1]
+           return stfAddr[0][1]
+
+        else:  # Destination is 6to4, try to use source 6to4 addr if any
+            if len(stfAddr) != 0:
+                return stfAddr[0][1]
+            return nativeAddr[0][1]
+    else:
+        return None
+
 # Think before modify it : for instance, FE::1 does exist and is unicast
 # there are many others like that.
 # TODO : integrate Unique Local Addresses
@@ -167,11 +216,12 @@ def in6_getAddrType(addr):
     addrType = 0
     # _Assignable_ Global Unicast Address space
     # is defined in RFC 3513 as those in 2000::/3
-    if ((orb(naddr[0]) & 0xE0) == 0x20):
+    #if ((struct.unpack("B", naddr[0])[0] & 0xE0) == 0x20):
+    if (((naddr[0]) & 0xE0) == 0x20):
         addrType = (IPV6_ADDR_UNICAST | IPV6_ADDR_GLOBAL)
         if naddr[:2] == b' \x02': # Mark 6to4 @
             addrType |= IPV6_ADDR_6TO4
-    elif orb(naddr[0]) == 0xff: # multicast
+    elif naddr[0] == 0xff: # multicast
         addrScope = paddr[3]
         if addrScope == '2':
             addrType = (IPV6_ADDR_LINKLOCAL | IPV6_ADDR_MULTICAST)
@@ -179,7 +229,7 @@ def in6_getAddrType(addr):
             addrType = (IPV6_ADDR_GLOBAL | IPV6_ADDR_MULTICAST)
         else:
             addrType = (IPV6_ADDR_GLOBAL | IPV6_ADDR_MULTICAST)
-    elif ((orb(naddr[0]) == 0xfe) and ((int(paddr[2], 16) & 0xC) == 0x8)):
+    elif ((naddr[0] == 0xfe) and ((int(paddr[2], 16) & 0xC) == 0x8)):
         addrType = (IPV6_ADDR_UNICAST | IPV6_ADDR_LINKLOCAL)
     elif paddr == "::1":
         addrType = IPV6_ADDR_LOOPBACK
@@ -228,7 +278,8 @@ def in6_ifaceidtomac(ifaceid): # TODO: finish commenting function behavior
     first = struct.pack("B", ((first & 0xFD) | ulbit))
     oui = first + ifaceid[1:3]
     end = ifaceid[5:]
-    l = ["%.02x" % orb(x) for x in list(oui + end)]
+    #l = map(lambda x: "%.02x" % struct.unpack("B", x)[0], list(oui+end))
+    l = map(lambda x: "%.02x" % x, list(oui+end))
     return ":".join(l)
 
 def in6_addrtomac(addr):
@@ -254,7 +305,7 @@ def in6_addrtovendor(addr):
         return None
 
     res = conf.manufdb._get_manuf(mac)
-    if len(res) == 17 and res.count(':') != 5: # Mac address, i.e. unknown
+    if len(res) == 17 and res.count(b':') != 5: # Mac address, i.e. unknown
         res = "UNKNOWN"
 
     return res
@@ -270,7 +321,7 @@ def in6_getLinkScopedMcastAddr(addr, grpid=None, scope=2):
     By default, the function returns a ::/96 prefix (aka last 32 bits of 
     returned address are null). If a group id is provided through 'grpid' 
     parameter, last 32 bits of the address are set to that value (accepted 
-    formats : b'\x12\x34\x56\x78' or '12345678' or 0x12345678 or 305419896).
+    formats : '\x12\x34\x56\x78' or '12345678' or 0x12345678 or 305419896).
 
     By default, generated address scope is Link-Local (2). That value can 
     be modified by passing a specific 'scope' value as an argument of the
@@ -295,7 +346,9 @@ def in6_getLinkScopedMcastAddr(addr, grpid=None, scope=2):
     if grpid is None:
         grpid = b'\x00\x00\x00\x00'
     else:
-        if isinstance(grpid, (bytes, str)):
+        if type(grpid) is str:
+          grpid = grpid.encode('ascii')
+        if type(grpid) is bytes:
             if len(grpid) == 8:
                 try:
                     grpid = int(grpid, 16) & 0xffffffff
@@ -332,8 +385,8 @@ def in6_get6to4Prefix(addr):
 
 def in6_6to4ExtractAddr(addr):
     """
-    Extract IPv4 address embedded in 6to4 address. Passed address must be
-    a 6to4 address. None is returned on error.
+    Extract IPv4 address embbeded in 6to4 address. Passed address must be
+    a 6to4 addrees. None is returned on error.
     """
     try:
         addr = inet_pton(socket.AF_INET6, addr)
@@ -347,7 +400,7 @@ def in6_6to4ExtractAddr(addr):
 def in6_getLocalUniquePrefix():
     """
     Returns a pseudo-randomly generated Local Unique prefix. Function
-    follows recommendation of Section 3.2.2 of RFC 4193 for prefix
+    follows recommandation of Section 3.2.2 of RFC 4193 for prefix
     generation.
     """
     # Extracted from RFC 1305 (NTP) :
@@ -365,11 +418,13 @@ def in6_getLocalUniquePrefix():
     i = int(tod)
     j = int((tod - i)*(2**32))
     tod = struct.pack("!II", i,j)
-    mac = RandMAC()
+    # TODO: Add some check regarding system address gathering
+    rawmac = get_if_raw_hwaddr(conf.iface6)
+    mac = b":".join(map(lambda x: b"%.02x" % ord(x), list(rawmac)))
     # construct modified EUI-64 ID
     eui64 = inet_pton(socket.AF_INET6, '::' + in6_mactoifaceid(mac))[8:] 
-    import hashlib
-    globalid = hashlib.sha1(tod+eui64).digest()[:5]
+    import sha
+    globalid = sha.new(tod+eui64).digest()[:5]
     return inet_ntop(socket.AF_INET6, b'\xfd' + globalid + b'\x00'*10)
 
 def in6_getRandomizedIfaceId(ifaceid, previous=None):
@@ -384,24 +439,28 @@ def in6_getRandomizedIfaceId(ifaceid, previous=None):
     a "printable" format as depicted below.
     
     ex: 
+
     >>> in6_getRandomizedIfaceId('20b:93ff:feeb:2d3')
     ('4c61:76ff:f46a:a5f3', 'd006:d540:db11:b092')
+
     >>> in6_getRandomizedIfaceId('20b:93ff:feeb:2d3',
                                  previous='d006:d540:db11:b092')
     ('fe97:46fe:9871:bd38', 'eeed:d79c:2e3f:62e')
     """
 
-    s = b""
+    s = []
     if previous is None:
-        d = b"".join(chb(x) for x in range(256))
-        for _ in range(8):
-            s += chb(random.choice(d))
+        #d = b"".join(map(chr, range(256)))
+        d = list(range(256))
+        for i in range(8):
+            s.append(random.choice(d))
+        s = bytes(s)
         previous = s
     s = inet_pton(socket.AF_INET6, "::"+ifaceid)[8:] + previous
     import hashlib
     s = hashlib.md5(s).digest()
     s1,s2 = s[:8],s[8:]
-    s1 = chb(orb(s1[0]) | 0x04) + s1[1:]
+    s1 = bytes([(s1[0]) | 0x04]) + s1[1:]  
     s1 = inet_ntop(socket.AF_INET6, b"\xff"*8 + s1)[20:]
     s2 = inet_ntop(socket.AF_INET6, b"\xff"*8 + s2)[20:]    
     return (s1, s2)
@@ -420,8 +479,8 @@ def in6_ctop(addr):
     (RFC 1924) to printable representation ;-)
     Returns None on error.
     """
-    if len(addr) != 20 or not reduce(lambda x,y: x and y, 
-                                     [x in _rfc1924map for x in addr]):
+    #if len(addr) != 20 or not reduce(lambda x,y: x and y, map(lambda x: x in _rfc1924map, addr)):
+    if len(addr) != 20 or not all(map(lambda x: x in _rfc1924map, addr)):
         return None
     i = 0
     for c in addr:
@@ -527,9 +586,10 @@ def _in6_bitops(a1, a2, operator=0):
     fop = [ lambda x,y: x | y,
             lambda x,y: x & y,
             lambda x,y: x ^ y
-          ]
+          ]  
     ret = map(fop[operator%len(fop)], a1, a2)
-    return b"".join(struct.pack('I', x) for x in ret)
+    t = b''.join(map(lambda x: struct.pack('I', x), ret))
+    return t
 
 def in6_or(a1, a2):
     """
@@ -559,7 +619,7 @@ def in6_cidr2mask(m):
     """
     Return the mask (bitstring) associated with provided length 
     value. For instance if function is called on 48, return value is
-    b'\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'.
+    '\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'.
     
     """
     if m > 128 or m < 0:
@@ -570,7 +630,7 @@ def in6_cidr2mask(m):
         t.append(max(0, 2**32  - 2**(32-min(32, m))))
         m -= 32
 
-    return b"".join(struct.pack('!I', x) for x in t)
+    return b"".join([ struct.pack('!I', i) for i in t ])
 
 def in6_getnsma(a): 
     """
@@ -591,7 +651,7 @@ def in6_getnsmac(a): # return multicast Ethernet address associated with multica
 
     a = struct.unpack('16B', a)[-4:]
     mac = '33:33:'
-    mac += ':'.join("%.2x" %x for x in a)
+    mac += (':'.join(map(lambda x: '%.2x' %x, a)))
     return mac
 
 def in6_getha(prefix): 
@@ -603,12 +663,12 @@ def in6_getha(prefix):
     r = in6_or(r, inet_pton(socket.AF_INET6, '::fdff:ffff:ffff:fffe'))
     return inet_ntop(socket.AF_INET6, r)
 
-def in6_ptop(str): 
+def in6_ptop(s): 
     """
     Normalizes IPv6 addresses provided in printable format, returning the 
     same address in printable format. (2001:0db8:0:0::1 -> 2001:db8::1)
     """
-    return inet_ntop(socket.AF_INET6, inet_pton(socket.AF_INET6, str))
+    return inet_ntop(socket.AF_INET6, inet_pton(socket.AF_INET6, s))
 
 def in6_isincluded(addr, prefix, plen):
     """
@@ -619,111 +679,101 @@ def in6_isincluded(addr, prefix, plen):
     zero = inet_pton(socket.AF_INET6, prefix)
     return zero == in6_and(temp, pref)
 
-def in6_isllsnmaddr(str):
-    """
-    Return True if provided address is a link-local solicited node
-    multicast address, i.e. belongs to ff02::1:ff00:0/104. False is
-    returned otherwise.
-    """
-    temp = in6_and(b"\xff"*13+b"\x00"*3, inet_pton(socket.AF_INET6, str))
-    temp2 = b'\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xff\x00\x00\x00'
-    return temp == temp2
-
-def in6_isdocaddr(str):
+def in6_isdocaddr(s):
     """
     Returns True if provided address in printable format belongs to
     2001:db8::/32 address space reserved for documentation (as defined 
     in RFC 3849).
     """
-    return in6_isincluded(str, '2001:db8::', 32)
+    return in6_isincluded(s, '2001:db8::', 32)
 
-def in6_islladdr(str):
+def in6_islladdr(s):
     """
     Returns True if provided address in printable format belongs to
     _allocated_ link-local unicast address space (fe80::/10)
     """
-    return in6_isincluded(str, 'fe80::', 10)
+    return in6_isincluded(s, 'fe80::', 10)
 
-def in6_issladdr(str):
+def in6_issladdr(s):
     """
     Returns True if provided address in printable format belongs to
     _allocated_ site-local address space (fec0::/10). This prefix has 
     been deprecated, address being now reserved by IANA. Function 
     will remain for historic reasons.
     """
-    return in6_isincluded(str, 'fec0::', 10)
+    return in6_isincluded(s, 'fec0::', 10)
 
-def in6_isuladdr(str):
+def in6_isuladdr(s):
     """
     Returns True if provided address in printable format belongs to
     Unique local address space (fc00::/7).
     """
-    return in6_isincluded(str, 'fc00::', 7)
+    return in6_isincluded(s, 'fc00::', 7)
 
 # TODO : we should see the status of Unique Local addresses against
 #        global address space.
 #        Up-to-date information is available through RFC 3587. 
 #        We should review function behavior based on its content.
-def in6_isgladdr(str):
+def in6_isgladdr(s):
     """
     Returns True if provided address in printable format belongs to
     _allocated_ global address space (2000::/3). Please note that,
     Unique Local addresses (FC00::/7) are not part of global address
     space, and won't match.
     """
-    return in6_isincluded(str, '2000::', 3)
+    return in6_isincluded(s, '2000::', 3)
 
-def in6_ismaddr(str):
+def in6_ismaddr(s):
     """
     Returns True if provided address in printable format belongs to 
     allocated Multicast address space (ff00::/8).
     """
-    return in6_isincluded(str, 'ff00::', 8)
+    return in6_isincluded(s, 'ff00::', 8)
 
-def in6_ismnladdr(str):
+def in6_ismnladdr(s):
     """
     Returns True if address belongs to node-local multicast address
     space (ff01::/16) as defined in RFC 
     """
-    return in6_isincluded(str, 'ff01::', 16)
+    return in6_isincluded(s, 'ff01::', 16)
 
-def in6_ismgladdr(str):
+def in6_ismgladdr(s):
     """
     Returns True if address belongs to global multicast address
     space (ff0e::/16).
     """
-    return in6_isincluded(str, 'ff0e::', 16)
+    return in6_isincluded(s, 'ff0e::', 16)
 
-def in6_ismlladdr(str):
+def in6_ismlladdr(s):
     """
     Returns True if address belongs to link-local multicast address
     space (ff02::/16)
     """
-    return in6_isincluded(str, 'ff02::', 16)
+    return in6_isincluded(s, 'ff02::', 16)
 
-def in6_ismsladdr(str):
+def in6_ismsladdr(s):
     """
     Returns True if address belongs to site-local multicast address
     space (ff05::/16). Site local address space has been deprecated.
     Function remains for historic reasons.
     """
-    return in6_isincluded(str, 'ff05::', 16)
+    return in6_isincluded(s, 'ff05::', 16)
 
-def in6_isaddrllallnodes(str):
+def in6_isaddrllallnodes(s):
     """
     Returns True if address is the link-local all-nodes multicast 
     address (ff02::1). 
     """
     return (inet_pton(socket.AF_INET6, "ff02::1") ==
-            inet_pton(socket.AF_INET6, str))
+            inet_pton(socket.AF_INET6, s))
 
-def in6_isaddrllallservers(str):
+def in6_isaddrllallservers(s):
     """
     Returns True if address is the link-local all-servers multicast 
     address (ff02::2). 
     """
     return (inet_pton(socket.AF_INET6, "ff02::2") ==
-            inet_pton(socket.AF_INET6, str))
+            inet_pton(socket.AF_INET6, s))
 
 def in6_getscope(addr):
     """
@@ -766,17 +816,8 @@ def in6_get_common_plen(a, b):
     tmpA = inet_pton(socket.AF_INET6, a)
     tmpB = inet_pton(socket.AF_INET6, b)
     for i in range(16):
-        mbits = matching_bits(orb(tmpA[i]), orb(tmpB[i]))
+        #mbits = matching_bits(ord(tmpA[i]), ord(tmpB[i]))
+        mbits = matching_bits((tmpA[i]), (tmpB[i]))
         if mbits != 8:
             return 8*i + mbits
     return 128
-
-def in6_isvalid(address):
-    """Return True if 'address' is a valid IPv6 address string, False
-       otherwise."""
-
-    try:
-        socket.inet_pton(socket.AF_INET6, address)
-        return True
-    except:
-        return False

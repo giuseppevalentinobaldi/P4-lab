@@ -7,13 +7,11 @@
 TFTP (Trivial File Transfer Protocol).
 """
 
-from __future__ import absolute_import
 import os,random
 from scapy.packet import *
 from scapy.fields import *
 from scapy.automaton import *
-from scapy.layers.inet import UDP, IP
-from scapy.modules.six.moves import range
+from scapy.layers.inet import UDP
 
 
 
@@ -229,8 +227,8 @@ class TFTP_write(Automaton):
     # BEGIN
     @ATMT.state(initial=1)
     def BEGIN(self):
-        self.data = [self.origdata[i*self.blocksize:(i+1)*self.blocksize]
-                     for i in range( len(self.origdata)/self.blocksize+1)]
+        self.data = [ self.origdata[i*self.blocksize:(i+1)*self.blocksize]
+                      for i in range( len(self.origdata)/self.blocksize+1) ] 
         self.my_tid = self.sport or RandShort()._fix()
         bind_bottom_up(UDP, TFTP, dport=self.my_tid)
         self.server_tid = None
@@ -320,7 +318,7 @@ class TFTP_WRQ_server(Automaton):
         self.ip = ip.dst
         self.dst = ip.src
         self.filename = pkt[TFTP_WRQ].filename
-        options = pkt.getlayer(TFTP_Options)
+        options = pkt[TFTP_Options]
         self.l3 = IP(src=ip.dst, dst=ip.src)/UDP(sport=self.my_tid, dport=pkt.sport)/TFTP()
         if options is None:
             self.last_packet = self.l3/TFTP_ACK(block=0)

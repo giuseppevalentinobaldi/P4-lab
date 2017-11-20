@@ -2,6 +2,10 @@
 Advanced usage
 **************
 
+.. note::
+
+   This section has not been updated for scapy3k yet. Code examples may not work directly. Try bytes() instead of str() and b'string' instead of b'somestring'.
+
 ASN.1 and SNMP
 ==============
 
@@ -12,7 +16,7 @@ What is ASN.1?
 
    This is only my view on ASN.1, explained as simply as possible. For more theoretical or academic views, I'm sure you'll find better on the Internet.
 
-ASN.1 is a notation whose goal is to specify formats for data exchange. It is independent of the way data is encoded. Data encoding is specified in Encoding Rules.
+ASN.1 is a notation whose goal is to specify formats for data exchange. It is independant of the way data is encoded. Data encoding is specified in Encoding Rules.
 
 The most used encoding rules are BER (Basic Encoding Rules) and DER (Distinguished Encoding Rules). Both look the same, but the latter is specified to guarantee uniqueness of encoding. This property is quite interesting when speaking about cryptography, hashes and signatures.
 
@@ -493,42 +497,42 @@ It is even possible to graph it::
 Automata
 ========
 
-Scapy enables to create easily network automata. Scapy does not stick to a specific model like Moore or Mealy automata. It provides a flexible way for you to choose you way to go.
+Scapy enables you to easily create network automata. Scapy does not stick to a specific model like `Moore <https://en.wikipedia.org/wiki/Moore_machine>`_ or `Mealy <https://en.wikipedia.org/wiki/Mealy_machine>`_ automata. It provides a flexible way for you to choose your way to go.
 
-An automaton in Scapy is deterministic. It has different states. A start state and some end and error states. There are transitions from one state to another. Transitions can be transitions on a specific condition, transitions on the reception of a specific packet or transitions on a timeout. When a transition is taken, one or more actions can be run. An action can be bound to many transitions. Parameters can be passed from states to transitions and from transitions to states and actions.
+An automaton in Scapy is deterministic. It has different states: a start state, some intermediate and some end and error states. There are transitions from one state to another. Transitions can be tied to specific conditions, the reception of a specific packet or a timeout. When a transition is taken, one or more actions can be run. An action can be bound to many transitions. Parameters can be passed from states to transitions and from transitions to states and actions.
 
-From a programmer's point of view, states, transitions and actions are methods from an Automaton subclass. They are decorated to provide meta-information needed in order for the automaton to work.
+From a programmer's point of view, states, transitions and actions are methods from an automaton subclass. They are decorated to provide some meta-information needed in order for the automaton to work.
 
 First example
 -------------
 
-Let's begin with a simple example. I take the convention to write states with capitals, but anything valid with Python syntax would work as well.
+Let's begin with a simple example. I take the convention to write states with capitals, but any valid Python syntax would work as well.
 
 ::
 
     class HelloWorld(Automaton):
         @ATMT.state(initial=1)
         def BEGIN(self):
-            print "State=BEGIN"
+            print("State=BEGIN")
     
         @ATMT.condition(BEGIN)
         def wait_for_nothing(self):
-            print "Wait for nothing..."
+            print("Wait for nothing...")
             raise self.END()
     
         @ATMT.action(wait_for_nothing)
         def on_nothing(self):
-            print "Action on 'nothing' condition"
+            print("Action on 'nothing' condition")
     
         @ATMT.state(final=1)
         def END(self):
-            print "State=END"
+            print("State=END")
 
 In this example, we can see 3 decorators:
 
-* ``ATMT.state`` that is used to indicate that a method is a state, and that can
+* ``ATMT.state`` is used to indicate that a method is a state, and that can
   have initial, final and error optional arguments set to non-zero for special states.
-* ``ATMT.condition`` that indicate a method to be run when the automaton state 
+* ``ATMT.condition`` indicates a method to be run when the automaton state 
   reaches the indicated state. The argument is the name of the method representing that state
 * ``ATMT.action`` binds a method to a transition and is run when the transition is taken. 
 
@@ -549,16 +553,21 @@ The graph can be automatically drawn from the code with::
 
     >>> HelloWorld.graph()
 
+The graph can be saved to an image file using::
+
+    >>> HelloWorld.graph().savefig('automaton.png')
+
+
 Changing states
 ---------------
 
-The ``ATMT.state`` decorator transforms a method into a function that returns an exception. If you raise that exception, the automaton state will be changed. If the change occurs in a transition, actions bound to this transition will be called. The parameters given to the function replacing the method will be kept and finally delivered to the method. The exception has a method action_parameters that can be called before it is raised so that it will store parameters to be delivered to all actions bound to the current transition.
+The ``ATMT.state`` decorator transforms a method into a function that raises an exception. If you raise that exception, the automaton state will be changed. If the change occurs in a transition, actions bound to this transition will be called. The parameters given to the function replacing the method will be kept and finally delivered to the method. The exception has a method action_parameters that can be called before it is raised so that it will store parameters to be delivered to all actions bound to the current transition.
 
 As an example, let's consider the following state::
 
     @ATMT.state()
     def MY_STATE(self, param1, param2):
-        print "state=MY_STATE. param1=%r param2=%r" % (param1, param2)
+        print("state=MY_STATE. param1=%r param2=%r" % (param1, param2))
 
 This state will be reached with the following code::
 
@@ -676,12 +685,10 @@ It can be run like this, for instance::
 Detailed documentation
 ----------------------
 
-Decorators
-^^^^^^^^^^
 Decorator for states
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
-States are methods decorated by the result of the ``ATMT.state`` function. It can take 3 optional parameters, ``initial``, ``final`` and ``error``, that, when set to ``True``, indicate that the state is an initial, final or error state.
+States are methods decorated by the result of the ``ATMT.state`` function. It can take 3 optional parameters: ``initial``, ``final`` and ``error``. The set to ``True`` indicates that the state is an initial, final or error state.
 
 ::
 
@@ -704,7 +711,7 @@ States are methods decorated by the result of the ``ATMT.state`` function. It ca
     # [...]
 
 Decorators for transitions
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Transitions are methods decorated by the result of one of ``ATMT.condition``, ``ATMT.receive_condition``, ``ATMT.timeout``. They all take as argument the state method they are related to. ``ATMT.timeout`` also have a mandatory ``timeout`` parameter to provide the timeout value in seconds. ``ATMT.condition`` and ``ATMT.receive_condition`` have an optional ``prio`` parameter so that the order in which conditions are evaluated can be forced. Default priority is 0. Transitions with the same priority level are called in an undetermined order.
 
@@ -737,9 +744,9 @@ When the automaton switches to a given state, the state's method is executed. Th
             raise self.ERROR_TIMEOUT()
 
 Decorator for actions
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
-Actions are methods that are decorated by the return of ``ATMT.action`` function. This function takes the transition method it is bound to as first parameter and an optional priority ``prio`` as a second parameter. Default priority is 0. An action method can be decorated many times to be bound to many transitions.
+Actions are methods that are decorated by the return of ``ATMT.action`` function. This function takes the transition method it is bound to as first parameter and an optionnal priority ``prio`` as a second parameter. Default priority is 0. An action method can be decorated many times to be bound to many transitions.
 
 ::
 
@@ -762,14 +769,14 @@ Actions are methods that are decorated by the return of ``ATMT.action`` function
     
         @ATMT.action(maybe_go_to_end)
         def maybe_action(self):
-            print "We are lucky..."
+            print("We are lucky...")
         @ATMT.action(certainly_go_to_end)
         def certainly_action(self):
-            print "We are not lucky..."
+            print("We are not lucky...")
         @ATMT.action(maybe_go_to_end, prio=1)
         @ATMT.action(certainly_go_to_end, prio=1)
         def always_action(self):
-            print "This wasn't luck!..."
+            print("This wasn't luck!...")
 
 The two possible outputs are::
 
@@ -790,299 +797,3 @@ Two methods are hooks to be overloaded:
 
 * The ``master_filter()`` method is called each time a packet is sniffed and decides if it is interesting for the automaton. When working on a specific protocol, this is where you will ensure the packet belongs to the connection you are being part of, so that you do not need to make all the sanity checks in each transition.
 
-PROFINET IO RTC
-===============
-
-PROFINET IO is an industrial protocol composed of different layers such as the Real-Time Cyclic (RTC) layer, used to exchange data. However, this RTC layer is stateful and depends on a configuration sent through another layer: the DCE/RPC endpoint of PROFINET. This configuration defines where each exchanged piece of data must be located in the RTC ``data`` buffer, as well as the length of this same buffer. Building such packet is then a bit more complicated than other protocols.
-
-RTC data packet
----------------
-
-The first thing to do when building the RTC ``data`` buffer is to instanciate each Scapy packet which represents a piece of data. Each one of them may require some specific piece of configuration, such as its length. All packets and their configuration are:
-
-* ``PNIORealTimeRawData``: a simple raw data like ``Raw``
-
-  * ``length``: defines the length of the data
-
-* ``Profisafe``: the PROFIsafe profile to perform functional safety
-
-  * ``length``: defines the length of the whole packet
-  * ``CRC``: defines the length of the CRC, either ``3`` or ``4``
-
-* ``PNIORealTimeIOxS``: either an IO Consumer or Provider Status byte
-
-  * Doesn't require any configuration
-
-To instanciate one of these packets with its configuration, the ``config`` argument must be given. It is a ``dict()`` which contains all the required piece of configuration::
-
-    >>> load_contrib('pnio_rtc')
-    >>> str(PNIORealTimeRawData(load='AAA', config={'length': 4}))
-    'AAA\x00'
-    >>> str(Profisafe(load='AAA', Control_Status=0x20, CRC=0x424242, config={'length': 8, 'CRC': 3}))
-    'AAA\x00 BBB'
-    >>> hexdump(PNIORealTimeIOxS())
-    0000   80                                                 .
-
-
-RTC packet
-----------
-
-Now that a data packet can be instanciated, a whole RTC packet may be built. ``PNIORealTime`` contains a field ``data`` which is a list of all data packets to add in the buffer, however, without the configuration, Scapy won't be
-able to dissect it::
-
-    >>> load_contrib("pnio_rtc")
-    >>> p=PNIORealTime(cycleCounter=1024, data=[
-    ... PNIORealTimeIOxS(),
-    ... PNIORealTimeRawData(load='AAA', config={'length':4}) / PNIORealTimeIOxS(),
-    ... Profisafe(load='AAA', Control_Status=0x20, CRC=0x424242, config={'length': 8, 'CRC': 3}) / PNIORealTimeIOxS(),
-    ... ])
-    >>> p.show()
-    ###[ PROFINET Real-Time ]### 
-      len= None
-      dataLen= None
-      \data\
-       |###[ PNIO RTC IOxS ]### 
-       |  dataState= good
-       |  instance= subslot
-       |  reserved= 0x0
-       |  extension= 0
-       |###[ PNIO RTC Raw data ]### 
-       |  load= 'AAA'
-       |###[ PNIO RTC IOxS ]### 
-       |     dataState= good
-       |     instance= subslot
-       |     reserved= 0x0
-       |     extension= 0
-       |###[ PROFISafe ]### 
-       |  load= 'AAA'
-       |  Control_Status= 0x20
-       |  CRC= 0x424242
-       |###[ PNIO RTC IOxS ]### 
-       |     dataState= good
-       |     instance= subslot
-       |     reserved= 0x0
-       |     extension= 0
-      padding= ''
-      cycleCounter= 1024
-      dataStatus= primary+validData+run+no_problem
-      transferStatus= 0
-    
-    >>> p.show2()
-    ###[ PROFINET Real-Time ]### 
-      len= 44
-      dataLen= 15
-      \data\
-       |###[ PNIO RTC Raw data ]### 
-       |  load= '\x80AAA\x00\x80AAA\x00 BBB\x80'
-      padding= ''
-      cycleCounter= 1024
-      dataStatus= primary+validData+run+no_problem
-      transferStatus= 0
-
-For Scapy to be able to dissect it correctly, one must also configure the layer for it to know the location of each data in the buffer. This configuration is saved in the dictionary ``conf.contribs["PNIO_RTC"]`` which can be updated with the ``pnio_update_config`` method. Each item in the dictionary uses the tuple ``(Ether.src, Ether.dst)`` as key, to be able to separate the configuration of each communication. Each value is then a list of a tuple which describes a data packet. It is composed of the negative index, from the end of the data buffer, of the packet position, the class of the packet as second item and the ``config`` dictionary to provide to the class as last. If we continue the previous example, here is the configuration to set::
-
-    >>> load_contrib("pnio")
-    >>> e=Ether(src='00:01:02:03:04:05', dst='06:07:08:09:0a:0b') / ProfinetIO() / p
-    >>> e.show2()
-    ###[ Ethernet ]### 
-      dst= 06:07:08:09:0a:0b
-      src= 00:01:02:03:04:05
-      type= 0x8892
-    ###[ ProfinetIO ]### 
-         frameID= RT_CLASS_1
-    ###[ PROFINET Real-Time ]### 
-      len= 44
-      dataLen= 15
-      \data\
-       |###[ PNIO RTC Raw data ]### 
-       |  load= '\x80AAA\x00\x80AAA\x00 BBB\x80'
-      padding= ''
-      cycleCounter= 1024
-      dataStatus= primary+validData+run+no_problem
-      transferStatus= 0
-    >>> pnio_update_config({('00:01:02:03:04:05', '06:07:08:09:0a:0b'): [
-    ... (-9, Profisafe, {'length': 8, 'CRC': 3}),
-    ... (-9 - 5, PNIORealTimeRawData, {'length':4}),
-    ... ]})
-    >>> e.show2()
-    ###[ Ethernet ]### 
-      dst= 06:07:08:09:0a:0b
-      src= 00:01:02:03:04:05
-      type= 0x8892
-    ###[ ProfinetIO ]### 
-         frameID= RT_CLASS_1
-    ###[ PROFINET Real-Time ]### 
-            len= 44
-            dataLen= 15
-            \data\
-             |###[ PNIO RTC IOxS ]### 
-             |  dataState= good
-             |  instance= subslot
-             |  reserved= 0x0L
-             |  extension= 0L
-             |###[ PNIO RTC Raw data ]### 
-             |  load= 'AAA'
-             |###[ PNIO RTC IOxS ]### 
-             |     dataState= good
-             |     instance= subslot
-             |     reserved= 0x0L
-             |     extension= 0L
-             |###[ PROFISafe ]### 
-             |  load= 'AAA'
-             |  Control_Status= 0x20
-             |  CRC= 0x424242L
-             |###[ PNIO RTC IOxS ]### 
-             |     dataState= good
-             |     instance= subslot
-             |     reserved= 0x0L
-             |     extension= 0L
-            padding= ''
-            cycleCounter= 1024
-            dataStatus= primary+validData+run+no_problem
-            transferStatus= 0
-
-If no data packets are configured for a given offset, it defaults to a ``PNIORealTimeIOxS``. However, this method is not very convenient for the user to configure the layer and it only affects the dissection of packets. In such cases, one may have access to several RTC packets, sniffed or retrieved from a PCAP file. Thus, ``PNIORealTime`` provides some methods to analyse a list of ``PNIORealTime`` packets and locate all data in it, based on simple heuristics. All of them take as first argument an iterable which contains the list of packets to analyse.
-
-* ``PNIORealTime.find_data()`` analyses the data buffer and separate real data from IOxS. It returns a dict which can be provided to ``pnio_update_config``.
-* ``PNIORealTime.find_profisafe()`` analyses the data buffer and find the PROFIsafe profiles among the real data. It returns a dict which can be provided to ``pnio_update_config``.
-* ``PNIORealTime.analyse_data()`` executes both previous methods and update the configuration. **This is usually the method to call.**
-* ``PNIORealTime.draw_entropy()`` will draw the entropy of each byte in the data buffer. It can be used to easily visualize PROFIsafe locations as entropy is the base of the decision algorithm of ``find_profisafe``.
-
-::
-
-    >>> load_contrib('pnio_rtc')
-    >>> t=rdpcap('/path/to/trace.pcap', 1024)
-    >>> PNIORealTime.analyse_data(t)
-    {('00:01:02:03:04:05', '06:07:08:09:0a:0b'): [(-19, <class 'scapy.contrib.pnio_rtc.PNIORealTimeRawData'>, {'length': 1}), (-15, <class 'scapy.contrib.pnio_rtc.Profisafe'>, {'CRC': 3, 'length': 6}), (-7, <class 'scapy.contrib.pnio_rtc.Profisafe'>, {'CRC': 3, 'length': 5})]}
-    >>> t[100].show()
-    ###[ Ethernet ]###
-      dst= 06:07:08:09:0a:0b
-      src= 00:01:02:03:04:05
-      type= n_802_1Q
-    ###[ 802.1Q ]###
-         prio= 6L
-         id= 0L
-         vlan= 0L
-         type= 0x8892
-    ###[ ProfinetIO ]###
-            frameID= RT_CLASS_1
-    ###[ PROFINET Real-Time ]###
-               len= 44
-               dataLen= 22
-               \data\
-                |###[ PNIO RTC Raw data ]###
-                |  load= '\x80\x80\x80\x80\x80\x80\x00\x80\x80\x80\x12:\x0e\x12\x80\x80\x00\x12\x8b\x97\xe3\x80'
-               padding= ''
-               cycleCounter= 6208
-               dataStatus= primary+validData+run+no_problem
-               transferStatus= 0
-    
-    >>> t[100].show2()
-    ###[ Ethernet ]###
-      dst= 06:07:08:09:0a:0b
-      src= 00:01:02:03:04:05
-      type= n_802_1Q
-    ###[ 802.1Q ]###
-         prio= 6L
-         id= 0L
-         vlan= 0L
-         type= 0x8892
-    ###[ ProfinetIO ]###
-            frameID= RT_CLASS_1
-    ###[ PROFINET Real-Time ]###
-               len= 44
-               dataLen= 22
-               \data\
-                |###[ PNIO RTC IOxS ]###
-                |  dataState= good
-                |  instance= subslot
-                |  reserved= 0x0L
-                |  extension= 0L
-                [...]
-                |###[ PNIO RTC IOxS ]###
-                |  dataState= good
-                |  instance= subslot
-                |  reserved= 0x0L
-                |  extension= 0L
-                |###[ PNIO RTC Raw data ]###
-                |  load= ''
-                |###[ PNIO RTC IOxS ]###
-                |     dataState= good
-                |     instance= subslot
-                |     reserved= 0x0L
-                |     extension= 0L
-                [...]
-                |###[ PNIO RTC IOxS ]###
-                |  dataState= good
-                |  instance= subslot
-                |  reserved= 0x0L
-                |  extension= 0L
-                |###[ PROFISafe ]###
-                |  load= ''
-                |  Control_Status= 0x12
-                |  CRC= 0x3a0e12L
-                |###[ PNIO RTC IOxS ]###
-                |     dataState= good
-                |     instance= subslot
-                |     reserved= 0x0L
-                |     extension= 0L
-                |###[ PNIO RTC IOxS ]###
-                |  dataState= good
-                |  instance= subslot
-                |  reserved= 0x0L
-                |  extension= 0L
-                |###[ PROFISafe ]###
-                |  load= ''
-                |  Control_Status= 0x12
-                |  CRC= 0x8b97e3L
-                |###[ PNIO RTC IOxS ]###
-                |     dataState= good
-                |     instance= subslot
-                |     reserved= 0x0L
-                |     extension= 0L
-               padding= ''
-               cycleCounter= 6208
-               dataStatus= primary+validData+run+no_problem
-               transferStatus= 0
-    
-In addition, one can see, when displaying a ``PNIORealTime`` packet, the field ``len``. This is a computed field which is not added in the final packet build. It is mainly useful for dissection and reconstruction, but it can also be used to modify the behaviour of the packet. In fact, RTC packet must always be long enough for an Ethernet frame and to do so, a padding must be added right after the ``data`` buffer. The default behaviour is to add ``padding`` whose size is computed during the ``build`` process::
-
-    >>> str(PNIORealTime(cycleCounter=0x4242, data=[PNIORealTimeIOxS()]))
-    '\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00BB5\x00'
-
-However, one can set ``len`` to modify this behaviour. ``len`` controls the length of the whole ``PNIORealTime`` packet. Then, to shorten the length of the padding, ``len`` can be set to a lower value::
-
-    >>> str(PNIORealTime(cycleCounter=0x4242, data=[PNIORealTimeIOxS()], len=50))
-    '\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00BB5\x00'
-    >>> str(PNIORealTime(cycleCounter=0x4242, data=[PNIORealTimeIOxS()]))
-    '\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00BB5\x00'
-    >>> str(PNIORealTime(cycleCounter=0x4242, data=[PNIORealTimeIOxS()], len=30))
-    '\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00BB5\x00'
-
-
-SCTP
-====
-
-SCTP is a relatively young transport-layer protocol combining both TCP and UDP characteristics. The `RFC 3286 <https://tools.ietf.org/html/rfc3286>`_ introduces it and its description lays in the `RFC 4960 <https://tools.ietf.org/html/rfc4960>`_.
-
-It is not broadly used, its mainly present in core networks operated by telecommunication companies, to support VoIP for instance.
-
-
-Enabling dynamic addressing reconfiguration and chunk authentication capabilities
----------------------------------------------------------------------------------
-
-If you are trying to discuss with SCTP servers, you may be interested in capabilities added in `RFC 4895 <https://tools.ietf.org/html/rfc4895>`_ which describe how to authenticated some SCTP chunks, and/or `RFC 5061 <https://tools.ietf.org/html/rfc5061>`_ to dynamically reconfigure the IP address of a SCTP association.
-
-These capabilities are not always enabled by default on Linux. Scapy does not need any modification on its end, but SCTP servers may need specific activation.
-
-To enable the RFC 4895 about authenticating chunks::
-
-    $ sudo echo 1 > /proc/sys/net/sctp/auth_enable
-
-To enable the RFC 5061 about dynamic address reconfiguration::
-
-    $ sudo echo 1 > /proc/sys/net/sctp/addip_enable
-
-You may also want to use the dynamic address reconfiguration without necessarily enabling the chunk authentication::
-
-    $ sudo echo 1 > /proc/sys/net/sctp/addip_noauth_enable

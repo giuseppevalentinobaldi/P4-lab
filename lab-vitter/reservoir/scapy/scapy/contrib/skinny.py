@@ -11,8 +11,7 @@
 ## Copyright (C) 2006    Nicolas Bareil      <nicolas.bareil@ eads.net>    ##
 ##                       EADS/CRC security team                            ##
 ##                                                                         ##
-## This file is part of Scapy                                              ##
-## Scapy is free software: you can redistribute it and/or modify           ##
+## This program is free software; you can redistribute it and/or modify it ##
 ## under the terms of the GNU General Public License version 2 as          ##
 ## published by the Free Software Foundation; version 2.                   ##
 ##                                                                         ##
@@ -23,11 +22,8 @@
 ##                                                                         ##
 #############################################################################
 
-from __future__ import absolute_import
-from scapy.packet import *
-from scapy.fields import *
-from scapy.layers.inet import TCP
-from scapy.modules.six.moves import range
+from scapy.all import *
+import builtins
 
 #####################################################################
 # Helpers and constants
@@ -210,13 +206,13 @@ class SkinnyDateTimeField(StrFixedLenField):
         return (year, month, day, hour, min, sec)
     
     def i2m(self, pkt, val):
-        if isinstance(val, str):
+        if type(val) is str:
             val = self.h2i(pkt, val)
         l= val[:2] + (0,) + val[2:7] + (0,)
         return struct.pack('<8I', *l)
 
     def i2h(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
         else:
             return time.ctime(time.mktime(x+(0,0,0)))
@@ -226,7 +222,7 @@ class SkinnyDateTimeField(StrFixedLenField):
     
     def h2i(self, pkt, s):
         t = ()
-        if isinstance(s, str):
+        if type(s) is str:
             t = time.strptime(s)
             t = t[:2] + t[2:-3]
         else:
@@ -322,7 +318,7 @@ class SkinnyMessageSoftKeyEvent(Packet):
 class SkinnyMessagePromptStatus(Packet):
     name='Prompt status'
     fields_desc = [ LEIntField("timeout", 0),
-                    StrFixedLenField("text", b"\0"*32, 32),
+                    StrFixedLenField("text", "\0"*32, 32),
                     LEIntField("instance", 1),
                     LEIntField("callid", 0)]
 
@@ -374,10 +370,10 @@ class SkinnyMessageCallInfo(Packet):
                     StrFixedLenField("lastredirectingnum", "1034", 24),
                     LEIntField("originalredirectreason", 0),
                     LEIntField("lastredirectreason", 0),
-                    StrFixedLenField('voicemailboxG', b'\0'*24, 24),
-                    StrFixedLenField('voicemailboxD', b'\0'*24, 24),
-                    StrFixedLenField('originalvoicemailboxD', b'\0'*24, 24),
-                    StrFixedLenField('lastvoicemailboxD', b'\0'*24, 24),
+                    StrFixedLenField('voicemailboxG', '\0'*24, 24),
+                    StrFixedLenField('voicemailboxD', '\0'*24, 24),
+                    StrFixedLenField('originalvoicemailboxD', '\0'*24, 24),
+                    StrFixedLenField('lastvoicemailboxD', '\0'*24, 24),
                     LEIntField('security', 0),
                     FlagsField('restriction', 0, 16, _skinny_message_callinfo_restrictions),
                     LEIntField('unknown', 0)]
@@ -478,7 +474,7 @@ class Skinny(Packet):
     name="Skinny"
     fields_desc = [ LEIntField("len", None),
                     LEIntField("res",0),
-                    LEIntEnumField("msg",0, skinny_messages_cls) ]
+                    LEIntEnumField("msg",0, skinny_messages) ]
 
     def post_build(self, pkt, p):
         if self.len is None:
@@ -489,7 +485,7 @@ class Skinny(Packet):
 # An helper 
 def get_cls(name, fallback_cls):
     return globals().get(name, fallback_cls)
-    #return __builtin__.__dict__.get(name, fallback_cls)
+    #return builtins.__dict__.get(name, fallback_cls)
 
 for msgid,strcls in skinny_messages_cls.items():
     cls=get_cls(strcls, SkinnyMessageGeneric)
@@ -499,6 +495,5 @@ bind_layers(TCP, Skinny, { "dport": 2000 } )
 bind_layers(TCP, Skinny, { "sport": 2000 } )
 
 if __name__ == "__main__":
-    from scapy.main import interact
     interact(mydict=globals(),mybanner="Welcome to Skinny add-on")
 

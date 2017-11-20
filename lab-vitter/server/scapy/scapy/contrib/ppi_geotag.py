@@ -1,18 +1,7 @@
-# This file is part of Scapy
-# Scapy is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# any later version.
-#
-# Scapy is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Scapy. If not, see <http://www.gnu.org/licenses/>.
-
-# author: <jellch@harris.com>
+## This file is (hopefully) part of Scapy
+## See http://www.secdev.org/projects/scapy for more informations
+## <jellch@harris.com>
+## This program is published under a GPLv2 license
 
 # scapy.contrib.description = PPI GEOLOCATION
 # scapy.contrib.status = loads
@@ -21,14 +10,10 @@
 """
 PPI-GEOLOCATION tags
 """
-from __future__ import absolute_import
-import struct, time
+import struct
 from scapy.packet import *
 from scapy.fields import *
 from scapy.contrib.ppi import PPIGenericFldHdr,addPPIType
-from scapy.error import warning
-import scapy.modules.six as six
-from scapy.modules.six.moves import range
 
 CURR_GEOTAG_VER = 2 #Major revision of specification
 
@@ -41,20 +26,20 @@ class Fixed3_6Field(LEIntField):
     def i2h(self, pkt, x):
         if x is not None:
             if (x < 0):
-                warning("Fixed3_6: Internal value too negative: %d", x)
+                warning("Fixed3_6: Internal value too negative: %d" % x)
                 x = 0
             elif (x > 999999999):
-                warning("Fixed3_6: Internal value too positive: %d", x)
+                warning("Fixed3_6: Internal value too positive: %d" % x)
                 x = 999999999
             x = x * 1e-6
         return x
     def h2i(self, pkt, x):
         if x is not None:
             if (x <= -0.5e-6):
-                warning("Fixed3_6: Input value too negative: %.7f", x)
+                warning("Fixed3_6: Input value too negative: %.7f" % x)
                 x = 0
             elif (x >= 999.9999995):
-                warning("Fixed3_6: Input value too positive: %.7f", x)
+                warning("Fixed3_6: Input value too positive: %.7f" % x)
                 x = 999.999999
             x = int(round(x * 1e6))
         return x
@@ -75,20 +60,20 @@ class Fixed3_7Field(LEIntField):
     def i2h(self, pkt, x):
         if x is not None:
             if (x < 0):
-                warning("Fixed3_7: Internal value too negative: %d",  x)
+                warning("Fixed3_7: Internal value too negative: %d" % x)
                 x = 0
             elif (x > 3600000000):
-                warning("Fixed3_7: Internal value too positive: %d",  x)
+                warning("Fixed3_7: Internal value too positive: %d" % x)
                 x = 3600000000
             x = (x - 1800000000) * 1e-7
         return x
     def h2i(self, pkt, x):
         if x is not None:
             if (x <= -180.00000005):
-                warning("Fixed3_7: Input value too negative: %.8f",  x)
+                warning("Fixed3_7: Input value too negative: %.8f" % x)
                 x = -180.0
             elif (x >= 180.00000005):
-                warning("Fixed3_7: Input value too positive: %.8f",  x)
+                warning("Fixed3_7: Input value too positive: %.8f" % x)
                 x = 180.0
             x = int(round((x + 180.0) * 1e7))
         return x
@@ -109,20 +94,20 @@ class Fixed6_4Field(LEIntField):
     def i2h(self, pkt, x):
         if x is not None:
             if (x < 0):
-                warning("Fixed6_4: Internal value too negative: %d",  x)
+                warning("Fixed6_4: Internal value too negative: %d" % x)
                 x = 0
             elif (x > 3600000000):
-                warning("Fixed6_4: Internal value too positive: %d",  x)
+                warning("Fixed6_4: Internal value too positive: %d" % x)
                 x = 3600000000
             x = (x - 1800000000) * 1e-4
         return x
     def h2i(self, pkt, x):
         if x is not None:
             if (x <= -180000.00005):
-                warning("Fixed6_4: Input value too negative: %.5f",  x)
+                warning("Fixed6_4: Input value too negative: %.5f" % x)
                 x = -180000.0
             elif (x >= 180000.00005):
-                warning("Fixed6_4: Input value too positive: %.5f",  x)
+                warning("Fixed6_4: Input value too positive: %.5f" % x)
                 x = 180000.0
             x = int(round((x + 180000.0) * 1e4))
         return x
@@ -144,20 +129,20 @@ class NSCounter_Field(LEIntField):
     def i2h(self, pkt, x): #converts nano-seconds to seconds for output
         if x is not None:
             if (x < 0):
-                warning("NSCounter_Field: Internal value too negative: %d",  x)
+                warning("NSCounter_Field: Internal value too negative: %d" % x)
                 x = 0
             elif (x >= 2**32):
-                warning("NSCounter_Field: Internal value too positive: %d",  x)
+                warning("NSCounter_Field: Internal value too positive: %d" % x)
                 x = 2**32-1
             x = (x / 1e9)
         return x
     def h2i(self, pkt, x): #converts input in seconds into nano-seconds for storage
         if x is not None:
             if (x < 0):
-                warning("NSCounter_Field: Input value too negative: %.10f",  x)
+                warning("NSCounter_Field: Input value too negative: %.10f" % x)
                 x = 0
             elif (x >= (2**32) / 1e9):
-                warning("NSCounter_Field: Input value too positive: %.10f",  x)
+                warning("NSCounter_Field: Input value too positive: %.10f" % x)
                 x = (2**32-1) / 1e9
             x = int(round((x * 1e9)))
         return x
@@ -168,11 +153,25 @@ class NSCounter_Field(LEIntField):
             y=self.i2h(pkt,x)
         return "%1.9f"%(y)
 
+class UTCTimeField(IntField):
+    def __init__(self, name, default, epoch=time.gmtime(0), strf="%a, %d %b %Y %H:%M:%S +0000"):
+        IntField.__init__(self, name, default)
+        self.epoch = epoch
+        self.delta = time.mktime(epoch) - time.mktime(time.gmtime(0))
+        self.strf = strf
+    def i2repr(self, pkt, x):
+        if x is None:
+            x = 0
+        x = int(x) + self.delta
+        t = time.strftime(self.strf, time.gmtime(x))
+        return "%s (%d)" % (t, x)
+
 class LETimeField(UTCTimeField,LEIntField):
-    __slots__ = ["epoch", "delta", "strf"]
-    def __init__(self, name, default, epoch=None, strf="%a, %d %b %Y %H:%M:%S +0000"):
+    def __init__(self, name, default, epoch=time.gmtime(0), strf="%a, %d %b %Y %H:%M:%S +0000"):
         LEIntField.__init__(self, name, default)
-        UTCTimeField.__init__(self, name, default, epoch=epoch, strf=strf)
+        self.epoch = epoch
+        self.delta = time.mktime(epoch) - time.mktime(time.gmtime(0))
+        self.strf = strf
 
 class SignedByteField(Field):
     def __init__(self, name, default):
@@ -213,7 +212,7 @@ class VectorFlags_Field(XLEIntField):
         sout = "+".join(r)
         return sout
     def any2i(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             r = x.split("+")
             y = 0
             for value in r:
@@ -224,7 +223,7 @@ class VectorFlags_Field(XLEIntField):
                     y &= (~self._relmask)
                     y |= self._relvals[i]
                 else:
-                    #logging.warning("Unknown VectorFlags Argument: %s",  value)
+                    #logging.warning("Unknown VectorFlags Argument: %s" % value)
                     pass
         else:
             y = x
@@ -240,7 +239,8 @@ class HCSIFlagsField(FlagsField):
         if val is None:
             val = 0
             if (pkt):
-                for i, name in enumerate(self.names):
+                for i in range(len(self.names)):
+                    name = self.names[i][0]
                     value = pkt.getfieldval(name)
                     if value is not None:
                         val |= 1 << i
@@ -259,9 +259,11 @@ class HCSIAppField(StrFixedLenField):
         return StrFixedLenField.__init__(self, name, default, length=60)
 
 def _FlagsList(myfields):
-    flags = ["Reserved%02d" % i for i in range(32)]
-    for i, value in six.iteritems(myfields):
-        flags[i] = value
+    flags = []
+    for i in range(32):
+        flags.append("Reserved%02d" % i)
+    for i in myfields.keys():
+        flags[i] = myfields[i]
     return flags
 
 # Define all geolocation-tag flags lists
@@ -301,10 +303,10 @@ def _HCSITest(pkt, ibit, name):
 # Wrap optional fields in ConditionalField, add HCSIFlagsField
 def _HCSIBuildFields(fields):
     names = [f.name for f in fields]
-    cond_fields = [HCSIFlagsField('present', None, -len(names), names)]
-    for i, name in enumerate(names):
+    cond_fields = [ HCSIFlagsField('present', None, -len(names), names)]
+    for i in range(len(names)):
         ibit = 1 << i
-        seval = "lambda pkt:_HCSITest(pkt,%s,'%s')" % (ibit, name)
+        seval = "lambda pkt:_HCSITest(pkt,%s,'%s')" % (ibit, names[i])
         test = eval(seval)
         cond_fields.append(ConditionalField(fields[i], test))
     return cond_fields
@@ -328,7 +330,7 @@ class HCSIPacket(Packet):
         p += pay
         return p
     def extract_padding(self, p):
-        return b"", p
+        return "",p
 
 #GPS Fields
 GPS_Fields = [FlagsField("GPSFlags", None, -32, _hcsi_gps_flags),

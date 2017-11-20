@@ -7,30 +7,16 @@
 Clone of p0f passive OS fingerprinting
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-import time
-import struct
-import os
-import socket
-import random
-
 from scapy.data import KnowledgeBase
 from scapy.config import conf
+from scapy.error import warning
 from scapy.layers.inet import IP, TCP, TCPOptions
-from scapy.packet import NoPayload, Packet
-from scapy.error import warning, Scapy_Exception, log_runtime
-from scapy.volatile import RandInt, RandByte, RandChoice, RandNum, RandShort, RandString
-from scapy.sendrecv import sniff
-from scapy.modules.six.moves import map, range
-if conf.route is None:
-    # unused import, only to initialize conf.route
-    import scapy.route
+from scapy.packet import NoPayload
 
 conf.p0f_base ="/etc/p0f/p0f.fp"
 conf.p0fa_base ="/etc/p0f/p0fa.fp"
 conf.p0fr_base ="/etc/p0f/p0fr.fp"
-conf.p0fo_base ="/etc/p0f/p0fo.fp"
+#conf.p0fo_base ="/etc/p0f/p0fo.fp"
 
 
 ###############
@@ -58,7 +44,7 @@ class p0fKnowledgeBase(KnowledgeBase):
         try:
             f=open(self.filename)
         except IOError:
-            warning("Can't open base %s", self.filename)
+            warning("Can't open base %s" % self.filename)
             return
         try:
             self.base = []
@@ -72,7 +58,7 @@ class p0fKnowledgeBase(KnowledgeBase):
                     if x.isdigit():
                         return int(x)
                     return x
-                li = [a2i(e) for e in l[1:4]]
+                li = [ a2i(i) for i in l[1:4] ]
                 #if li[0] not in self.ttl_range:
                 #    self.ttl_range.append(li[0])
                 #    self.ttl_range.sort()
@@ -85,7 +71,7 @@ class p0fKnowledgeBase(KnowledgeBase):
 p0f_kdb = p0fKnowledgeBase(conf.p0f_base)
 p0fa_kdb = p0fKnowledgeBase(conf.p0fa_base)
 p0fr_kdb = p0fKnowledgeBase(conf.p0fr_base)
-p0fo_kdb = p0fKnowledgeBase(conf.p0fo_base)
+#p0fo_kdb = p0fKnowledgeBase(conf.p0fo_base)
 
 def p0f_selectdb(flags):
     # tested flags: S, R, A
@@ -98,15 +84,15 @@ def p0f_selectdb(flags):
     elif flags & 0x16 in [ 0x4, 0x14 ]:
         # RST RST/ACK
         return p0fr_kdb
-    elif flags & 0x16 == 0x10:
+#    elif flags & 0x16 == 0x10:
         # ACK
-        return p0fo_kdb
+#        return p0fo_kdb
     else:
         return None
 
 def packet2p0f(pkt):
     pkt = pkt.copy()
-    pkt = pkt.__class__(str(pkt))
+    pkt = pkt.__class__(bytes(pkt))
     while pkt.haslayer(IP) and pkt.haslayer(TCP):
         pkt = pkt.getlayer(IP)
         if isinstance(pkt.payload, TCP):
@@ -137,9 +123,9 @@ def packet2p0f(pkt):
             ss = '*'
         else:
             ss = 0
-    if db == p0fo_kdb:
+#    if db == p0fo_kdb:
         # p0fo.fp: "Packet size MUST be wildcarded."
-        ss = '*'
+#        ss = '*'
     
     ooo = ""
     mss = -1
@@ -176,7 +162,7 @@ def packet2p0f(pkt):
             if ilen > 0:
                 qqP = True
         else:
-            if isinstance(option[0], str):
+            if type(option[0]) is str:
                 ooo += "?%i," % TCPOptions[1][option[0]]
             else:
                 ooo += "?%i," % option[0]
@@ -225,16 +211,17 @@ def packet2p0f(pkt):
         qq += "A"
     if qqT:
         qq += "T"
-    if db == p0fo_kdb:
-        if pkt.payload.flags & 0x20 != 0:
+#    if db == p0fo_kdb:
+#        if pkt.payload.flags & 0x20 != 0:
             # U
             # p0fo.fp: "PUSH flag is excluded from 'F' quirk checks"
-            qq += "F"
-    else:
-        if pkt.payload.flags & 0x28 != 0:
+#            qq += "F"
+#    else:
+#        if pkt.payload.flags & 0x28 != 0:
             # U or P
-            qq += "F"
-    if db != p0fo_kdb and not isinstance(pkt.payload.payload, NoPayload):
+    qq += "F"
+    #if db != p0fo_kdb and not isinstance(pkt.payload.payload, NoPayload):
+    if not isinstance(pkt.payload.payload, NoPayload):
         # p0fo.fp: "'D' quirk is not checked for."
         qq += "D"
     # FIXME : "!" - broken options segment: not handled yet
@@ -302,7 +289,7 @@ def prnp0f(pkt):
     except:
         return
     if r == []:
-        r = ("UNKNOWN", "[" + ":".join(map(str, packet2p0f(pkt)[1])) + ":?:?]", None)
+        r = ("UNKNOWN", "[" + ":".join([ str(i) for i in packet2p0f(pkt)[1]]) + ":?:?]", None)
     else:
         r = r[0]
     uptime = None
@@ -314,7 +301,7 @@ def prnp0f(pkt):
         uptime = None
     res = pkt.sprintf("%IP.src%:%TCP.sport% - " + r[0] + " " + r[1])
     if uptime is not None:
-        res += pkt.sprintf(" (up: " + str(uptime/3600) + " hrs)\n  -> %IP.dst%:%TCP.dport% (%TCP.flags%)")
+        res += pkt.sprintf(" (up: " + str(uptime//3600) + " hrs)\n  -> %IP.dst%:%TCP.dport% (%TCP.flags%)")
     else:
         res += pkt.sprintf("\n  -> %IP.dst%:%TCP.dport% (%TCP.flags%)")
     if r[2] is not None:
@@ -368,9 +355,11 @@ Some specifications of the p0f.fp file are not (yet) implemented."""
         pb = db.get_base()
         if pb is None:
             pb = []
-        pb = [x for x in pb if x[6] == osgenre]
+        #pb = filter(lambda x: x[6] == osgenre, pb)
+        pb = [ x for x in pb if x[6] == osgenre ]
         if osdetails:
-            pb = [x for x in pb if x[7] == osdetails]
+            #pb = filter(lambda x: x[7] == osdetails, pb)
+            pb = [ x for x in pb if x[7] == osdetails ]
     elif signature:
         pb = [signature]
     else:
@@ -378,9 +367,11 @@ Some specifications of the p0f.fp file are not (yet) implemented."""
     if db == p0fr_kdb:
         # 'K' quirk <=> RST+ACK
         if pkt.payload.flags & 0x4 == 0x4:
-            pb = [x for x in pb if 'K' in x[5]]
+            #pb = filter(lambda x: 'K' in x[5], pb)
+            pb = [ x for x in pb if 'K' in x[5] ]
         else:
-            pb = [x for x in pb if 'K' not in x[5]]
+            #pb = filter(lambda x: 'K' not in x[5], pb)
+            pb = [ x for x in pb if 'K' not in x[5] ]
     if not pb:
         raise Scapy_Exception("No match in the p0f database")
     pers = pb[random.randint(0, len(pb) - 1)]
@@ -462,10 +453,11 @@ Some specifications of the p0f.fp file are not (yet) implemented."""
         pkt.payload.window = mtu * int(pers[0][1:])
     elif pers[0][0] == 'S':
         ## needs MSS set
-        mss = [x for x in options if x[0] == 'MSS']
-        if not mss:
+        #MSS = filter(lambda x: x[0] == 'MSS', options)
+        MSS = [ x for x in options if x[0] == 'MSS' ]
+        if not MSS:
             raise Scapy_Exception("TCP window value requires MSS, and MSS option not set")
-        pkt.payload.window = filter(lambda x: x[0] == 'MSS', options)[0][1] * int(pers[0][1:])
+        pkt.payload.window = MSS[0][1] * int(pers[0][1:])
     else:
         raise Scapy_Exception('Unhandled window size specification')
     
@@ -484,9 +476,9 @@ Some specifications of the p0f.fp file are not (yet) implemented."""
             elif qq == 'U': pkt.payload.urgptr = RandShort()
             elif qq == 'A': pkt.payload.ack = RandInt()
             elif qq == 'F':
-                if db == p0fo_kdb:
-                    pkt.payload.flags |= 0x20 # U
-                else:
+                #if db == p0fo_kdb:
+                #    pkt.payload.flags |= 0x20 # U
+                #else:
                     pkt.payload.flags |= RandChoice(8, 32, 40) #P / U / PU
             elif qq == 'D' and db != p0fo_kdb:
                 pkt /= conf.raw_layer(load=RandString(random.randint(1, 10))) # XXX p0fo.fp
@@ -533,9 +525,7 @@ interface and may (are likely to) be different than those generated on
         # XXX are the packets also seen twice on non Linux systems ?
         count=14
         pl = sniff(iface=iface, filter='tcp and port ' + str(port), count = count, timeout=3)
-        for pkt in pl:
-            for elt in packet2p0f(pkt):
-                addresult(elt)
+        map(addresult, map(packet2p0f, pl))
         os.waitpid(pid,0)
     elif pid < 0:
         log_runtime.error("fork error")

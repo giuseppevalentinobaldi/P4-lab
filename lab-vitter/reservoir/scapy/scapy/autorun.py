@@ -7,13 +7,11 @@
 Run commands when the Scapy interpreter starts.
 """
 
-from __future__ import print_function
-import code, sys, importlib
-from scapy.config import conf
-from scapy.themes import *
-from scapy.error import Scapy_Exception
-from scapy.utils import tex_escape
-import scapy.modules.six as six
+import code,sys
+from .config import conf
+from .themes import *
+from .error import Scapy_Exception
+from .utils import tex_escape
 
 
 #########################
@@ -38,27 +36,25 @@ class ScapyAutorunInterpreter(code.InteractiveInterpreter):
         return code.InteractiveInterpreter.showtraceback(self, *args, **kargs)
 
 
-def autorun_commands(cmds, my_globals=None, ignore_globals=None, verb=0):
+def autorun_commands(cmds,my_globals=None,verb=0):
     sv = conf.verb
+    import builtins
     try:
         try:
             if my_globals is None:
-                my_globals = importlib.import_module(".all", "scapy").__dict__
-                if ignore_globals:
-                    for ig in ignore_globals:
-                        my_globals.pop(ig, None)
+                my_globals = __import__("scapy.all").all.__dict__
             conf.verb = verb
             interp = ScapyAutorunInterpreter(my_globals)
             cmd = ""
             cmds = cmds.splitlines()
-            cmds.append("") # ensure we finish multi-line commands
+            cmds.append("") # ensure we finish multiline commands
             cmds.reverse()
-            six.moves.builtins.__dict__["_"] = None
-            while True:
+            builtins.__dict__["_"] = None
+            while 1:
                 if cmd:
                     sys.stderr.write(sys.__dict__.get("ps2","... "))
                 else:
-                    sys.stderr.write(str(sys.__dict__.get("ps1", sys.ps1)))
+                    sys.stderr.write(str(sys.__dict__.get("ps1",ColorPrompt())))
                     
                 l = cmds.pop()
                 print(l)
@@ -82,8 +78,6 @@ def autorun_get_interactive_session(cmds, **kargs):
             self.s = ""
         def write(self, x):
             self.s += x
-        def flush(self):
-            pass
             
     sw = StringWriter()
     sstdout,sstderr = sys.stdout,sys.stderr

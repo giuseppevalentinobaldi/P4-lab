@@ -7,22 +7,27 @@
 All layers. Configurable with conf.load_layers.
 """
 
-from __future__ import absolute_import
+import importlib
 from scapy.config import conf
 from scapy.error import log_loading
-from scapy.main import load_layer
-import logging, importlib
-import scapy.modules.six as six
-ignored = list(six.moves.builtins.__dict__) + ["sys"]
+import logging
 log = logging.getLogger("scapy.loading")
 
-__all__ = []
+log_loading.info("Please, report issues to https://github.com/phaethon/scapy")
+
+def _import_star(m):
+    #mod = __import__("." + m, globals(), locals())
+    mod = importlib.import_module("scapy.layers." + m)
+    for k,v in mod.__dict__.items():
+        globals()[k] = v
 
 for _l in conf.load_layers:
     log_loading.debug("Loading layer %s" % _l)
     try:
-        load_layer(_l, globals_dict=globals(), symb_list=__all__)
+        _import_star(_l)
     except Exception as e:
-        log.warning("can't import layer %s: %s", _l, e)
+        log.warning("can't import layer %s: %s" % (_l,e))
 
-del _l
+
+
+

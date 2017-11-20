@@ -11,47 +11,47 @@ Generators and packet meta classes.
 ## Generators ##
 ################
 
-from __future__ import absolute_import
 import re,random,socket
-import types
-from scapy.modules.six.moves import range
+from types import GeneratorType
+import scapy.config
+from . import error
 
 class Gen(object):
-    __slots__ = []
     def __iter__(self):
         return iter([])
     
 class SetGen(Gen):
-    def __init__(self, values, _iterpacket=1):
+    def __init__(self, col, _iterpacket=1):
         self._iterpacket=_iterpacket
-        if isinstance(values, (list, BasePacketList)):
-            self.values = list(values)
-        elif (isinstance(values, tuple) and (2 <= len(values) <= 3) and \
-             all(hasattr(i, "__int__") for i in values)):
-            # We use values[1] + 1 as stop value for (x)range to maintain
-            # the behavior of using tuples as field `values`
-            self.values = [range(*((int(values[0]), int(values[1]) + 1)
-                                    + tuple(int(v) for v in values[2:])))]
+        if type(col) is list or isinstance(col, GeneratorType):
+            self.col = col
+        elif isinstance(col, BasePacketList):
+            self.col = list(col)
         else:
-            self.values = [values]
-    def transf(self, element):
-        return element
+            self.col = [col]
+    # DEPRECATED
+    # def transf(self, element):
+    #     return element
     def __iter__(self):
-        for i in self.values:
-            if (isinstance(i, Gen) and
-                (self._iterpacket or not isinstance(i,BasePacket))) or (
-                    isinstance(i, (range, types.GeneratorType))):
+        for i in self.col:
+            if (type(i) is tuple) and (len(i) == 2) and type(i[0]) is int and type(i[1]) is int:
+                if  (i[0] <= i[1]):
+                    j=i[0]
+                    while j <= i[1]:
+                        yield j
+                        j += 1
+            elif isinstance(i, Gen) and (self._iterpacket or not isinstance(i,BasePacket)):
                 for j in i:
                     yield j
             else:
                 yield i
     def __repr__(self):
-        return "<SetGen %r>" % self.values
+        return "<SetGen %s>" % self.col.__repr__()
 
 class Net(Gen):
     """Generate a list of IPs from a network address or a name"""
     name = "ip"
-    ip_regex = re.compile(r"^(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)\.(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)\.(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)\.(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)(/[0-3]?[0-9])?$")
+    ipaddress = re.compile(r"^(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)\.(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)\.(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)\.(\*|[0-2]?[0-9]?[0-9](-[0-2]?[0-9]?[0-9])?)(/[0-3]?[0-9])?$")
 
     @staticmethod
     def _parse_digit(a,netmask):
@@ -59,7 +59,7 @@ class Net(Gen):
         if a == "*":
             a = (0,256)
         elif a.find("-") >= 0:
-            x, y = [int(d) for d in a.split('-')]
+            x,y = map(int,a.split("-"))
             if x > y:
                 y = x
             a = (x &  (0xff<<netmask) , max(y, (x | (0xff>>(8-netmask))))+1)
@@ -70,21 +70,15 @@ class Net(Gen):
     @classmethod
     def _parse_net(cls, net):
         tmp=net.split('/')+["32"]
-        if not cls.ip_regex.match(net):
+        if not cls.ipaddress.match(net):
             tmp[0]=socket.gethostbyname(tmp[0])
         netmask = int(tmp[1])
-        ret_list = [cls._parse_digit(x, y-netmask) for (x, y) in zip(tmp[0].split('.'), [8, 16, 24, 32])]
-        return ret_list, netmask
+        #return map(lambda x,y: cls._parse_digit(x,y), tmp[0].split("."), map(lambda x,nm=netmask: x-nm, (8,16,24,32))),netmask
+        return list(map(lambda x,y: cls._parse_digit(x,y), tmp[0].split("."), [ i - netmask for i in (8,16,24,32)] )),netmask
 
     def __init__(self, net):
         self.repr=net
         self.parsed,self.netmask = self._parse_net(net)
-
-    def __str__(self):
-        try:
-            return next(self.__iter__())
-        except StopIteration:
-            return None
                                                                                                
     def __iter__(self):
         for d in range(*self.parsed[3]):
@@ -136,10 +130,10 @@ class OID(Gen):
         return "OID(%r)" % self.oid
     def __iter__(self):        
         ii = [k[0] for k in self.cmpt]
-        while True:
+        while 1:
             yield self.fmt % tuple(ii)
             i = 0
-            while True:
+            while 1:
                 if i >= len(ii):
                     raise StopIteration
                 if ii[i] < self.cmpt[i][1]:
@@ -184,32 +178,12 @@ class Packet_metaclass(type):
 
             dct["fields_desc"] = final_fld
 
-        if "__slots__" not in dct:
-            dct["__slots__"] = []
-        for attr in ["name", "overload_fields"]:
-            try:
-                dct["_%s" % attr] = dct.pop(attr)
-            except KeyError:
-                pass
         newcls = super(Packet_metaclass, cls).__new__(cls, name, bases, dct)
-        newcls.__all_slots__ = set(
-            attr
-            for cls in newcls.__mro__ if hasattr(cls, "__slots__")
-            for attr in cls.__slots__
-        )
-
-        if hasattr(newcls, "aliastypes"):
-            newcls.aliastypes = [newcls] + newcls.aliastypes
-        else:
-            newcls.aliastypes = [newcls]
-
         if hasattr(newcls,"register_variant"):
             newcls.register_variant()
-        for f in newcls.fields_desc:
-            if hasattr(f, "register_owner"):
-                f.register_owner(newcls)
-        from scapy import config
-        config.conf.layers.register(newcls)
+        for f in newcls.fields_desc:                
+            f.register_owner(newcls)
+        scapy.config.conf.layers.register(newcls)
         return newcls
 
     def __getattr__(self, attr):
@@ -220,23 +194,11 @@ class Packet_metaclass(type):
 
     def __call__(cls, *args, **kargs):
         if "dispatch_hook" in cls.__dict__:
-            try:
-                cls = cls.dispatch_hook(*args, **kargs)
-            except:
-                from scapy import config
-                if config.conf.debug_dissector:
-                    raise
-                cls = config.conf.raw_layer
+            cls =  cls.dispatch_hook(*args, **kargs)
         i = cls.__new__(cls, cls.__name__, cls.__bases__, cls.__dict__)
         i.__init__(*args, **kargs)
         return i
 
-class Field_metaclass(type):
-    def __new__(cls, name, bases, dct):
-        if "__slots__" not in dct:
-            dct["__slots__"] = []
-        newcls = super(Field_metaclass, cls).__new__(cls, name, bases, dct)
-        return newcls
 
 class NewDefaultValues(Packet_metaclass):
     """NewDefaultValues is deprecated (not needed anymore)
@@ -246,7 +208,7 @@ class NewDefaultValues(Packet_metaclass):
     and it should still work.
     """    
     def __new__(cls, name, bases, dct):
-        from scapy.error import log_loading
+        from error import log_loading
         import traceback
         try:
             for tb in traceback.extract_stack()+[("??",-1,None,"")]:
@@ -256,17 +218,20 @@ class NewDefaultValues(Packet_metaclass):
         except:
             f,l="??",-1
             raise
-        log_loading.warning("Deprecated (no more needed) use of NewDefaultValues  (%s l. %i).", f, l)
+        log_loading.warning("Deprecated (no more needed) use of NewDefaultValues  (%s l. %i)." % (f,l))
         
         return super(NewDefaultValues, cls).__new__(cls, name, bases, dct)
 
 class BasePacket(Gen):
-    __slots__ = []
+    pass
 
 
 #############################
-## Packet list base class  ##
+## Packet list base classe ##
 #############################
 
-class BasePacketList(object):
-    __slots__ = []
+class BasePacketList:
+    pass
+
+
+

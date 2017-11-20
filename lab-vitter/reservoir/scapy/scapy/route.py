@@ -7,13 +7,11 @@
 Routing and handling of network interfaces.
 """
 
-from __future__ import absolute_import
-from scapy.utils import atol, ltoa, itom, pretty_routes
+import socket
+from scapy.arch import read_routes,get_if_addr,LOOPBACK_NAME
+from scapy.utils import atol,ltoa,itom
 from scapy.config import conf
-from scapy.error import Scapy_Exception, warning
-from scapy.arch import WINDOWS
-import scapy.consts
-import scapy.modules.six as six
+from scapy.error import Scapy_Exception,warning
 
 ##############################
 ## Routing/Interfaces stuff ##
@@ -22,31 +20,27 @@ import scapy.modules.six as six
 class Route:
     def __init__(self):
         self.resync()
+        self.s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.cache = {}
 
     def invalidate_cache(self):
         self.cache = {}
 
     def resync(self):
-        from scapy.arch import read_routes
         self.invalidate_cache()
         self.routes = read_routes()
 
     def __repr__(self):
-        rtlst = []
-        for net, msk, gw, iface, addr, metric in self.routes:
-            rtlst.append((ltoa(net),
-                      ltoa(msk),
-                      gw,
-                      (iface.name if not isinstance(iface, six.string_types) else iface),
-                      addr,
-                      str(metric)))
+        rt = "Network         Netmask         Gateway         Iface           Output IP\n"
+        for net,msk,gw,iface,addr in self.routes:
+            rt += "%-15s %-15s %-15s %-15s %-15s\n" % (ltoa(net),
+                                              ltoa(msk),
+                                              gw,
+                                              iface,
+                                              addr)
+        return rt
 
-        return pretty_routes(rtlst,
-                             [("Network", "Netmask", "Gateway", "Iface", "Output IP", "Metric")])
-
-    def make_route(self, host=None, net=None, gw=None, dev=None, metric=1):
-        from scapy.arch import get_if_addr
+    def make_route(self, host=None, net=None, gw=None, dev=None):
         if host is not None:
             thenet,msk = host,32
         elif net is not None:
@@ -64,7 +58,7 @@ class Route:
             dev,ifaddr,x = self.route(nhop)
         else:
             ifaddr = get_if_addr(dev)
-        return (atol(thenet), itom(msk), gw, dev, ifaddr, metric)
+        return (atol(thenet), itom(msk), gw, dev, ifaddr)
 
     def add(self, *args, **kargs):
         """Ex:
@@ -92,17 +86,14 @@ class Route:
         the_net = the_rawaddr & the_msk
         
         
-        for i, route in enumerate(self.routes):
-            net, msk, gw, iface, addr, metric = route
-            if WINDOWS:
-                if iff.guid != iface.guid:
-                    continue
-            elif iff != iface:
+        for i in range(len(self.routes)):
+            net,msk,gw,iface,addr = self.routes[i]
+            if iface != iff:
                 continue
             if gw == '0.0.0.0':
-                self.routes[i] = (the_net,the_msk,gw,iface,the_addr,metric)
+                self.routes[i] = (the_net,the_msk,gw,iface,the_addr)
             else:
-                self.routes[i] = (net,msk,gw,iface,the_addr,metric)
+                self.routes[i] = (net,msk,gw,iface,the_addr)
         conf.netcache.flush()
         
                 
@@ -111,12 +102,8 @@ class Route:
         self.invalidate_cache()
         new_routes=[]
         for rt in self.routes:
-            if WINDOWS:
-                if iff.guid == rt[3].guid:
-                    continue
-            elif iff == rt[3]:
-                continue
-            new_routes.append(rt)
+            if rt[3] != iff:
+                new_routes.append(rt)
         self.routes=new_routes
         
     def ifadd(self, iff, addr):
@@ -125,11 +112,11 @@ class Route:
         the_msk = itom(int(the_msk))
         the_rawaddr = atol(the_addr)
         the_net = the_rawaddr & the_msk
-        self.routes.append((the_net,the_msk,'0.0.0.0',iff,the_addr,1))
+        self.routes.append((the_net,the_msk,'0.0.0.0',iff,the_addr))
 
 
     def route(self,dest,verbose=None):
-        if isinstance(dest, list) and dest:
+        if type(dest) is list and dest:
             dest = dest[0]
         if dest in self.cache:
             return self.cache[dest]
@@ -148,49 +135,35 @@ class Route:
             
         dst = atol(dst)
         pathes=[]
-        for d,m,gw,i,a,me in self.routes:
-            if not a: # some interfaces may not currently be connected
-                continue
+        for d,m,gw,i,a in self.routes:
             aa = atol(a)
-            if aa == dst:
-                pathes.append((0xffffffff, 1, (scapy.consts.LOOPBACK_INTERFACE,a,"0.0.0.0")))
+            #Commented out after issue with virtual network with local address 0.0.0.0
+            #if aa == dst:
+            #    pathes.append((0xffffffff,(LOOPBACK_NAME,a,"0.0.0.0")))
             if (dst & m) == (d & m):
-                pathes.append((m, me, (i,a,gw)))
+                pathes.append((m,(i,a,gw)))
         if not pathes:
             if verbose:
                 warning("No route found (no default route?)")
-            return scapy.consts.LOOPBACK_INTERFACE,"0.0.0.0","0.0.0.0"
-        # Choose the more specific route
-        # Sort by greatest netmask
-        pathes.sort(key=lambda x: x[0], reverse=True)
-        # Get all pathes having the (same) greatest mask
-        pathes = [i for i in pathes if i[0] == pathes[0][0]]
-        # Tie-breaker: Metrics
-        pathes.sort(key=lambda x: x[1])
-        # Return interface
-        ret = pathes[0][2]
+            return LOOPBACK_NAME,"0.0.0.0","0.0.0.0" #XXX linux specific!
+        # Choose the more specific route (greatest netmask).
+        # XXX: we don't care about metrics
+        pathes.sort()
+        ret = pathes[-1][1]
         self.cache[dest] = ret
         return ret
             
     def get_if_bcast(self, iff):
-        for net, msk, gw, iface, addr, metric in self.routes:
-            if net == 0:
-                continue
-            if WINDOWS:
-                if iff.guid != iface.guid:
-                    continue
-            elif iff != iface:
-                continue
-            bcast = atol(addr)|(~msk&0xffffffff); # FIXME: check error in atol()
-            return ltoa(bcast)
-        warning("No broadcast address found for iface %s\n", iff);
+        for net, msk, gw, iface, addr in self.routes:
+            if (iff == iface and net != 0):
+                bcast = atol(addr)|(~msk&0xffffffff); # FIXME: check error in atol()
+                return ltoa(bcast);
+        warning("No broadcast address found for iface %s\n" % iff);
 
 conf.route=Route()
 
 #XXX use "with"
 _betteriface = conf.route.route("0.0.0.0", verbose=0)[0]
-if ((_betteriface if (isinstance(_betteriface, six.string_types) or _betteriface is None) else _betteriface.name) != scapy.consts.LOOPBACK_NAME):
+if _betteriface != LOOPBACK_NAME:
     conf.iface = _betteriface
-else:
-    conf.iface = get_working_if()
 del(_betteriface)

@@ -1,16 +1,4 @@
-# This file is part of Scapy
-# Scapy is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# any later version.
-#
-# Scapy is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Scapy. If not, see <http://www.gnu.org/licenses/>.
+#!/usr/bin/env python
 
 # scapy.contrib.description = VLAN Trunking Protocol (VTP)
 # scapy.contrib.status = loads
@@ -41,7 +29,7 @@
         - Have a closer look at 8 byte padding in summary adv.
             "debug sw-vlan vtp packets" sais the TLV length is invalid,
             when I change the values
-            b'\x00\x00\x00\x01\x06\x01\x00\x02'
+            '\x00\x00\x00\x01\x06\x01\x00\x02'
                 * \x00\x00 ?
                 * \x00\x01 tlvtype?
                 * \x06 length?
@@ -54,9 +42,7 @@
         http://www.cisco.com/en/US/tech/tk389/tk689/technologies_tech_note09186a0080094c52.shtml
 """
 
-from scapy.packet import *
-from scapy.fields import *
-from scapy.layers.l2 import *
+from scapy.all import *
 
 _VTP_VLAN_TYPE = {
             1 : 'Ethernet',
@@ -117,7 +103,7 @@ class VTPVlanInfo(Packet):
         # Pad vlan name with zeros if vlannamelen > len(vlanname)
         l = vlannamelen - len(self.vlanname)
         if l != 0:
-            p += b"\x00" * l
+            p += "\x00" * l
 
         p += pay
 
@@ -161,7 +147,7 @@ class VTP(Packet):
                                         lambda pkt:pkt.code == 1),
                     ConditionalField(VTPTimeStampField("timestamp", '930301000000'),
                                         lambda pkt:pkt.code == 1),
-                    ConditionalField(StrFixedLenField("md5", b"\x00" * 16, 16),
+                    ConditionalField(StrFixedLenField("md5", "\x00" * 16, 16),
                                         lambda pkt:pkt.code == 1),
                     ConditionalField(
                         PacketListField("vlaninfo", [], VTPVlanInfo),
@@ -172,7 +158,7 @@ class VTP(Packet):
 
     def post_build(self, p, pay):
         if self.domnamelen == None:
-            domnamelen = len(self.domname.strip(b"\x00"))
+            domnamelen = len(self.domname.strip("\x00"))
             p = p[:3] + chr(domnamelen & 0xff) + p[4:]
 
         p += pay
@@ -182,5 +168,4 @@ class VTP(Packet):
 bind_layers(SNAP, VTP, code=0x2003)
 
 if __name__ == '__main__':
-    from scapy.main import interact
     interact(mydict=globals(), mybanner="VTP")

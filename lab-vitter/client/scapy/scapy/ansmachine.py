@@ -11,12 +11,9 @@ Answering machines.
 ## Answering machines ##
 ########################
 
-from __future__ import absolute_import
-from __future__ import print_function
-from scapy.sendrecv import send,sendp,sniff
-from scapy.config import conf
-from scapy.error import log_interactive
-import scapy.modules.six as six
+from .sendrecv import send,sendp,sniff
+from .config import conf
+from .error import log_interactive
 
 class ReferenceAM(type):
     def __new__(cls, name, bases, dct):
@@ -26,7 +23,8 @@ class ReferenceAM(type):
         return o
 
 
-class AnsweringMachine(six.with_metaclass(ReferenceAM, object)):
+class AnsweringMachine(object):
+    __metaclass__ = ReferenceAM
     function_name = ""
     filter = None
     sniff_options = { "store":0 }
@@ -70,13 +68,13 @@ class AnsweringMachine(six.with_metaclass(ReferenceAM, object)):
     def parse_all_options(self, mode, kargs):
         sniffopt = {}
         sendopt = {}
-        for k in list(kargs):  # use list(): kargs is modified in the loop
+        for k in list(kargs):
             if k in self.sniff_options_list:
                 sniffopt[k] = kargs[k]
             if k in self.send_options_list:
                 sendopt[k] = kargs[k]
             if k in self.sniff_options_list+self.send_options_list:
-                del kargs[k]
+                del(kargs[k])
         if mode != 2 or kargs:
             if mode == 1:
                 self.optam0 = kargs

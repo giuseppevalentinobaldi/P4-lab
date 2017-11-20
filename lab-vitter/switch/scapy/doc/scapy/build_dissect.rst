@@ -2,6 +2,10 @@
 Adding new protocols
 ********************
 
+.. note::
+
+   This section has not been updated for scapy3k yet. Code examples may not work directly. Try bytes() instead of str() and b'string' instead of b'somestring'.
+
 Adding new protocol (or more correctly: a new *layer*) in Scapy is very easy. All the magic is in the fields. If the 
 fields you need are already there and the protocol is not too brain-damaged, 
 this should be a matter of minutes. 
@@ -16,23 +20,31 @@ when assembling the layer or dissected one by one when disassembling a string.
 The list of fields is held in an attribute named ``fields_desc``. Each field is an instance 
 of a field class:: 
 
+    from scapy.packet import *
+
+
     class Disney(Packet): 
-        name = "DisneyPacket " 
-        fields_desc=[ ShortField("mickey",5), 
-                     XByteField("minnie",3) , 
-                     IntEnumField("donald" , 1 , 
-                          { 1: "happy", 2: "cool" , 3: "angry" } ) ]
+        name = "DisneyPacket" 
+        fields_desc=[ShortField("mickey", 5),
+                     XByteField("minnie", 3),
+                     IntEnumField("donald", 1,
+                          {1: "happy", 2: "cool" , 3: "angry"})]
                        
 In this example, our layer has three fields. The first one is an 2 byte integer 
 field named ``mickey`` and whose default value is 5. The second one is a 1 byte 
 integer field named ``minnie`` and whose default value is 3. The difference between 
-a vanilla ``ByteField`` and a ``XByteField`` is only the fact that the preferred human 
+a vanilla ``ByteField`` and a ``XByteField`` is only the fact that the prefered human 
 representation of the field’s value is in hexadecimal. The last field is a 4 byte 
 integer field named ``donald``. It is different from a vanilla ``IntField`` by the fact 
-that some of the possible values of the field have literate representations. For 
+that some of the possible values of the field have litterate representations. For 
 example, if it is worth 3, the value will be displayed as angry. Moreover, if the 
 "cool" value is assigned to this field, it will understand that it has to take the 
 value 2. 
+
+If you saved your class into a file called "disney.py", import it for testing::
+
+    >>> sys.path.append('.')
+    >>> from disney import *
 
 If your protocol is as simple as this, it is ready to use:: 
 
@@ -47,7 +59,7 @@ If your protocol is as simple as this, it is ready to use::
     minnie= 0x3 
     donald= happy 
     >>> d.donald="cool" 
-    >>> str(d) 
+    >>> bytes(d) 
     ’\x00\x01\x03\x00\x00\x00\x02’ 
     >>> Disney( ) 
     <Disney mickey=1 minnie=0x3 donald=cool |> 
@@ -121,7 +133,8 @@ user does not have to give them when he builds a packet.
 
 The main  mechanism  is based on  the ``Field`` structure.  Always keep in
 mind that a layer is just a little more than a list of fields, but not
-much more. 
+much more. Avoid whitespace in the name of any field. Whitespace will
+complicate assigning and reading values significantly down the road.
 
 So, to understanding how layers are working, one needs to look quickly
 at how the fields are handled.
@@ -138,8 +151,7 @@ Manipulating packets == manipulating its fields
 A field should be considered in different states:
 
 - ``i`` (nternal) : this is the way Scapy manipulates it.
-- ``m`` (achine) : this is where the truth is, that is the layer as it is
-    on the network.
+- ``m`` (achine) : this is where the truth is, that is the layer as it is on the network.
 - ``h`` (uman) : how the packet is displayed to our human eyes.
 
 This explains  the mysterious  methods ``i2h()``, ``i2m()``,  ``m2i()`` and  so on
@@ -193,7 +205,7 @@ last byte. For instance, 0x123456 will be coded as 0xC8E856::
             s.append( hex(0x80 | (l & 0x7F) ) )
             l = l >> 7
         s.reverse()
-        return "".join(map( lambda(x) : chr(int(x, 16)) , s))
+        return "".join(map(lambda x: chr(int(x, 16)) , s))
     
     def str2vlenq(s=""):
         i = l = 0
@@ -246,7 +258,7 @@ And now, define a layer using this kind of field::
         >>> f = FOO(data="A"*129)
         >>> f.show()
         ###[ FOO ]###
-          len= 0
+          len= None
           data=    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 Here, ``len``  is  not  yet  computed  and only  the  default  value  are
@@ -292,12 +304,12 @@ The core function for dissection is ``Packet.dissect()``::
         if pad and conf.padding:
             self.add_payload(Padding(pad))
 
-When called, ``s`` is a string containing what is going to be
+When called, ``s`` is a string of bytes containing what is going to be
 dissected. ``self`` points to the current layer.
  
 ::
 
-    >>> p=IP("A"*20)/TCP("B"*32)
+    >>> p=IP(b'A'*20)/TCP(b'B'*32)
     WARNING: bad dataofs (4). Assuming dataofs=5
     >>> p
     <IP  version=4L ihl=1L tos=0x41 len=16705 id=16705 flags=DF frag=321L ttl=65 proto=65 chksum=0x4141
@@ -306,8 +318,8 @@ dissected. ``self`` points to the current layer.
 
 ``Packet.dissect()`` is called 3 times:
 
-1. to dissect the ``"A"*20`` as an IPv4 header
-2. to dissect the ``"B"*32`` as a TCP header
+1. to dissect the ``b'A'*20`` as an IPv4 header
+2. to dissect the ``b'B'*32`` as a TCP header
 3. and  since  there  are still  12  bytes  in  the packet,  they  are
    dissected as "``Raw``" data (which is some kind of default layer type)
 
@@ -387,14 +399,7 @@ Binding layers
 
 One of the cool features with  Scapy when dissecting layers is that is
 try to guess for us what the next layer is. The official way to link 2
-layers is using ``bind_layers()`` function.
-
-Available inside the ``packet`` module, this function can be used as following::
-
-    bind_layers(ProtoA, ProtoB, FieldToBind=Value)
-
-Each time a packet ``ProtoA()/ProtoB()`` will be created, the ``FieldToBind`` of
-``ProtoA`` will be equal to ``Value``.
+layers is using ``bind_layers()``:
 
 For instance,  if you have a class ``HTTP``, you may expect  that all the
 packets coming from or going to  port 80 will be decoded as such. This
@@ -448,7 +453,7 @@ Changing the default behavior
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you do not like Scapy's  behavior for a given layer, you can either
-change or disable it through  the call to ``split_layer()``. For instance,
+change or disable it through  the call to ``split_layers()``. For instance,
 if you do not want UDP/53 to be bound with ``DNS``, just add in your code:
 ``
 split_layers(UDP, DNS, sport=53)
@@ -859,17 +864,16 @@ Legend:
 
 ::
 
-    ByteField           
+    ByteField           # one byte
     XByteField    
     
-    ShortField
-    SignedShortField
+    ShortField          # two bytes
     LEShortField
     XShortField
     
-    X3BytesField        # three bytes (in hexad 
+    X3BytesField        # three bytes (in hexadecimal)
     
-    IntField
+    IntField            # four bytes
     SignedIntField
     LEIntField
     LESignedIntField
@@ -948,13 +952,13 @@ Variable length fields
 
 This is about how fields that have a variable length can be handled with Scapy. These fields usually know their length from another field. Let's call them varfield and lenfield. The idea is to make each field reference the other so that when a packet is dissected, varfield can know its length from lenfield when a packet is assembled, you don't have to fill lenfield, that will deduce its value directly from varfield value.
 
-Problems arise when you realize that the relation between lenfield and varfield is not always straightforward. Sometimes, lenfield indicates a length in bytes, sometimes a number of objects. Sometimes the length includes the header part, so that you must subtract the fixed header length to deduce the varfield length. Sometimes the length is not counted in bytes but in 16bits words. Sometimes the same lenfield is used by two different varfields. Sometimes the same varfield is referenced by two lenfields, one in bytes one in 16bits words.
+Problems arise whe you realize that the relation between lenfield and varfield is not always straightforward. Sometimes, lenfield indicates a length in bytes, sometimes a number of objects. Sometimes the length includes the header part, so that you must substract the fixed header length to deduce the varfield length. Sometimes the length is not counted in bytes but in 16bits words. Sometimes the same lenfield is used by two different varfields. Sometimes the same varfield is referenced by two lenfields, one in bytes one in 16bits words.
 
  
 The length field
 ~~~~~~~~~~~~~~~~
 
-First, a lenfield is declared using ``FieldLenField`` (or a derivate). If its value is None when assembling a packet, its value will be deduced from the varfield that was referenced. The reference is done using either the ``length_of`` parameter or the ``count_of`` parameter. The ``count_of`` parameter has a meaning only when varfield is a field that holds a list (``PacketListField`` or ``FieldListField``). The value will be the name of the varfield, as a string. According to which parameter is used the ``i2len()`` or ``i2count()`` method will be called on the varfield value. The returned value will the be adjusted by the function provided in the adjust parameter. adjust will be applied on 2 arguments: the packet instance and the value returned by ``i2len()`` or ``i2count()``. By default, adjust does nothing::
+First, a lenfield is declared using ``FieldLenField`` (or a derivate). If its value is None when assembling a packet, its value will be deduced from the varfield that was referenced. The reference is done using either the ``length_of`` parameter or the ``count_of`` parameter. The ``count_of`` parameter has a meaning only when varfield is a field that holds a list (``PacketListField`` or ``FieldListField``). The value will be the name of the varfield, as a string. According to which parameter is used the ``i2len()`` or ``i2count()`` method will be called on the varfield value. The returned value will the be adjusted by the function provided in the adjust parameter. The function provided by ``adjust`` will be applied on 2 arguments: the packet instance and the value returned by ``i2len()`` or ``i2count()``. By default, adjust does nothing::
 
     adjust=lambda pkt,x: x
 
@@ -971,9 +975,9 @@ or if the length is in 16bits words::
 The variable length field
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A varfield can be: ``StrLenField``, ``PacketLenField``, ``PacketListField``, ``FieldListField``, ...
+A varfield can be of type ``StrLenField``, ``PacketLenField``, ``PacketListField``, ``FieldListField``, ...
 
-For the two firsts, when a packet is being dissected, their lengths are deduced from a lenfield already dissected. The link is done using the ``length_from`` parameter, which takes a function that, applied to the partly dissected packet, returns the length in bytes to take for the field. For instance::
+The lengths of the first two is deduced from a lenfield when dissected. The link is done using the ``length_from`` parameter, which takes a function that, applied to the partly dissected packet, returns the length in bytes to take for the field. For instance::
 
     StrLenField("the_varfield", "the_default_value", length_from = lambda pkt: pkt.the_lenfield)
 
@@ -1019,7 +1023,7 @@ Examples
 
 Test the ``FieldListField`` class::
     
-    >>> TestFLF("\x00\x02ABCDEFGHIJKL")
+    >>> TestFLF(b'\x00\x02ABCDEFGHIJKL')
     <TestFLF  the_lenfield=2 the_varfield=['65.66.67.68', '69.70.71.72'] |<Raw  load='IJKL' |>>
 
 
@@ -1111,15 +1115,3 @@ Other protocols
     TimeStampField           # NTP (BitField)
 
 
-Design patterns
-===============
-Some patterns are similar to a lot of protocols and thus can be described the same way in Scapy.
-
-The following parts will present several models and conventions that can be followed when implementing a new protocol.
-
-Field naming convention
------------------------
-The goal is to keep the writing of packets fluent and intuitive. The basic instructions are the following :
-
-* Use inverted camel case and common abbreviations (e.g. len, src, dst, dstPort, srcIp).
-* Wherever it is either possible or relevant, prefer using the names from the specifications. This aims to help newcomers to easily forge packets.

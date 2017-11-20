@@ -10,9 +10,6 @@ Clone of queso OS fingerprinting
 from scapy.data import KnowledgeBase
 from scapy.config import conf
 from scapy.layers.inet import IP,TCP
-from scapy.error import warning
-from scapy.volatile import RandInt
-from scapy.sendrecv import sr
 #from 
 
 conf.queso_base ="/etc/queso.conf"
@@ -56,7 +53,7 @@ class QuesoKnowledgeBase(KnowledgeBase):
                 res = l[2:].split()
                 res[-1] = quesoTCPflags(res[-1])
                 res = " ".join(res)
-                if res not in p:
+                if not res in p:
                     p[res] = {}
                 p = p[res]
             if p is not None:

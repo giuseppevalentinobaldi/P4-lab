@@ -7,18 +7,14 @@
 Direct Access dictionary.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-from scapy.error import Scapy_Exception
-import scapy.modules.six as six
-from scapy.compat import *
+from .error import Scapy_Exception
 
 ###############################
-## Direct Access dictionary  ##
+## Direct Access dictionnary ##
 ###############################
 
 def fixname(x):
-    if x and str(x[0]) in "0123456789":
+    if x and x[0] in "0123456789":
         x = "n_"+x
     return x.translate("________________________________________________0123456789_______ABCDEFGHIJKLMNOPQRSTUVWXYZ______abcdefghijklmnopqrstuvwxyz_____________________________________________________________________________________________________________________________________")
 
@@ -29,9 +25,9 @@ class DADict_Exception(Scapy_Exception):
 class DADict:
     def __init__(self, _name="DADict", **kargs):
         self._name=_name
-        self.update(kargs)
+        self.__dict__.update(kargs)
     def fixname(self,val):
-        return fixname(plain_str(val))
+        return fixname(val)
     def __contains__(self, val):
         return val in self.__dict__
     def __getitem__(self, attr):
@@ -39,14 +35,16 @@ class DADict:
     def __setitem__(self, attr, val):        
         return setattr(self, self.fixname(attr), val)
     def __iter__(self):
-        return (value for key, value in six.iteritems(self.__dict__)
-                if key and key[0] != '_')
+        #return iter(map(lambda (x,y):y,filter(lambda (x,y):x and x[0]!="_", self.__dict__.items())))
+        #return iter(map(lambda a:a[1],filter(lambda a:a[0] and a[0][0]!="_", self.__dict__.items())))
+        return iter([a[1] for a in self.__dict__.items() if a[0] and a[0][0]!=" "])
     def _show(self):
-        for k in self.__dict__:
+        for k in self.__dict__.keys():
             if k and k[0] != "_":
                 print("%10s = %r" % (k,getattr(self,k)))
     def __repr__(self):
-        return "<%s/ %s>" % (self._name," ".join(x for x in self.__dict__ if x and x[0]!="_"))
+        #return "<%s/ %s>" % (self._name," ".join(filter(lambda x:x and x[0]!="_",self.__dict__.keys())))
+        return "<%s/ %s>" % (self._name," ".join([ x for x in self.__dict__.keys() if x and x[0]!="_"]))
 
     def _branch(self, br, uniq=0):
         if uniq and br._name in self:
@@ -60,10 +58,6 @@ class DADict:
             if k not in self or self[k] != kargs[k]:
                 return False
         return True
-
-    def update(self, *args, **kwargs):
-        for k, v in six.iteritems(dict(*args, **kwargs)):
-            self[k] = v
     
     def _find(self, *args, **kargs):
          return self._recurs_find((), *args, **kargs)
@@ -92,8 +86,6 @@ class DADict:
                 r += p
         return r
     def keys(self):
-        return list(self.iterkeys())
-    def iterkeys(self):
-        return (x for x in self.__dict__ if x and x[0] != "_")
-    def __len__(self):
-        return len(self.__dict__)
+        #return filter(lambda x:x and x[0]!="_", self.__dict__.keys())
+        return [ x for x in self.__dict__.keys() if x and x[0]!="_" ]
+        

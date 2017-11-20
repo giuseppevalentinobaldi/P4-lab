@@ -1,19 +1,5 @@
 #!/usr/bin/env python
 
-# This file is part of Scapy
-# Scapy is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# any later version.
-#
-# Scapy is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Scapy. If not, see <http://www.gnu.org/licenses/>.
-
 # scapy.contrib.description = DTP
 # scapy.contrib.status = loads
 
@@ -30,8 +16,6 @@
         http://trac.secdev.org/scapy/ticket/18
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 from scapy.packet import *
 from scapy.fields import *
 from scapy.layers.l2 import SNAP,Dot3,LLC
@@ -66,7 +50,7 @@ class RepeatedTlvListField(PacketListField):
         return remain,lst
 
     def addfield(self, pkt, s, val):
-        return s + ''.join(str(v) for v in val)
+        return s+reduce(str.__add__, map(str, val),"")
 
 _DTP_TLV_CLS = {
                     0x0001 : "DTPDomain",
@@ -79,21 +63,21 @@ class DTPDomain(DtpGenericTlv):
     name = "DTP Domain"
     fields_desc = [ ShortField("type", 1),
             FieldLenField("length", None, "domain", adjust=lambda pkt,x:x + 4),
-            StrLenField("domain", b"\x00", length_from=lambda pkt:pkt.length - 4)
+            StrLenField("domain", "\x00", length_from=lambda pkt:pkt.length - 4)
             ]
 
 class DTPStatus(DtpGenericTlv):
     name = "DTP Status"
     fields_desc = [ ShortField("type", 2),
             FieldLenField("length", None, "status", adjust=lambda pkt,x:x + 4),
-            StrLenField("status", b"\x03", length_from=lambda pkt:pkt.length - 4)
+            StrLenField("status", "\x03", length_from=lambda pkt:pkt.length - 4)
             ]
 
 class DTPType(DtpGenericTlv):
     name = "DTP Type"
     fields_desc = [ ShortField("type", 3),
             FieldLenField("length", None, "dtptype", adjust=lambda pkt,x:x + 4),
-            StrLenField("dtptype", b"\xa5", length_from=lambda pkt:pkt.length - 4)
+            StrLenField("dtptype", "\xa5", length_from=lambda pkt:pkt.length - 4)
             ]
 
 class DTPNeighbor(DtpGenericTlv):
@@ -110,7 +94,7 @@ def _DTPGuessPayloadClass(p, **kargs):
         t = struct.unpack("!H", p[:2])[0]
         clsname = _DTP_TLV_CLS.get(t, "DtpGenericTlv")
         cls = globals()[clsname]
-    return cls(p, **kargs)
+        return cls(p, **kargs)
 
 class DTP(Packet):
     name = "DTP"

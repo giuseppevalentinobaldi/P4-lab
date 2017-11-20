@@ -1,9 +1,14 @@
-#! /bin/sh
+#! /usr/bin/env bash
+
+#
+# This scripts runs the regression tests
+# based on UTscapy.
+#
+
 DIR=$(dirname $0)/..
-PYTHON=${PYTHON:-python}
-if [ -z "$*" ]
+if [ "$*" == "" ]
 then
-    PYTHONPATH=$DIR exec $PYTHON ${DIR}/scapy/tools/UTscapy.py -t regression.uts -f html -K ipv6 -l -o /tmp/scapy_regression_test_$(date +%Y%m%d-%H%M%S).html
+    PYTHONPATH=$DIR exec python3 ${DIR}/scapy/tools/UTscapy.py -t regression.uts -f html -o /tmp/scapy_regression_test_$(date +%Y%M%d-%H%H%S).html
 else
-    PYTHONPATH=$DIR exec $PYTHON ${DIR}/scapy/tools/UTscapy.py "$@"
+    PYTHONPATH=$DIR exec python3 ${DIR}/scapy/tools/UTscapy.py "$@"
 fi

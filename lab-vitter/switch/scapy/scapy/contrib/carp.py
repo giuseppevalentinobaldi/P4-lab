@@ -1,26 +1,12 @@
-# This file is part of Scapy
-# Scapy is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# any later version.
-#
-# Scapy is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Scapy. If not, see <http://www.gnu.org/licenses/>.
 
 # scapy.contrib.description = CARP
 # scapy.contrib.status = loads
 
-import struct, hmac, hashlib
-
 from scapy.packet import *
 from scapy.layers.inet import IP
 from scapy.fields import BitField, ByteField, XShortField, IntField, XIntField
-from scapy.utils import checksum, inet_aton
+from scapy.utils import checksum
+import struct, hmac, hashlib
 
 class CARP(Packet):
     name = "CARP"
@@ -47,18 +33,14 @@ class CARP(Packet):
 
         return pkt
 
-def build_hmac_sha1(pkt, pw = b'\0' * 20, ip4l=None, ip6l=None):
-    if ip4l is None:
-        ip4l = []
-    if ip6l is None:
-        ip6l = []
+def build_hmac_sha1(pkt, pw = '\0' * 20, ip4l = [], ip6l = []):
     if not pkt.haslayer(CARP):
         return None 
 
     p = pkt[CARP]
     h = hmac.new(pw, digestmod = hashlib.sha1)
     # XXX: this is a dirty hack. it needs to pack version and type into a single 8bit field
-    h.update(b'\x21')
+    h.update('\x21')
     # XXX: mac addy if different from special link layer. comes before vhid
     h.update(struct.pack('!B', p.vhid))
 

@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
 from scapy.all import *
-import Queue, datetime, time
+import queue, datetime, time
 
 N = 3
-q = Queue.Queue(N)
+q = queue.Queue(N)
 
 
 def print_resevoir():
     global q
-    tmp = Queue.Queue(N)
+    tmp = queue.Queue(N)
     print("=====================================================")
     while not (q.empty()) :
         tup = q.get()

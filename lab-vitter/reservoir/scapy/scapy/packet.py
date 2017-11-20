@@ -7,24 +7,16 @@
 Packet class. Binding mechanism. fuzz() method.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-import re
-import time,itertools
+import time,itertools,os,random
+import sys,traceback
 import copy
+from .fields import StrField,ConditionalField,Emph,PacketListField,FlagsField
+from .config import conf
+from .base_classes import BasePacket,Gen,SetGen,Packet_metaclass,NewDefaultValues
+from .volatile import VolatileValue
+from .utils import import_hexcap,tex_escape,colgen,get_temp_file
+from .error import Scapy_Exception,log_runtime, warning
 import subprocess
-
-from scapy.fields import StrField, ConditionalField, Emph, PacketListField, BitField, \
-    MultiEnumField, EnumField, FlagsField
-from scapy.config import conf
-from scapy.compat import *
-from scapy.base_classes import BasePacket, Gen, SetGen, Packet_metaclass
-from scapy.volatile import VolatileValue
-from scapy.utils import import_hexcap,tex_escape,colgen,get_temp_file, \
-    ContextManagerSubprocess
-from scapy.error import Scapy_Exception, log_runtime
-from scapy.consts import PYX
-import scapy.modules.six as six
 
 try:
     import pyx
@@ -33,37 +25,33 @@ except ImportError:
 
 
 class RawVal:
-    def __init__(self, val=""):
+    def __init__(self, val=b""):
+        assert type(val) == bytes
         self.val = val
     def __str__(self):
         return str(self.val)
-    def __bytes__(self):
-        return raw(self.val)
     def __repr__(self):
         return "<RawVal [%r]>" % self.val
+    def bytes(self):
+        return self.val
 
 
-class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
-    __slots__ = [
-        "time", "sent_time", "name", "default_fields",
-        "overload_fields", "overloaded_fields", "fields", "fieldtype",
-        "packetfields",
-        "original", "explicit", "raw_packet_cache",
-        "raw_packet_cache_fields", "_pkt", "post_transforms",
-        # then payload and underlayer
-        "payload", "underlayer",
-        "name",
-        # used for sr()
-        "_answered",
-        # used when sniffing
-        "direction", "sniffed_on"
-    ]
-    name = None
+class Packet(BasePacket, metaclass = Packet_metaclass):
+    name=None
+
     fields_desc = []
+
+    aliastypes = []
     overload_fields = {}
+
+    underlayer = None
+
+    sent_time = None
     payload_guess = []
-    show_indent = 1
-    show_summary = True
+    initialized = 0
+    show_indent=1
+    explicit = 0
+    raw_packet_cache = None
 
     @classmethod
     def from_hexcap(cls):
@@ -72,64 +60,36 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
     @classmethod
     def upper_bonds(self):
         for fval,upper in self.payload_guess:
-            print("%-20s  %s" % (upper.__name__, ", ".join("%-12s" % ("%s=%r"%i) for i in six.iteritems(fval))))
+            print("%-20s  %s" % (upper.__name__, ", ".join("%-12s" % ("%s=%r"%i) for i in fval.items())))
 
     @classmethod
     def lower_bonds(self):
-        for lower,fval in six.iteritems(self._overload_fields):
-            print("%-20s  %s" % (lower.__name__, ", ".join("%-12s" % ("%s=%r"%i) for i in six.iteritems(fval))))
-
-    def _unpickle(self, dlist):
-        """Used to unpack pickling"""
-        self.__init__(b"".join(dlist))
-        return self
-
-    def __reduce__(self):
-        """Used by pickling methods"""
-        return (self.__class__, (), (self.build(),))
-
-    def __reduce_ex__(self, proto):
-        """Used by pickling methods"""
-        return self.__reduce__()
-
-    def __getstate__(self):
-        """Mark object as pickable"""
-        return self.__reduce__()[2]
-
-    def __setstate__(self, state):
-        """Rebuild state using pickable methods"""
-        return self._unpickle(state)
-
-    def __deepcopy__(self, memo):
-        """Used by copy.deepcopy"""
-        return self.copy()
+        for lower,fval in self.overload_fields.items():
+            print("%-20s  %s" % (lower.__name__, ", ".join("%-12s" % ("%s=%r"%i) for i in fval.items())))
 
     def __init__(self, _pkt=b"", post_transform=None, _internal=0, _underlayer=None, **fields):
         self.time  = time.time()
-        self.sent_time = None
-        self.name = (self.__class__.__name__
-                     if self._name is None else
-                     self._name)
+        self.sent_time = 0
+        if self.name is None:
+            self.name = self.__class__.__name__
+        self.aliastypes = [ self.__class__ ] + self.aliastypes
         self.default_fields = {}
-        self.overload_fields = self._overload_fields
         self.overloaded_fields = {}
-        self.fields = {}
-        self.fieldtype = {}
-        self.packetfields = []
-        self.payload = NoPayload()
+        self.fields={}
+        self.fieldtype={}
+        self.packetfields=[]
+        self.__dict__["payload"] = NoPayload()
         self.init_fields()
         self.underlayer = _underlayer
+        self.initialized = 1
         self.original = _pkt
-        self.explicit = 0
-        self.raw_packet_cache = None
-        self.raw_packet_cache_fields = None
         if _pkt:
             self.dissect(_pkt)
             if not _internal:
                 self.dissection_done(self)
-        for f, v in six.iteritems(fields):
-            self.fields[f] = self.get_field(f).any2i(self, v)
-        if isinstance(post_transform, list):
+        for f in fields.keys():
+            self.fields[f] = self.get_field(f).any2i(self,fields[f])
+        if type(post_transform) is list:
             self.post_transforms = post_transform
         elif post_transform is None:
             self.post_transforms = []
@@ -137,15 +97,9 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             self.post_transforms = [post_transform]
 
     def init_fields(self):
-        """
-        Initialize each fields of the fields_desc dict
-        """
         self.do_init_fields(self.fields_desc)
 
     def do_init_fields(self, flist):
-        """
-        Initialize each fields of the fields_desc dict
-        """
         for f in flist:
             self.default_fields[f.name] = copy.deepcopy(f.default)
             self.fieldtype[f.name] = f
@@ -172,19 +126,20 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             self.payload.add_payload(payload)
         else:
             if isinstance(payload, Packet):
-                self.payload = payload
+                self.__dict__["payload"] = payload
                 payload.add_underlayer(self)
                 for t in self.aliastypes:
                     if t in payload.overload_fields:
                         self.overloaded_fields = payload.overload_fields[t]
                         break
-            elif isinstance(payload, bytes):
-                self.payload = conf.raw_layer(load=payload)
+            #elif type(payload) is str:
+            elif type(payload) is bytes:
+                self.__dict__["payload"] = conf.raw_layer(load=payload)
             else:
                 raise TypeError("payload must be either 'Packet' or 'bytes', not [%s]" % repr(payload))
     def remove_payload(self):
         self.payload.remove_underlayer(self)
-        self.payload = NoPayload()
+        self.__dict__["payload"] = NoPayload()
         self.overloaded_fields = {}
     def add_underlayer(self, underlayer):
         self.underlayer = underlayer
@@ -193,19 +148,20 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
     def copy(self):
         """Returns a deep copy of the instance."""
         clone = self.__class__()
-        clone.fields = self.copy_fields_dict(self.fields)
-        clone.default_fields = self.copy_fields_dict(self.default_fields)
+        clone.fields = self.fields.copy()
+        for k in clone.fields:
+            clone.fields[k] = self.get_field(k).do_copy(clone.fields[k])
+        clone.default_fields = self.default_fields.copy()
         clone.overloaded_fields = self.overloaded_fields.copy()
+        clone.overload_fields = self.overload_fields.copy()
         clone.underlayer = self.underlayer
         clone.explicit = self.explicit
         clone.raw_packet_cache = self.raw_packet_cache
-        clone.raw_packet_cache_fields = self.copy_fields_dict(
-            self.raw_packet_cache_fields
-        )
         clone.post_transforms = self.post_transforms[:]
-        clone.payload = self.payload.copy()
+        clone.__dict__["payload"] = self.payload.copy()
         clone.payload.add_underlayer(clone)
         clone.time = self.time
+        clone.sent_time = self.sent_time
         return clone
 
     def getfieldval(self, attr):
@@ -216,7 +172,19 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         if attr in self.default_fields:
             return self.default_fields[attr]
         return self.payload.getfieldval(attr)
+
+    def getbyteval(self, attr):
+        fld,v = self.getfield_and_val(attr)
+        return fld.i2b(self, v)
     
+    def getstrval(self, attr):
+        fld,v = self.getfield_and_val(attr)
+        return fld.i2repr(self, v)
+
+    def getdictval(self, attr):
+        fld,v = self.getfield_and_val(attr)
+        return fld.i2dict(self, v)
+
     def getfield_and_val(self, attr):
         if attr in self.fields:
             return self.get_field(attr),self.fields[attr]
@@ -224,15 +192,15 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             return self.get_field(attr),self.overloaded_fields[attr]
         if attr in self.default_fields:
             return self.get_field(attr),self.default_fields[attr]
-
+        return self.payload.getfield_and_val(attr)
+    
     def __getattr__(self, attr):
-        try:
-            fld, v = self.getfield_and_val(attr)
-        except TypeError:
-            return self.payload.__getattr__(attr)
-        if fld is not None:
-            return fld.i2h(self, v)
-        return v
+        if self.initialized:
+            fld,v = self.getfield_and_val(attr)
+            if fld is not None:
+                return fld.i2h(self, v)
+            return v
+        raise AttributeError(attr)
 
     def setfieldval(self, attr, val):
         if attr in self.default_fields:
@@ -244,7 +212,6 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             self.fields[attr] = any2i(self, val)
             self.explicit = 0
             self.raw_packet_cache = None
-            self.raw_packet_cache_fields = None
         elif attr == "payload":
             self.remove_payload()
             self.add_payload(val)
@@ -252,20 +219,20 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             self.payload.setfieldval(attr,val)
 
     def __setattr__(self, attr, val):
-        if attr in self.__all_slots__:
-            return object.__setattr__(self, attr, val)
-        try:
-            return self.setfieldval(attr,val)
-        except AttributeError:
-            pass
-        return object.__setattr__(self, attr, val)
+        if self.initialized:
+            try:
+                self.setfieldval(attr,val)
+            except AttributeError:
+                pass
+            else:
+                return
+        self.__dict__[attr] = val
 
     def delfieldval(self, attr):
         if attr in self.fields:
             del(self.fields[attr])
             self.explicit = 0 # in case a default value must be explicited
             self.raw_packet_cache = None
-            self.raw_packet_cache_fields = None
         elif attr in self.default_fields:
             pass
         elif attr == "payload":
@@ -274,35 +241,18 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             self.payload.delfieldval(attr)
 
     def __delattr__(self, attr):
-        if attr == "payload":
-            return self.remove_payload()
-        if attr in self.__all_slots__:
-            return object.__delattr__(self, attr)
-        try:
-            return self.delfieldval(attr)
-        except AttributeError:
-            pass
-        return object.__delattr__(self, attr)
+        if self.initialized:
+            try:
+                self.delfieldval(attr)
+            except AttributeError:
+                pass
+            else:
+                return
+        if attr in self.__dict__:
+            del(self.__dict__[attr])
+        else:
+            raise AttributeError(attr)
             
-    def _superdir(self):
-        """
-        Return a list of slots and methods, including those from subclasses.
-        """
-        attrs = set()
-        cls = self.__class__
-        if hasattr(cls, '__all_slots__'):
-            attrs.update(cls.__all_slots__)
-        for bcls in cls.__mro__:
-            if hasattr(bcls, '__dict__'):
-                attrs.update(bcls.__dict__)
-        return attrs
-
-    def __dir__(self):
-        """
-        Add fields to tab completion list.
-        """
-        return sorted(itertools.chain(self._superdir(), self.default_fields))
-
     def __repr__(self):
         s = ""
         ct = conf.color_theme
@@ -332,8 +282,11 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
                                   ct.punct("|"),
                                   repr(self.payload),
                                   ct.punct(">"))
+    #def __str__(self):
+    #TODO3 FIX
     def __str__(self):
-        return str(self.build())
+        warning("Unless called manually, this could indicate deprecated use. Should be changed to bytes(self)")
+        return repr(bytes(self)) 
     def __bytes__(self):
         return self.build()
     def __div__(self, other):
@@ -342,56 +295,43 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             cloneB = other.copy()
             cloneA.add_payload(cloneB)
             return cloneA
-        elif isinstance(other, (bytes, str)):
+        elif type(other) is str:
+            return self/conf.raw_layer(load=other.encode('ascii'))
+        elif type(other) is bytes:
             return self/conf.raw_layer(load=other)
         else:
             return other.__rdiv__(self)
     __truediv__ = __div__
     def __rdiv__(self, other):
-        if isinstance(other, (bytes, str)):
+        if type(other) is str:
+            return conf.raw_layer(load=other.encode('ascii'))/self
+        if type(other) is bytes:
             return conf.raw_layer(load=other)/self
         else:
             raise TypeError
     __rtruediv__ = __rdiv__
     def __mul__(self, other):
-        if isinstance(other, int):
+        if type(other) is int:
             return  [self]*other
         else:
             raise TypeError
     def __rmul__(self,other):
         return self.__mul__(other)
     
-    def __nonzero__(self):
+    def __bool__(self):
         return True
-    __bool__ = __nonzero__
     def __len__(self):
-        return len(self.__bytes__())
-    def copy_field_value(self, fieldname, value):
-        return self.get_field(fieldname).do_copy(value)
-    def copy_fields_dict(self, fields):
-        if fields is None:
-            return None
-        return {fname: self.copy_field_value(fname, fval)
-                for fname, fval in six.iteritems(fields)}
+        return len(bytes(self))
     def self_build(self, field_pos_list=None):
-        """
-        Create the default layer regarding fields_desc dict
-
-        :param field_pos_list:
-        """
         if self.raw_packet_cache is not None:
-            for fname, fval in six.iteritems(self.raw_packet_cache_fields):
-                if self.getfieldval(fname) != fval:
-                    self.raw_packet_cache = None
-                    self.raw_packet_cache_fields = None
-                    break
-            if self.raw_packet_cache is not None:
-                return self.raw_packet_cache
+            return self.raw_packet_cache
         p=b""
         for f in self.fields_desc:
+            #print(f.name)
             val = self.getfieldval(f.name)
             if isinstance(val, RawVal):
-                sval = raw(val)
+                #sval = str(val)
+                sval = bytes(val)
                 p += sval
                 if field_pos_list is not None:
                     field_pos_list.append( (f.name, sval.encode("string_escape"), len(p), len(sval) ) )
@@ -400,66 +340,43 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         return p
 
     def do_build_payload(self):
-        """
-        Create the default version of the payload layer
-
-        :return: a string of payload layer
-        """
         return self.payload.do_build()
 
     def do_build(self):
-        """
-        Create the default version of the layer
-
-        :return: a string of the packet with the payload
-        """
         if not self.explicit:
-            self = next(iter(self))
+            self = next(self.__iter__())
         pkt = self.self_build()
         for t in self.post_transforms:
             pkt = t(pkt)
         pay = self.do_build_payload()
-        if self.raw_packet_cache is None:
-            return self.post_build(pkt, pay)
-        else:
-            return pkt + pay
+        p = self.post_build(pkt,pay)
+        return p
     
     def build_padding(self):
         return self.payload.build_padding()
 
     def build(self):
-        """
-        Create the current layer
-
-        :return: string of the packet with the payload
-        """
         p = self.do_build()
         p += self.build_padding()
         p = self.build_done(p)
         return p
     
     def post_build(self, pkt, pay):
-        """
-        DEV: called right after the current layer is build.
-
-        :param str pkt: the current packet (build by self_buil function)
-        :param str pay: the packet payload (build by do_build_payload function)
-        :return: a string of the packet with the payload
-        """
+        """DEV: called right after the current layer is build."""
         return pkt+pay
 
     def build_done(self, p):
         return self.payload.build_done(p)
 
     def do_build_ps(self):
-        p = b""
+        p=b""
         pl = []
-        q = b""
+        q=b""
         for f in self.fields_desc:
             if isinstance(f, ConditionalField) and not f._evalcond(self):
                 continue
             p = f.addfield(self, p, self.getfieldval(f.name) )
-            if isinstance(p, bytes):
+            if type(p) is bytes:
                 r = p[len(q):]
                 q = p
             else:
@@ -485,48 +402,32 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
 
 
     def psdump(self, filename=None, **kargs):
-        """
-        psdump(filename=None, layer_shift=0, rebuild=1)
-
-        Creates an EPS file describing a packet. If filename is not provided a
-        temporary file is created and gs is called.
-
-        :param filename: the file's filename
-        """
+        """psdump(filename=None, layer_shift=0, rebuild=1)
+Creates an EPS file describing a packet. If filename is not provided a temporary file is created and gs is called."""
         canvas = self.canvas_dump(**kargs)
         if filename is None:
             fname = get_temp_file(autoext=".eps")
             canvas.writeEPSfile(fname)
-            with ContextManagerSubprocess("psdump()"):
-                subprocess.Popen([conf.prog.psreader, fname+".eps"])
+            subprocess.Popen([conf.prog.psreader, fname+".eps"])
         else:
             canvas.writeEPSfile(filename)
 
     def pdfdump(self, filename=None, **kargs):
-        """
-        pdfdump(filename=None, layer_shift=0, rebuild=1)
-
-        Creates a PDF file describing a packet. If filename is not provided a
-        temporary file is created and xpdf is called.
-
-        :param filename: the file's filename
-        """
+        """pdfdump(filename=None, layer_shift=0, rebuild=1)
+        Creates a PDF file describing a packet. If filename is not provided a temporary file is created and xpdf is called."""
         canvas = self.canvas_dump(**kargs)
         if filename is None:
             fname = get_temp_file(autoext=".pdf")
             canvas.writePDFfile(fname)
-            with ContextManagerSubprocess("pdfdump()"):
-                subprocess.Popen([conf.prog.pdfreader, fname+".pdf"])
+            subprocess.Popen([conf.prog.pdfreader, fname+".pdf"])
         else:
             canvas.writePDFfile(filename)
 
         
     def canvas_dump(self, layer_shift=0, rebuild=1):
-        if PYX == 0:
-            raise ImportError("PyX and its depedencies must be installed")
         canvas = pyx.canvas.canvas()
         if rebuild:
-            p,t = self.__class__(raw(self)).build_ps()
+            p,t = self.__class__(bytes(self)).build_ps()
         else:
             p,t = self.build_ps()
         YTXT=len(t)
@@ -551,7 +452,7 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         def hexstr(x):
             s = []
             for c in x:
-                s.append("%02x" % orb(c))
+                s.append("%02x" % c)
             return " ".join(s)
 
                 
@@ -671,12 +572,7 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
 
 
     def extract_padding(self, s):
-        """
-        DEV: to be overloaded to extract current layer's padding.
-
-        :param str s: the current layer
-        :return: a couple of strings (actual layer, padding)
-        """
+        """DEV: to be overloaded to extract current layer's padding. Return a couple of strings (actual layer, padding)"""
         return s,None
 
     def post_dissect(self, s):
@@ -688,29 +584,24 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         return s
 
     def do_dissect(self, s):
-        s = raw(s)
-        _raw = s
-        self.raw_packet_cache_fields = {}
-        for f in self.fields_desc:
-            if not s:
-                break
-            s, fval = f.getfield(self, s)
-            # We need to track fields with mutable values to discard
-            # .raw_packet_cache when needed.
-            if f.islist or f.holds_packets or f.ismutable:
-                self.raw_packet_cache_fields[f.name] = f.do_copy(fval)
+        flist = self.fields_desc[:]
+        flist.reverse()
+        raw = s
+        while s and flist:
+            f = flist.pop()
+            #print(f, end = " = ")
+            s,fval = f.getfield(self, s)
+            #print('fval')
             self.fields[f.name] = fval
-        assert(_raw.endswith(raw(s)))
-        self.raw_packet_cache = _raw[:-len(s)] if s else _raw
+        assert(raw.endswith(s))
+        if s:
+            self.raw_packet_cache = raw[:-len(s)]
+        else:
+            self.raw_packet_cache = raw
         self.explicit = 1
         return s
 
     def do_dissect_payload(self, s):
-        """
-        Perform the dissection of the layer's payload
-
-        :param str s: the raw layer
-        """
         if s:
             cls = self.guess_payload_class(s)
             try:
@@ -720,7 +611,7 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
             except:
                 if conf.debug_dissector:
                     if isinstance(cls,type) and issubclass(cls,Packet):
-                        log_runtime.error("%s dissector failed" % cls.__name__)
+                        log_runtime.error("%s dissector failed" % cls.name)
                     else:
                         log_runtime.error("%s.guess_payload_class() returned [%s]" % (self.__class__.__name__,repr(cls)))
                     if cls is not None:
@@ -742,18 +633,12 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
 
 
     def guess_payload_class(self, payload):
-        """
-        DEV: Guesses the next payload class from layer bonds.
-        Can be overloaded to use a different mechanism.
-
-        :param str payload: the layer's payload
-        :return: the payload class
-        """
+        """DEV: Guesses the next payload class from layer bonds. Can be overloaded to use a different mechanism."""
         for t in self.aliastypes:
             for fval, cls in t.payload_guess:
                 ok = 1
-                for k, v in six.iteritems(fval):
-                    if not hasattr(self, k) or v != self.getfieldval(k):
+                for k in fval.keys():
+                    if not hasattr(self, k) or fval[k] != self.getfieldval(k):
                         ok = 0
                         break
                 if ok:
@@ -761,40 +646,29 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         return self.default_payload_class(payload)
     
     def default_payload_class(self, payload):
-        """
-        DEV: Returns the default payload class if nothing has been found by the
-        guess_payload_class() method.
-
-        :param str payload: the layer's payload
-        :return: the default payload class define inside the configuration file
-        """
+        """DEV: Returns the default payload class if nothing has been found by the guess_payload_class() method."""
         return conf.raw_layer
 
     def hide_defaults(self):
         """Removes fields' values that are the same as default values."""
-        for k, v in list(self.fields.items()):  # use list(): self.fields is modified in the loop
-            v = self.fields[k]
+        for k in list(self.fields.keys()):
             if k in self.default_fields:
-                if self.default_fields[k] == v:
-                    del self.fields[k]
+                if self.default_fields[k] == self.fields[k]:
+                    del(self.fields[k])
         self.payload.hide_defaults()
-
+            
     def clone_with(self, payload=None, **kargs):
         pkt = self.__class__()
         pkt.explicit = 1
         pkt.fields = kargs
-        pkt.default_fields = self.copy_fields_dict(self.default_fields)
-        pkt.overloaded_fields = self.overloaded_fields.copy()
         pkt.time = self.time
         pkt.underlayer = self.underlayer
+        pkt.overload_fields = self.overload_fields.copy()
         pkt.post_transforms = self.post_transforms
-        pkt.raw_packet_cache = self.raw_packet_cache
-        pkt.raw_packet_cache_fields = self.copy_fields_dict(
-            self.raw_packet_cache_fields
-        )
         if payload is not None:
             pkt.add_payload(payload)
         return pkt
+        
 
     def __iter__(self):
         def loop(todo, done, self=self):
@@ -823,13 +697,13 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
                     pkt = self.clone_with(payload=payl, **done2)
                     yield pkt
 
-        if self.explicit or self.raw_packet_cache is not None:
+        if self.explicit:
             todo = []
             done = self.fields
         else:
-            todo = [k for (k,v) in itertools.chain(six.iteritems(self.default_fields),
-                                                   six.iteritems(self.overloaded_fields))
-                    if isinstance(v, VolatileValue)] + list(self.fields.keys())
+            todo = [ k for (k,v) in itertools.chain(self.default_fields.items(),
+                                                    self.overloaded_fields.items())
+                     if isinstance(v, VolatileValue) ] + list(self.fields.keys())
             done = {}
         return loop(todo, done)
 
@@ -837,7 +711,7 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         """True if other is an answer from self (self ==> other)."""
         if isinstance(other, Packet):
             return other < self
-        elif isinstance(other, bytes):
+        elif type(other) is str:
             return 1
         else:
             raise TypeError((self, other))
@@ -845,7 +719,7 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
         """True if self is an answer from other (other ==> self)."""
         if isinstance(other, Packet):
             return self.answers(other)
-        elif isinstance(other, bytes):
+        elif type(other) is str:
             return 1
         else:
             raise TypeError((self, other))
@@ -888,33 +762,23 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
                     if ret:
                         return ret
         return self.payload.haslayer(cls)
-
-    def getlayer(self, cls, nb=1, _track=None, _subclass=False, **flt):
-        """Return the nb^th layer that is an instance of cls, matching flt
-values.
-
-        """
-        if _subclass:
-            match = lambda cls1, cls2: issubclass(cls1, cls2)
-        else:
-            match = lambda cls1, cls2: cls1 == cls2
-        if isinstance(cls, int):
+    def getlayer(self, cls, nb=1, _track=None):
+        """Return the nb^th layer that is an instance of cls."""
+        if type(cls) is int:
             nb = cls+1
             cls = None
-        if isinstance(cls, str) and "." in cls:
+        if type(cls) is str and "." in cls:
             ccls,fld = cls.split(".",1)
         else:
             ccls,fld = cls,None
-        if cls is None or match(self.__class__, cls) or self.__class__.__name__ == ccls:
-            if all(self.getfieldval(fldname) == fldvalue
-                   for fldname, fldvalue in six.iteritems(flt)):
-                if nb == 1:
-                    if fld is None:
-                        return self
-                    else:
-                        return self.getfieldval(fld)
+        if cls is None or self.__class__ == cls or self.__class__.name == ccls:
+            if nb == 1:
+                if fld is None:
+                    return self
                 else:
-                    nb -=1
+                    return self.getfieldval(fld)
+            else:
+                nb -=1
         for f in self.packetfields:
             fvalue_gen = self.getfieldval(f.name)
             if fvalue_gen is None:
@@ -924,13 +788,11 @@ values.
             for fvalue in fvalue_gen:
                 if isinstance(fvalue, Packet):
                     track=[]
-                    ret = fvalue.getlayer(cls, nb=nb, _track=track,
-                                          _subclass=_subclass)
+                    ret = fvalue.getlayer(cls, nb, _track=track)
                     if ret is not None:
                         return ret
                     nb = track[0]
-        return self.payload.getlayer(cls, nb=nb, _track=_track,
-                                     _subclass=_subclass, **flt)
+        return self.payload.getlayer(cls,nb,_track=_track)
 
     def firstlayer(self):
         q = self
@@ -939,19 +801,21 @@ values.
         return q
 
     def __getitem__(self, cls):
-        if isinstance(cls, slice):
+        if type(cls) is slice:
             lname = cls.start
             if cls.stop:
-                ret = self.getlayer(cls.start, nb=cls.stop, **(cls.step or {}))
+                ret = self.getlayer(cls.start, cls.stop)
             else:
-                ret = self.getlayer(cls.start, **(cls.step or {}))
+                ret = self.getlayer(cls.start)
+            if ret is None and cls.step is not None:
+                ret = cls.step
         else:
-            lname = cls
+            lname=cls
             ret = self.getlayer(cls)
         if ret is None:
-            if isinstance(lname, Packet_metaclass):
+            if type(lname) is Packet_metaclass:
                 lname = lname.__name__
-            elif not isinstance(lname, bytes):
+            elif type(lname) is not str:
                 lname = repr(lname)
             raise IndexError("Layer [%s] not found" % lname)
         return ret
@@ -976,29 +840,13 @@ values.
     def display(self,*args,**kargs):  # Deprecated. Use show()
         """Deprecated. Use show() method."""
         self.show(*args,**kargs)
-    
-    def _show_or_dump(self, dump=False, indent=3, lvl="", label_lvl="", first_call=True):
-        """
-        Internal method that shows or dumps a hierarchical view of a packet.
-        Called by show.
-
-        :param dump: determine if it prints or returns the string value
-        :param int indent: the size of indentation for each layer
-        :param str lvl: additional information about the layer lvl
-        :param str label_lvl: additional information about the layer fields
-        :param first_call: determine if the current function is the first
-        :return: return a hierarchical view if dump, else print it
-        """
-
-        if dump:
-            from scapy.themes import AnsiColorTheme
-            ct = AnsiColorTheme() # No color for dump output
-        else:
-            ct = conf.color_theme
-        s = "%s%s %s %s \n" % (label_lvl,
+    def show(self, indent=3, lvl="", label_lvl=""):
+        """Prints a hierarchical view of the packet. "indent" gives the size of indentation for each layer."""
+        ct = conf.color_theme
+        print("%s%s %s %s" % (label_lvl,
                               ct.punct("###["),
                               ct.layer_name(self.name),
-                              ct.punct("]###"))
+                              ct.punct("]###")))
         for f in self.fields_desc:
             if isinstance(f, ConditionalField) and not f._evalcond(self):
                 continue
@@ -1009,56 +857,26 @@ values.
                 ncol = ct.field_name
                 vcol = ct.field_value
             fvalue = self.getfieldval(f.name)
-            if isinstance(fvalue, Packet) or (f.islist and f.holds_packets and isinstance(fvalue, list)):
-                s += "%s  \\%-10s\\\n" % (label_lvl+lvl, ncol(f.name))
+            if isinstance(fvalue, Packet) or (f.islist and f.holds_packets and type(fvalue) is list):
+                print("%s  \\%-10s\\" % (label_lvl+lvl, ncol(f.name)))
                 fvalue_gen = SetGen(fvalue,_iterpacket=0)
                 for fvalue in fvalue_gen:
-                    s += fvalue._show_or_dump(dump=dump, indent=indent, label_lvl=label_lvl+lvl+"   |", first_call=False)
+                    fvalue.show(indent=indent, label_lvl=label_lvl+lvl+"   |")
             else:
                 begn = "%s  %-10s%s " % (label_lvl+lvl,
                                         ncol(f.name),
                                         ct.punct("="),)
                 reprval = f.i2repr(self,fvalue)
-                if isinstance(reprval, str):
+                if type(reprval) is str:
                     reprval = reprval.replace("\n", "\n"+" "*(len(label_lvl)
                                                               +len(lvl)
                                                               +len(f.name)
                                                               +4))
-                s += "%s%s\n" % (begn,vcol(reprval))
-        if self.payload:
-            s += self.payload._show_or_dump(dump=dump, indent=indent, lvl=lvl+(" "*indent*self.show_indent), label_lvl=label_lvl, first_call=False)
-
-        if first_call and not dump:
-            print(s)
-        else:
-            return s
-
-    def show(self, dump=False, indent=3, lvl="", label_lvl=""):
-        """
-        Prints or returns (when "dump" is true) a hierarchical view of the
-        packet.
-
-        :param dump: determine if it prints or returns the string value
-        :param int indent: the size of indentation for each layer
-        :param str lvl: additional information about the layer lvl
-        :param str label_lvl: additional information about the layer fields
-        :return: return a hierarchical view if dump, else print it
-        """
-        return self._show_or_dump(dump, indent, lvl, label_lvl)
-
-    def show2(self, dump=False, indent=3, lvl="", label_lvl=""):
-        """
-        Prints or returns (when "dump" is true) a hierarchical view of an
-        assembled version of the packet, so that automatic fields are
-        calculated (checksums, etc.)
-
-        :param dump: determine if it prints or returns the string value
-        :param int indent: the size of indentation for each layer
-        :param str lvl: additional information about the layer lvl
-        :param str label_lvl: additional information about the layer fields
-        :return: return a hierarchical view if dump, else print it
-        """
-        return self.__class__(raw(self)).show(dump, indent, lvl, label_lvl)
+                print("%s%s" % (begn,vcol(reprval)))
+        self.payload.show(indent=indent, lvl=lvl+(" "*indent*self.show_indent), label_lvl=label_lvl)
+    def show2(self):
+        """Prints a hierarchical view of an assembled version of the packet, so that automatic fields are calculated (checksums, etc.)"""
+        self.__class__(bytes(self)).show()
 
     def sprintf(self, fmt, relax=1):
         """sprintf(format, [relax=1]) -> str
@@ -1072,10 +890,10 @@ Special case : "%.time%" is the creation time.
 Ex : p.sprintf("%.time% %-15s,IP.src% -> %-15s,IP.dst% %IP.chksum% "
                "%03xr,IP.proto% %r,TCP.flags%")
 
-Moreover, the format string can include conditional statements. A conditional
+Moreover, the format string can include conditionnal statements. A conditionnal
 statement looks like : {layer:string} where layer is a layer name, and string
 is the string to insert in place of the condition if it is true, i.e. if layer
-is present. If layer is preceded by a "!", the result is inverted. Conditions
+is present. If layer is preceded by a "!", the result si inverted. Conditions
 can be imbricated. A valid statement can be :
   p.sprintf("This is a{TCP: TCP}{UDP: UDP}{ICMP:n ICMP} packet")
   p.sprintf("{IP:%IP.dst% {ICMP:%ICMP.type%}{TCP:%TCP.dport%}}")
@@ -1173,27 +991,26 @@ A side effect is that, to obtain "{" and "}" characters, you must use
         return ""
 
     def _do_summary(self):
-        found, s, needed = self.payload._do_summary()
+        found,s,needed = self.payload._do_summary()
+        if s:
+            s = " / "+s
         ret = ""
         if not found or self.__class__ in needed:
             ret = self.mysummary()
-            if isinstance(ret, tuple):
+            if type(ret) is tuple:
                 ret,n = ret
                 needed += n
         if ret or needed:
             found = 1
         if not ret:
-            ret = self.__class__.__name__ if self.show_summary else ""
+            ret = self.__class__.__name__
         if self.__class__ in conf.emph:
             impf = []
             for f in self.fields_desc:
                 if f in conf.emph:
                     impf.append("%s=%s" % (f.name, f.i2repr(self, self.getfieldval(f.name))))
             ret = "%s [%s]" % (ret," ".join(impf))
-        if ret and s:
-            ret = "%s / %s" % (ret, s)
-        else:
-            ret = "%s%s" % (ret,s)
+        ret = "%s%s" % (ret,s)
         return found,ret,needed
 
     def summary(self, intern=0):
@@ -1208,13 +1025,27 @@ A side effect is that, to obtain "{" and "}" characters, you must use
 
     def decode_payload_as(self,cls):
         """Reassembles the payload and decode it using another packet class"""
-        s = raw(self.payload)
+        s = bytes(self.payload)
         self.payload = cls(s, _internal=1, _underlayer=self)
         pp = self
         while pp.underlayer is not None:
             pp = pp.underlayer
         self.payload.dissection_done(pp)
 
+    def libnet(self):
+        """Not ready yet. Should give the necessary C code that interfaces with libnet to recreate the packet"""
+        print("libnet_build_%s(" % self.__class__.name.lower())
+        det = self.__class__(str(self))
+        for f in self.fields_desc:
+            val = det.getfieldval(f.name)
+            if val is None:
+                val = 0
+            elif type(val) is int:
+                val = str(val)
+            else:
+                val = '"%s"' % str(val)
+            print("\t%s, \t\t/* %s */" % (val,f.name))
+        print(");")
     def command(self):
         """Returns a string representing the command you have to type to obtain the same packet"""
         f = []
@@ -1222,10 +1053,9 @@ A side effect is that, to obtain "{" and "}" characters, you must use
             fld = self.get_field(fn)
             if isinstance(fv, Packet):
                 fv = fv.command()
-            elif fld.islist and fld.holds_packets and isinstance(fv, list):
-                fv = "[%s]" % ",".join( map(Packet.command, fv))
-            elif isinstance(fld, FlagsField):
-                fv = int(fv)
+            elif fld.islist and fld.holds_packets and type(fv) is list:
+                #fv = "[%s]" % ",".join( map(Packet.command, fv))
+                fv = "[%s]" % ",".join([ Packet.command(i) for i in fv ])
             else:
                 fv = repr(fv)
             f.append("%s=%s" % (fn, fv))
@@ -1260,11 +1090,8 @@ class NoPayload(Packet):
         return ""
     def __str__(self):
         return ""
-    def __bytes__(self):
-        return b""
-    def __nonzero__(self):
+    def __bool__(self):
         return False
-    __bool__ = __nonzero__
     def do_build(self):
         return b""
     def build(self):
@@ -1283,6 +1110,13 @@ class NoPayload(Packet):
         raise AttributeError(attr)
     def delfieldval(self, attr):
         raise AttributeError(attr)
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return self.__dict__[attr]
+        elif attr in self.__class__.__dict__:
+            return self.__class__.__dict__[attr]
+        else:
+            raise AttributeError(attr)
     def hide_defaults(self):
         pass
     def __iter__(self):
@@ -1297,7 +1131,7 @@ class NoPayload(Packet):
         return isinstance(other, NoPayload) or isinstance(other, conf.padding_layer)
     def haslayer(self, cls):
         return 0
-    def getlayer(self, cls, nb=1, _track=None, **flt):
+    def getlayer(self, cls, nb=1, _track=None):
         if _track is not None:
             _track.append(nb)
         return None
@@ -1324,10 +1158,10 @@ class NoPayload(Packet):
             
 class Raw(Packet):
     name = "Raw"
-    fields_desc = [ StrField("load", "") ]
+    fields_desc = [ StrField("load", b"") ]
     def answers(self, other):
         return 1
-#        s = raw(other)
+#        s = str(other)
 #        t = self.load
 #        l = min(len(s), len(t))
 #        return  s[:l] == t[:l]
@@ -1345,7 +1179,7 @@ class Padding(Raw):
     def self_build(self):
         return b""
     def build_padding(self):
-        return (raw(self.load) if self.raw_packet_cache is None
+        return (self.getbyteval("load") if self.raw_packet_cache is None
                 else self.raw_packet_cache) + self.payload.build_padding()
 
 conf.raw_layer = Raw
@@ -1368,8 +1202,8 @@ def bind_bottom_up(lower, upper, __fval=None, **fval):
 def bind_top_down(lower, upper, __fval=None, **fval):
     if __fval is not None:
         fval.update(__fval)
-    upper._overload_fields = upper._overload_fields.copy()
-    upper._overload_fields[lower] = fval
+    upper.overload_fields = upper.overload_fields.copy()
+    upper.overload_fields[lower] = fval
     
 @conf.commands.register
 def bind_layers(lower, upper, __fval=None, **fval):
@@ -1382,26 +1216,26 @@ def bind_layers(lower, upper, __fval=None, **fval):
 def split_bottom_up(lower, upper, __fval=None, **fval):
     if __fval is not None:
         fval.update(__fval)
-    def do_filter(xxx_todo_changeme,upper=upper,fval=fval):
-        (f,u) = xxx_todo_changeme
-        if u != upper:
+    #def do_filter((f,u),upper=upper,fval=fval):
+    def do_filter(s,upper=upper,fval=fval):
+        if s[1] != upper:
             return True
         for k in fval:
-            if k not in f or f[k] != fval[k]:
+            if k not in s[0] or s[0][k] != fval[k]:
                 return True
         return False
-    lower.payload_guess = [x for x in lower.payload_guess if do_filter(x)]
+    lower.payload_guess = list(filter(do_filter, lower.payload_guess))
         
 def split_top_down(lower, upper, __fval=None, **fval):
     if __fval is not None:
         fval.update(__fval)
-    if lower in upper._overload_fields:
-        ofval = upper._overload_fields[lower]
+    if lower in upper.overload_fields:
+        ofval = upper.overload_fields[lower]
         for k in fval:
             if k not in ofval or ofval[k] != fval[k]:
                 return
-        upper._overload_fields = upper._overload_fields.copy()
-        del(upper._overload_fields[lower])
+        upper.overload_fields = upper.overload_fields.copy()
+        del(upper.overload_fields[lower])
 
 @conf.commands.register
 def split_layers(lower, upper, __fval=None, **fval):
@@ -1413,77 +1247,30 @@ def split_layers(lower, upper, __fval=None, **fval):
 
 
 @conf.commands.register
-def ls(obj=None, case_sensitive=False, verbose=False):
-    """List  available layers, or infos on a given layer class or name"""
-    is_string = isinstance(obj, six.string_types)
-
-    if obj is None or is_string:
-        if obj is None:
-            all_layers = sorted(conf.layers, key=lambda x: x.__name__)
-        else:
-            pattern = re.compile(obj, 0 if case_sensitive else re.I)
-            all_layers = sorted((layer for layer in conf.layers
-                                if (pattern.search(layer.__name__ or '')
-                                    or pattern.search(layer.name or ''))),
-                                key=lambda x: x.__name__)
-        for layer in all_layers:
-            print("%-10s : %s" % (layer.__name__, layer._name))
-
+def ls(obj=None):
+    """List  available layers, or infos on a given layer"""
+    if obj is None:
+        
+        import builtins
+        all = builtins.__dict__.copy()
+        all.update(globals())
+        objlst = sorted(conf.layers, key=lambda x:x.__name__)
+        for o in objlst:
+            print("%-10s : %s" %(o.__name__,o.name))
     else:
-        is_pkt = isinstance(obj, Packet)
-        if (isinstance(obj, type) and issubclass(obj, Packet)) or is_pkt:
+        if isinstance(obj, type) and issubclass(obj, Packet):
             for f in obj.fields_desc:
-                cur_fld = f
-                attrs = []
-                long_attrs = []
-                while isinstance(cur_fld, (Emph, ConditionalField)):
-                    if isinstance(cur_fld, ConditionalField):
-                        attrs.append(cur_fld.__class__.__name__[:4])
-                    cur_fld = cur_fld.fld
-                if verbose and isinstance(cur_fld, EnumField) \
-                   and hasattr(cur_fld, "i2s"):
-                    if len(cur_fld.i2s) < 50:
-                        long_attrs.extend(
-                            "%s: %d" % (strval, numval)
-                            for numval, strval in
-                            sorted(six.iteritems(cur_fld.i2s))
-                        )
-                elif isinstance(cur_fld, MultiEnumField):
-                    fld_depend = cur_fld.depends_on(obj.__class__
-                                                    if is_pkt else obj)
-                    attrs.append("Depends on %s" % fld_depend.name)
-                    if verbose:
-                        cur_i2s = cur_fld.i2s_multi.get(
-                            cur_fld.depends_on(obj if is_pkt else obj()), {}
-                        )
-                        if len(cur_i2s) < 50:
-                            long_attrs.extend(
-                                "%s: %d" % (strval, numval)
-                                for numval, strval in
-                                sorted(six.iteritems(cur_i2s))
-                            )
-                elif verbose and isinstance(cur_fld, FlagsField):
-                    names = cur_fld.names
-                    long_attrs.append(", ".join(names))
-                class_name = "%s (%s)" % (
-                    cur_fld.__class__.__name__,
-                    ", ".join(attrs)) if attrs else cur_fld.__class__.__name__
-                if isinstance(cur_fld, BitField):
-                    class_name += " (%d bit%s)" % (cur_fld.size,
-                                                   "s" if cur_fld.size > 1
-                                                   else "")
-                print("%-10s : %-35s =" % (f.name, class_name), end=' ')
-                if is_pkt:
-                    print("%-15r" % (getattr(obj, f.name),), end=' ')
-                print("(%r)" % (f.default,))
-                for attr in long_attrs:
-                    print("%-15s%s" % ("", attr))
-            if is_pkt and not isinstance(obj.payload, NoPayload):
+                print("%-10s : %-20s = (%s)" % (f.name, f.__class__.__name__,  repr(f.default)))
+        elif isinstance(obj, Packet):
+            for f in obj.fields_desc:
+                print("%-10s : %-20s = %-15s (%s)" % (f.name, f.__class__.__name__, repr(getattr(obj,f.name)), repr(f.default)))
+            if not isinstance(obj.payload, NoPayload):
                 print("--")
                 ls(obj.payload)
+                
 
         else:
-            print("Not a packet class or name. Type 'ls()' to list packet classes.")
+            print("Not a packet class. Type 'ls()' to list packet classes.")
 
 
     
@@ -1503,11 +1290,13 @@ def fuzz(p, _inplace=0):
                 for r in getattr(q, f.name):
                     print("fuzzing", repr(r))
                     fuzz(r, _inplace=1)
+            elif isinstance(f, FlagsField):
+                rnd = random.randint(0, (2 ^ f.size) - 1)
+                q.default_fields[f.name] = rnd
             elif f.default is not None:
-                if not isinstance(f, ConditionalField) or f._evalcond(q):
-                    rnd = f.randval()
-                    if rnd is not None:
-                        q.default_fields[f.name] = rnd
+                rnd = f.randval()
+                if rnd is not None:
+                    q.default_fields[f.name] = rnd
         q = q.payload
     return p
 

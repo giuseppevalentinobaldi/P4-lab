@@ -18,7 +18,6 @@
 
 # Copyright (C) 2010 Florian Duraffourg
 
-from __future__ import absolute_import
 import struct
 
 from scapy.packet import *
@@ -27,7 +26,6 @@ from scapy.ansmachine import *
 from scapy.layers.inet import UDP
 from scapy.layers.inet import TCP
 from scapy.base_classes import Net
-from scapy.modules.six.moves import range
 
 
 # Guess payload
@@ -75,19 +73,19 @@ class FecTLVField(StrField):
             nbroctets = mask / 8
             if mask % 8:
                 nbroctets += 1
-            add=inet_ntoa(x[4:4+nbroctets]+b"\x00"*(4-nbroctets))
+            add=inet_ntoa(x[4:4+nbroctets]+"\x00"*(4-nbroctets))
             list.append( (add, mask) )
             used += 4 + nbroctets
             x=x[4+nbroctets:]
         return list
     def i2m(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
-        s = b"\x01\x00"
+        s = "\x01\x00"
         l = 0
         fec = ""
         for o in x:
-            fec += b"\x02\x00\x01"
+            fec += "\x02\x00\x01"
             # mask length
             fec += struct.pack("!B",o[1])
             # Prefix
@@ -111,9 +109,9 @@ class LabelTLVField(StrField):
     def m2i(self, pkt, x):
         return struct.unpack("!I",x[4:8])[0]
     def i2m(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
-        s = b"\x02\x00\x00\x04"
+        s = "\x02\x00\x00\x04"
         s += struct.pack("!I",x)
         return s
     def size(self, s):
@@ -134,15 +132,15 @@ class AddressTLVField(StrField):
         nbr /= 4
         x=x[6:]
         list=[]
-        for i in range(0, nbr):
+        for i in range(0,nbr):
             add = x[4*i:4*i+4]
             list.append(inet_ntoa(add))
         return list
     def i2m(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
         l=2+len(x)*4
-        s = b"\x01\x01"+struct.pack("!H",l)+b"\x00\x01"
+        s = "\x01\x01"+struct.pack("!H",l)+"\x00\x01"
         for o in x:
             s += inet_aton(o)
         return s
@@ -169,9 +167,9 @@ class StatusTLVField(StrField):
         l.append( struct.unpack("!H", x[12:14])[0] )
         return l
     def i2m(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
-        s = b"\x03\x00" + struct.pack("!H",10)
+        s = "\x03\x00" + struct.pack("!H",10)
         statuscode = 0
         if x[0] != 0:
             statuscode += 2**31
@@ -182,11 +180,11 @@ class StatusTLVField(StrField):
         if len(x) > 3:
             s += struct.pack("!I",x[3])
         else:
-            s += b"\x00\x00\x00\x00"
+            s += "\x00\x00\x00\x00"
         if len(x) > 4:
             s += struct.pack("!H",x[4])
         else:
-            s += b"\x00\x00"
+            s += "\x00\x00"
         return s
     def getfield(self, pkt, s):
         l = 14
@@ -207,9 +205,9 @@ class CommonHelloTLVField(StrField):
         list.append(v)
         return list
     def i2m(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
-        s = b"\x04\x00\x00\x04"
+        s = "\x04\x00\x00\x04"
         s += struct.pack("!H",x[0])
         byte = 0
         if x[1] == 1:
@@ -217,7 +215,7 @@ class CommonHelloTLVField(StrField):
         if x[2] == 1:
             byte += 0x40
         s += struct.pack("!B",byte)
-        s += b"\x00"
+        s += "\x00"
         return s
     def getfield(self, pkt, s):
         l = 8
@@ -228,7 +226,8 @@ class CommonHelloTLVField(StrField):
 class CommonSessionTLVField(StrField):
     islist = 1
     def m2i(self, pkt, x):
-        l = [struct.unpack("!H", x[6:8])[0]]
+        l = []
+        l.append(struct.unpack("!H",x[6:8])[0])
         octet = struct.unpack("B",x[8:9])[0]
         l.append( (octet & 2**7 ) >> 7 )
         l.append( (octet & 2**6 ) >> 6 )
@@ -238,9 +237,9 @@ class CommonSessionTLVField(StrField):
         l.append( struct.unpack("!H",x[16:18])[0] )
         return l
     def i2m(self, pkt, x):
-        if isinstance(x, str):
+        if type(x) is str:
             return x
-        s = b"\x05\x00\x00\x0E\x00\x01"
+        s = "\x05\x00\x00\x0E\x00\x01"
         s += struct.pack("!H",x[0])
         octet = 0
         if x[1] != 0:

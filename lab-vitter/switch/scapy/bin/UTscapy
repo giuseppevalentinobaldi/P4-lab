@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 
 #############################################################################
@@ -24,4 +24,4 @@
 import sys
 from scapy.tools.UTscapy import main
 
-exit(main(sys.argv[1:]))
+main(sys.argv[1:])

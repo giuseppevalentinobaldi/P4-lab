@@ -7,83 +7,95 @@
 Operating system specific functionality.
 """
 
-from __future__ import absolute_import
-import socket
 
-from scapy.consts import LINUX, OPENBSD, FREEBSD, NETBSD, DARWIN, \
-    SOLARIS, WINDOWS, BSD, IS_64BITS, LOOPBACK_NAME, plt, MATPLOTLIB_INLINED, \
-    MATPLOTLIB_DEFAULT_PLOT_KARGS, PYX, parent_function
+import sys,os,socket
 from scapy.error import *
 import scapy.config
-from scapy.pton_ntop import inet_pton
-from scapy.data import *
+
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB = True
+    if scapy.config.conf.interactive:
+        plt.ion()
+except ImportError:
+    log_loading.debug("Can't import matplotlib. Not critical, but won't be able to plot.")
+    MATPLOTLIB = False
+
+try:
+    import networkx as nx
+    NETWORKX = True
+except ImportError:
+    log_loading.debug("Can't import networkx. Not criticial, but won't be able to draw network graphs.")
+    NETWORKX = False
+
+try:
+    import pyx
+    PYX=1
+except ImportError:
+    log_loading.debug("Can't import PyX. Won't be able to use psdump() or pdfdump().")
+    PYX=0
+
+if scapy.config.conf.use_netifaces:
+  try:
+    import netifaces
+  except ImportError as e:
+    log_loading.warning("Could not load module netifaces: %s" % e)
+    scapy.config.conf.use_netifaces = False
 
 def str2mac(s):
-    return ("%02x:"*6)[:-1] % tuple(orb(x) for x in s)
+    #return ("%02x:"*6)[:-1] % tuple(map(ord, s)) 
+    return ("%02x:"*6)[:-1] % tuple(s)
 
-if not WINDOWS:
-    if not scapy.config.conf.use_pcap and not scapy.config.conf.use_dnet:
-        from scapy.arch.bpf.core import get_if_raw_addr
 
+    
 def get_if_addr(iff):
     return socket.inet_ntoa(get_if_raw_addr(iff))
     
 def get_if_hwaddr(iff):
-    addrfamily, mac = get_if_raw_hwaddr(iff)
-    if addrfamily in [ARPHDR_ETHER,ARPHDR_LOOPBACK]:
-        return str2mac(mac)
-    else:
-        raise Scapy_Exception("Unsupported address family (%i) for interface [%s]" % (addrfamily,iff))
+    mac = get_if_raw_hwaddr(iff)
+    return str2mac(mac)
 
+
+LINUX=sys.platform.startswith("linux")
+OPENBSD=sys.platform.startswith("openbsd")
+FREEBSD=sys.platform.startswith("freebsd")
+NETBSD = sys.platform.startswith("netbsd")
+DARWIN=sys.platform.startswith("darwin")
+SOLARIS=sys.platform.startswith("sunos")
+WINDOWS=sys.platform.startswith("win32")
+
+X86_64 = not WINDOWS and (os.uname()[4] == 'x86_64')
+
+if WINDOWS:
+    pass
+#  log_loading.warning("Windows support for scapy3k is currently in testing. Sniffing/sending/receiving packets should be working with WinPcap driver and Powershell. Create issues at https://github.com/phaethon/scapy")
 
 # Next step is to import following architecture specific functions:
 # def get_if_raw_hwaddr(iff)
 # def get_if_raw_addr(iff):
 # def get_if_list():
 # def get_working_if():
-# def attach_filter(s, filter, iface):
+# def attach_filter(s, bpf_filter, iface):
 # def set_promisc(s,iff,val=1):
 # def read_routes():
-# def read_routes6():
 # def get_if(iff,cmd):
 # def get_if_index(iff):
 
-if LINUX:
-    from scapy.arch.linux import *
-    if scapy.config.conf.use_pcap or scapy.config.conf.use_dnet:
-        from scapy.arch.pcapdnet import *
-elif BSD:
-    from scapy.arch.unix import read_routes, read_routes6, in6_getifaddr
 
-    if scapy.config.conf.use_pcap or scapy.config.conf.use_dnet:
-        from scapy.arch.pcapdnet import *
-    else:
-        from scapy.arch.bpf.supersocket import L2bpfListenSocket, L2bpfSocket, L3bpfSocket
-        from scapy.arch.bpf.core import *
-        scapy.config.conf.use_bpf = True
-        scapy.config.conf.L2listen = L2bpfListenSocket
-        scapy.config.conf.L2socket = L2bpfSocket
-        scapy.config.conf.L3socket = L3bpfSocket
+
+if LINUX:
+    from .linux import *
+    if scapy.config.conf.use_winpcapy or scapy.config.conf.use_netifaces:
+        from .pcapdnet import *
+elif OPENBSD or FREEBSD or NETBSD or DARWIN:
+    from .bsd import *
 elif SOLARIS:
-    from scapy.arch.solaris import *
+    from .solaris import *
 elif WINDOWS:
-    from scapy.arch.windows import *
+    from .windows import *
 
 if scapy.config.conf.iface is None:
-    scapy.config.conf.iface = scapy.consts.LOOPBACK_INTERFACE
-
-
-def get_if_addr6(iff):
-    """
-    Returns the main global unicast address associated with provided 
-    interface, in human readable form. If no global address is found,
-    None is returned. 
-    """
-    for x in in6_getifaddr():
-        if x[2] == iff and x[1] == IPV6_ADDR_GLOBAL:
-            return x[0]
-        
-    return None
+    scapy.config.conf.iface = LOOPBACK_NAME
 
 def get_if_raw_addr6(iff):
     """
@@ -91,8 +103,10 @@ def get_if_raw_addr6(iff):
     interface, in network format. If no global address is found, None 
     is returned. 
     """
-    ip6= get_if_addr6(iff)
-    if ip6 is not None:
-        return inet_pton(socket.AF_INET6, ip6)
-    
-    return None
+    #r = filter(lambda x: x[2] == iff and x[1] == IPV6_ADDR_GLOBAL, in6_getifaddr())
+    r = [ x for x in in6_getifaddr() if x[2] == iff and x[1] == IPV6_ADDR_GLOBAL]
+    if len(r) == 0:
+        return None
+    else:
+        r = r[0][0] 
+    return inet_pton(socket.AF_INET6, r)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Scapy documentation build configuration file.
+# Scapy documentation build configuration file, created by
+# sphinx-quickstart on Mon Sep  8 19:37:39 2008.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -35,15 +36,15 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Scapy'
-copyright = '2008, 2016 Philippe Biondi and the Scapy community'
+copyright = '2008, 2009 Philippe Biondi and the Scapy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '2.3.3'
+version = '3.0.0'
 # The full version, including alpha/beta/rc tags.
-release = '2.3.3-dev'
+release = '3.0.0'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -78,10 +79,6 @@ pygments_style = 'sphinx'
 
 # Options for HTML output
 # -----------------------
-
-# Auto detect sphinx rtd. If set to True, if sphinx rtd is installed, it will be
-# automatically used.
-auto_rtd = True
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
@@ -180,18 +177,3 @@ latex_documents = [
 
 # If false, no module index is generated.
 latex_use_modindex = False
-
-#############################################
-########       END OF CONFIG FILE    ########
-######## DO NOT EDIT BELOW THIS LINE ########
-#############################################
-
-### Performing detect tasks ###
-if auto_rtd:
-    try:
-        import sphinx_rtd_theme
-        del html_style
-        html_theme = "sphinx_rtd_theme"
-        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-    except:
-        pass

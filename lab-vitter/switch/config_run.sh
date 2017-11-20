@@ -28,7 +28,7 @@ function configure_machine(){
     ln -s /usr/bin/tcpdump /usr/sbin/tcpdump
     echo "> install scapy!!"
     cd /scapy
-    python setup.py install
+    python3 setup.py install
     cd /
     case $1 in
     1)

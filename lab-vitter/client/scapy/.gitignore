@@ -1,9 +1,9 @@
+build
+_build
+__pycache__
 *.pyc
-*.pyo
-dist/
-build/
-MANIFEST
-*.egg-info/
-scapy/VERSION
-test/*.html
-doc/scapy/_build
+*.sublime-project
+*.sublime-workspace
+scapy_python3.egg-info
+.idea
+*.swp

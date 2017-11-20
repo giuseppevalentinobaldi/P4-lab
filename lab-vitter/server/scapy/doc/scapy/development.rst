@@ -2,77 +2,26 @@
 Scapy development
 *****************
 
+.. note::
+
+   This section is only partly updated for scapy3k yet. Code examples may not work directly.
+
 Project organization
 ====================
 
-Scapy development uses the Git version control system. Scapy's
-reference repository is at https://github.com/secdev/scapy/.
+Scapy3k development uses the `GitHub repository <http://github.com/phaethon/scapy>`_
+Scapy3k is not synchronized with scapy v2.x repository at http://hg.secdev.org/scapy/. Changes in one project reflect on the other only if somebody manually transfers the change.
 
-Project management is done with `Github
-<https://github.com/secdev/scapy/>`_.  It provides a freely editable
-`Wiki <https://github.com/secdev/scapy/wiki/>`_ (please contribute!)
-that can reference tickets, changesets, files from the project. It
-also provides a ticket management service that is used to avoid
-forgetting patches or bugs.
 
 How to contribute
 =================
 
-* Found a bug in Scapy? `Add a ticket <https://github.com/secdev/scapy/issues/new>`_.
+* Found a bug in Scapy3k? `Add a ticket <http://github.com/phaethon/scapy/issues>`_.
 * Improve this documentation.
-* Program a new layer and share it on the mailing list, or create a pull request.
-* Contribute new `regression tests <https://github.com/secdev/scapy/wiki/Contrib:-RegressionTests>`_.
-* Upload packet samples for new protocols on the `packet samples page
-  <https://github.com/secdev/scapy/wiki/Contrib:-PacketSamples>`_.
+* Program a new layer and create a pull request. 
+* Contribute new regression tests.
+* Upload packet samples for new protocols.
 
-
-Improve the documentation
-=========================
-
-The documentation can be improved in several ways by:
-
-* Adding docstrings to the source code.
-* Adding usage examples to the documentation.
-
-Adding Docstrings
------------------
-The Scapy source code have few explanations of what a function is doing. A docstring, by adding explanation and
-expected input and output parameters, helps saving time for both the layer developers and the users looking for
-advanced features.
-
-An example of docstring from the ``scapy.fields.FlagsField`` class: ::
-
-  class FlagsField(BitField):
-    """ Handle Flag type field
-
-     Make sure all your flags have a label
-
-     Example:
-         >>> from scapy.packet import Packet
-         >>> class FlagsTest(Packet):
-                 fields_desc = [FlagsField("flags", 0, 8, ["f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7"])]
-         >>> FlagsTest(flags=9).show2()
-         ###[ FlagsTest ]###
-           flags     = f0+f3
-         >>> FlagsTest(flags=0).show2().strip()
-         ###[ FlagsTest ]###
-           flags     =
-
-     :param name: field's name
-     :param default: default value for the field
-     :param size: number of bits in the field
-     :param names: (list or dict) label for each flag, Least Significant Bit tag's name is written first
-     """
-
-It will contain a short oneline description of the class followed by some indications about its usage.
-You can add a usage example if it makes sense using the `doctest <https://docs.python.org/2.7/library/doctest.html>`_ format.
-Finally the classic python signature can be added following the `sphinx documentation  <http://www.sphinx-doc.org/en/stable/domains.html#python-signatures>`_.
-
-This task works in pair with writing non regression unit tests.
-
-Documentation
--------------
-A way to improve the documentation content is by keeping it up to date with the latest version of Scapy. You can also help by adding usage examples of your own or directly gathered from existing online Scapy presentations.
 
 Testing with UTScapy
 ====================
@@ -120,7 +69,7 @@ The generic format for a test campaign is shown in the following table::
     * Comments for unit test 1
     # Python statements follow
     a = 1
-    print a
+    print(a)
     a == 1
 
 
@@ -196,7 +145,7 @@ Table 5 shows a simple test campaign with multiple test set definitions. Additio
     = Unit Test 1
     ~ test_set_1 simple
     a = 1
-    print a
+    print(a)
     
     = Unit test 2
     ~ test_set_1 simple
@@ -234,11 +183,11 @@ Table 5 shows a simple test campaign with multiple test set definitions. Additio
     
     = Unit Test 6
     ~ test_set_2 hardest
-    print e
+    print(e)
     e == 1296
 
 To see an example that is targeted to Scapy, go to http://www.secdev.org/projects/UTscapy. Cut and paste the example at the bottom of the page to the file ``demo_campaign.txt`` and run UTScapy against it::
 
-./test/run_tests -t demo_campaign.txt -f html -o demo_campaign.html -F -l
+./UTscapy.py -t demo_campaign.txt -f html -o demo_campaign.html –F -l
 
 Examine the output generated in file ``demo_campaign.html``.
