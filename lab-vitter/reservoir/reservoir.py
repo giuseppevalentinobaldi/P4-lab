@@ -22,7 +22,7 @@ def print_resevoir():
 def resevoir(packet):
     global q
     ts = time.time()
-    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
     if q.qsize() < N:
         q.put((st, packet))
         print_resevoir()
