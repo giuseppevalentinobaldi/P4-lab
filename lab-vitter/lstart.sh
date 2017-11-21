@@ -26,6 +26,7 @@ function run(){
     echo "1 - to run copy to cpu"
     echo "2 - to run r"
     echo "3 - to run x"
+    echo "4 - to run window"
     read -p 'What do you want to do ?: ' dovar
     sudo nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
     sleep 15
