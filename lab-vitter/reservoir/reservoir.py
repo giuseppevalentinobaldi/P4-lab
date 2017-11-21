@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from scapy.all import *
-import queue, datetime, time
+import queue, datetime, time, sys
 
 N = 3
 q = queue.Queue(N)
@@ -37,10 +37,21 @@ def packet_callback(packet):
         resevoir(packet)
 
 
-def main():
+def main_custom(reservoir_length):
+    global N
+    N = reservoir_length
+    print ("> Custom reservoir ready!!")
+    sniff(iface="eth0", filter="tcp", prn=packet_callback, store=0)
+
+    
+def main_default():
+    # default N = 3
     print ("> Reservoir ready!!")
     sniff(iface="eth0", filter="tcp", prn=packet_callback, store=0)
 
 
 if __name__ == "__main__":
-   main()
+    if len(sys.argv) == 2:
+        main_custom(int(sys.argv[1]))
+    else:
+        main_default()
