@@ -212,13 +212,14 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             reg.read(ntot, 32w1);
             reg.read(tw, 32w6);
             if(ntot < N){ 					//cold start!!
-        	reg.write(32w1, ntot + 32s1);			//ntot = ntot + 1
+        	ntot = ntot + 32s1;
+                reg.write(32w1, ntot);				//ntot = ntot + 1
                 reg.write(32w6, tw + 32s1);			//tw = tw + 1
 		clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
                 if(ntot == N){
                     random(caster, 32w0, (bit<32>)N);
                     reg.write(32w2, (int<32>)caster);		//P = random(0,N)
-                    reg.write(32w3, ntot);			//t = N	  	
+                    reg.write(32w3, ntot);			//t = N		  	
                 }
             }
             else{
@@ -230,13 +231,19 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 if(tw == W){
                     reg.write(32w6, 32s0);			//tw = 0
                     reg.write(32w4, wcount + 32s1);		//wcount = wcount +1
+		    reg.read(tw, 32w6);				//update tw
+                    reg.read(wcount, 32w4); 			//update wcount
                 }
                 if(tn == N){
                     reg.write(32w0, 32s0);			//tn = 0
+                    reg.read(tn, 32w0);				//update tn
                 }
-		reg.write(32w0, tn + 32s1);			//tn = tn + 1
-		reg.write(32w6, tw + 32s1);			//tw = tw + 1
-                reg.write(32w3, t + 32s1);			//tw = tw + 1
+                tn = tn + 32s1;
+                tw = tw + 32s1;
+                t = t + 32s1;
+		reg.write(32w0, tn);				//tn = tn + 1
+		reg.write(32w6, tw);				//tw = tw + 1
+                reg.write(32w3, t);				//t = t + 1
         	if((wj - ntot) > (c * N) * wcount && wj > 0){
                     reg.read(Y, 32w7);
                     random(caster, 32w1, (bit<32>)c);
