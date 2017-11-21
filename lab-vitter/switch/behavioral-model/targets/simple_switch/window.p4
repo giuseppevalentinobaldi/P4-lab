@@ -248,6 +248,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                     reg.read(Y, 32w7);
                     random(caster, 32w1, (bit<32>)c);
                     Y = Y + (int<32>)caster * ls;
+                    reg.write(32w7, Y);
                     if( (V - tn - Y) < 0 ){
                         reg.write(32w5, 32s0);			//ls = 0
                         reg.write(32w7, 32s0);			//Y = 0
