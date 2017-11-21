@@ -152,7 +152,7 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 8) reg;
+    register<value_t>((index_t) 9) reg;
     int<32> tn;		//reg[0] 
     int<32> ntot;	//reg[1]
     int<32> V;		//reg[2]
@@ -244,11 +244,11 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 		reg.write(32w0, tn);				//tn = tn + 1
 		reg.write(32w6, tw);				//tw = tw + 1
                 reg.write(32w3, t);				//t = t + 1
-        	if((wj + t - ntot) > (c * N) * (wcount) && wj > 0){
+        	if((wj + t - ntot) > W * wcount && wj > 0){
                     reg.read(Y, 32w7);
-                    random(caster, 32w1, (bit<32>)c);
-                    Y = Y + (int<32>)caster * ls;
+                    Y = Y + ls;
                     reg.write(32w7, Y);
+                    reg.write(32w8, Y);
                     if( (V - tn - Y) < 32s0 ){
                         reg.write(32w5, 32s0);			//ls = 0
                         reg.write(32w7, 32s0);			//Y = 0
