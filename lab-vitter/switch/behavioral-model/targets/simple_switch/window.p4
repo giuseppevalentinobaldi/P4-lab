@@ -162,7 +162,8 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     int<32> tw;     	//reg[6]
     int<32> Y;     	//reg[7]
 
-    int<32> tmprand
+    int<32> tmprand;
+    bit<32> caster;
     
     action drop() {
         mark_to_drop();
@@ -210,55 +211,56 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
             reg.read(ntot, 32w1);
             reg.read(tw, 32w6);
-            if(ntot < N){ //cold start!!
-        	reg.write(32w1, ntot + 32s1);	//ntot = ntot + 1
-                reg.write(32w6, tw + 32s1);	//tw = tw + 1
+            if(ntot < N){ 					//cold start!!
+        	reg.write(32w1, ntot + 32s1);			//ntot = ntot + 1
+                reg.write(32w6, tw + 32s1);			//tw = tw + 1
 		clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
                 if(ntot == N){
-                    random(V, 32w0, (bit<32>)N);
-                    reg.write(32w2, V);		//P = random(0,N)
-                    reg.write(32w3, ntot);	//t = N	  	
+                    random(caster, 32w0, (bit<32>)N);
+                    reg.write(32w2, (int<32>)caster);		//P = random(0,N)
+                    reg.write(32w3, ntot);			//t = N	  	
                 }
             }
             else{
-                reg.read(tn,32w0);
-                reg.read(V,32w2);
-                reg.read(t,32w3);
-                reg.read(wcount,32w4);
-                reg.read(ls,32w5)
+                reg.read(tn, 32w0);
+                reg.read(V, 32w2);
+                reg.read(t, 32w3);
+                reg.read(wcount, 32w4);
+                reg.read(ls, 32w5);
                 if(tw == W){
-                    reg.write(32w6, 32s0);		//tw = 0
-                    reg.write(32w4, wcount + 32s1);	//wcount = wcount +1
+                    reg.write(32w6, 32s0);			//tw = 0
+                    reg.write(32w4, wcount + 32s1);		//wcount = wcount +1
                 }
                 if(tn == N){
-                    reg.write(32w0, 32s0);		//tn = 0
+                    reg.write(32w0, 32s0);			//tn = 0
                 }
-		reg.write(32w0, tn + 32s1);	//tn = tn + 1
-		reg.write(32w6, tw + 32s1);	//tw = tw + 1
-                reg.write(32w3, t + 32s1);	//tw = tw + 1
-        	if((wj - ntot) > (c * N) * wcount && wj > 0)
-                    reg.read(Y,32w7)
-                    random(tmprand, 32w1, (bit<32>)c);
-                    Y = Y + tmprand * ls
+		reg.write(32w0, tn + 32s1);			//tn = tn + 1
+		reg.write(32w6, tw + 32s1);			//tw = tw + 1
+                reg.write(32w3, t + 32s1);			//tw = tw + 1
+        	if((wj - ntot) > (c * N) * wcount && wj > 0){
+                    reg.read(Y, 32w7);
+                    random(caster, 32w1, (bit<32>)c);
+                    Y = Y + (int<32>)caster * ls;
                     if( (V - tn - Y) < 0 ){
-                        reg.write(32w5, 32s0);	//ls = 0
-                        reg.write(32s7, 32s0);	//Y = 0
-                        random(V, 32w0, (bit<32>)N);
-                        reg.write(32w2, V);	//P = random(0,N)
-                        reg.write(32w1, ntot + 32s1);	//ntot = ntot + 1
+                        reg.write(32w5, 32s0);			//ls = 0
+                        reg.write(32w7, 32s0);			//Y = 0
+                        random(caster, 32w0, (bit<32>)N);
+                        reg.write(32w2,(int<32>)caster);	//P = random(0,N)
+                        reg.write(32w1, ntot + 32s1);		//ntot = ntot + 1
                         clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });	//send packet to reservoir
                     }
                     else{
                         reg.write(32w5, ls + 32s1); //ls= ls + 1
                         //skip
                     }
+                }
                 else{
                     if( (V-tn) < 0 ){
-                        reg.write(32w5, 32s0);	//ls = 0
-                        reg.write(32s7, 32s0);	//Y = 0
-                        random(V, 32w0, (bit<32>)N);
-                        reg.write(32w2, V);	//P = random(0,N)
-                        reg.write(32w1, ntot + 32s1);	//ntot = ntot + 1
+                        reg.write(32w5, 32s0);			//ls = 0
+                        reg.write(32w7, 32s0);			//Y = 0
+                        random(caster, 32w0, (bit<32>)N);
+                        reg.write(32w2,(int<32>)caster);	//P = random(0,N)
+                        reg.write(32w1, ntot + 32s1);		//ntot = ntot + 1
                         clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });	//send packet to reservoir
                     }
                     else{
