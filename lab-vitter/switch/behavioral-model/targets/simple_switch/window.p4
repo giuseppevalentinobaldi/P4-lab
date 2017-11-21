@@ -152,7 +152,7 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 9) reg;
+    register<value_t>((index_t) 8) reg;
     int<32> tn;		//reg[0] 
     int<32> ntot;	//reg[1]
     int<32> V;		//reg[2]
@@ -162,7 +162,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     int<32> tw;     	//reg[6]
     int<32> Y;     	//reg[7]
 
-    int<32> tmprand;
     bit<32> caster;
     
     action drop() {
@@ -248,7 +247,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                     reg.read(Y, 32w7);
                     Y = Y + ls;
                     reg.write(32w7, Y);
-                    reg.write(32w8, Y);
                     if( (V - tn - Y) < 32s0 ){
                         reg.write(32w5, 32s0);			//ls = 0
                         reg.write(32w7, 32s0);			//Y = 0
