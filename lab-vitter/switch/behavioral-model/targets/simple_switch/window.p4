@@ -14,29 +14,29 @@ const int<32> W = 900;
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
 
-typedef bit<9>  egressSpec_t;
-typedef bit<48> macAddr_t;
-typedef bit<32> ip4Addr_t;
-typedef int<32> value_t;
-typedef bit<32> index_t;
-typedef bit<1> boolean_t;
+typedef bit<9>	egressSpec_t;
+typedef bit<48>	macAddr_t;
+typedef bit<32>	ip4Addr_t;
+typedef int<32>	value_t;
+typedef bit<32>	index_t;
+typedef bit<1>	boolean_t;
 
 struct intrinsic_metadata_t {
-    bit<1>  resubmit_flag;
-    bit<48> ingress_global_tstamp;
-    bit<16> mcast_grp;
-    bit<1>  deflection_flag;
-    bit<1>  deflect_on_drop;
-    bit<19> enq_qdepth;
-    bit<32> enq_tstamp;
-    bit<2>  enq_congest_stat;
-    bit<19> deq_qdepth;
-    bit<2>  deq_congest_stat;
-    bit<32> deq_timedelta;
-    bit<13> mcast_hash;
-    bit<16> egress_rid;
-    bit<32> lf_field_list;
-    bit<3> priority;
+    bit<1> 	resubmit_flag;
+    bit<48>	ingress_global_tstamp;
+    bit<16>	mcast_grp;
+    bit<1>	deflection_flag;
+    bit<1>	deflect_on_drop;
+    bit<19>	enq_qdepth;
+    bit<32>	enq_tstamp;
+    bit<2>	enq_congest_stat;
+    bit<19>	deq_qdepth;
+    bit<2>	deq_congest_stat;
+    bit<32>	deq_timedelta;
+    bit<13>	mcast_hash;
+    bit<16>	egress_rid;
+    bit<32>	lf_field_list;
+    bit<3>	priority;
 }
 
 struct mymeta_t {
@@ -84,9 +84,9 @@ struct metadata {
 }
 
 struct headers {
-    ethernet_t 	ethernet;
-    ipv4_t		ipv4;
-    tcp_t		tcp;
+    ethernet_t	ethernet;
+    ipv4_t	ipv4;
+    tcp_t 	tcp;
 }
 
 /*************************************************************************
@@ -261,7 +261,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                     }
                 }
                 else{
-                    if( (V-tn) < 32s0 ){
+                    if( (V - tn) < 32s0 ){
                         reg.write(32w5, 32s0);			//ls = 0
                         reg.write(32w7, 32s0);			//Y = 0
                         random(caster, 32w0, (bit<32>)N -1);
