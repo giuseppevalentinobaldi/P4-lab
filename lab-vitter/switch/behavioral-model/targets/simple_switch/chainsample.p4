@@ -50,18 +50,18 @@ header ethernet_t {
 }
 
 header ipv4_t {
-    bit<4>    version;
-    bit<4>    ihl;
-    bit<8>    diffserv;
-    bit<16>   totalLen;
-    bit<16>   identification;
-    bit<3>    flags;
-    bit<13>   fragOffset;
-    bit<8>    ttl;
-    bit<8>    protocol;
-    bit<16>   hdrChecksum;
-    ip4Addr_t srcAddr;
-    ip4Addr_t dstAddr;
+    bit<4>	version;
+    bit<4>	ihl;
+    bit<8>	diffserv;
+    bit<16>	totalLen;
+    bit<16>	identification;
+    bit<3>	flags;
+    bit<13>	fragOffset;
+    bit<8>	ttl;
+    bit<8>	protocol;
+    bit<16>	hdrChecksum;
+    ip4Addr_t	srcAddr;
+    ip4Addr_t	dstAddr;
 }
 
 header tcp_t {
@@ -152,17 +152,6 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 8) reg;
-    int<32> tn;		//reg[0] 
-    int<32> ntot;	//reg[1]
-    int<32> V;		//reg[2]
-    int<32> t;		//reg[3]
-    int<32> wcount;	//reg[4]
-    int<32> ls;     	//reg[5]
-    int<32> tw;     	//reg[6]
-    int<32> Y;     	//reg[7]
-
-    bit<32> caster;
     
     action drop() {
         mark_to_drop();
@@ -208,73 +197,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     apply {
     	check_src.apply();
     	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
-            reg.read(ntot, 32w1);
-            reg.read(tw, 32w6);
-            if(ntot < N){ 					//cold start!!
-        	ntot = ntot + 32s1;
-                reg.write(32w1, ntot);				//ntot = ntot + 1
-                reg.write(32w6, tw + 32s1);			//tw = tw + 1
-		clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
-                if(ntot == N){
-                    random(caster, 32w0, (bit<32>)N);
-                    reg.write(32w2, (int<32>)caster);		//P = random(0,N)
-                    reg.write(32w3, ntot);			//t = N		  	
-                }
-            }
-            else{
-                reg.read(tn, 32w0);
-                reg.read(V, 32w2);
-                reg.read(t, 32w3);
-                reg.read(wcount, 32w4);
-                reg.read(ls, 32w5);
-                if(tw == W){
-                    reg.write(32w6, 32s0);			//tw = 0
-                    reg.write(32w4, wcount + 32s1);		//wcount = wcount +1
-		    reg.read(tw, 32w6);				//update tw
-                    reg.read(wcount, 32w4); 			//update wcount
-                }
-                if(tn == N){
-                    reg.write(32w0, 32s0);			//tn = 0
-                    reg.read(tn, 32w0);				//update tn
-                }
-                tn = tn + 32s1;
-                tw = tw + 32s1;
-                t = t + 32s1;
-		reg.write(32w0, tn);				//tn = tn + 1
-		reg.write(32w6, tw);				//tw = tw + 1
-                reg.write(32w3, t);				//t = t + 1
-        	if((wj + t - ntot) > W * wcount && wj > 0){
-                    reg.read(Y, 32w7);
-                    Y = Y + ls;
-                    reg.write(32w7, Y);
-                    if( (V - tn - Y) < 32s0 ){
-                        reg.write(32w5, 32s0);			//ls = 0
-                        reg.write(32w7, 32s0);			//Y = 0
-                        random(caster, 32w0, (bit<32>)N -1);
-                        reg.write(32w2,(int<32>)caster);	//P = random(0,N)
-                        reg.write(32w1, ntot + 32s1);		//ntot = ntot + 1
-                        clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });	//send packet to reservoir
-                    }
-                    else{
-                        reg.write(32w5, ls + 32s1); 		//ls= ls + 1
-                        //skip
-                    }
-                }
-                else{
-                    if( (V - tn) < 32s0 ){
-                        reg.write(32w5, 32s0);			//ls = 0
-                        reg.write(32w7, 32s0);			//Y = 0
-                        random(caster, 32w0, (bit<32>)N -1);
-                        reg.write(32w2,(int<32>)caster);	//P = random(0,N)
-                        reg.write(32w1, ntot + 32s1);		//ntot = ntot + 1
-                        clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });	//send packet to reservoir
-                    }
-                    else{
-                        reg.write(32w5, ls + 32s1); //ls= ls + 1
-                        //skip
-                    }
-                }
-            }
+	    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
         }
         ipv4_lpm.apply();
     }
@@ -284,8 +207,27 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 ****************  E G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
 
-control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {   
+control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {  
+ 
+    action test_port(){
+    	 hdr.ipv4.options = 32w1024;
+         hdr.ipv4.ttl = 8w1;
+    }
+
+    table test {
+        key = {
+            standard_metadata.instance_type: exact;
+        }
+        actions = {
+            test_port;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
     apply {
+        test.apply();
      }
 }
 

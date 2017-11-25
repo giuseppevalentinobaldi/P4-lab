@@ -43,10 +43,13 @@ function configure_machine(){
     4)
         setup_config simple_switch window 16 commands_window nodebug sswitch_CLI
         ;;
+    5)
+        setup_config simple_switch chainsample 16 commands_chainsample nodebug sswitch_CLI
+        ;;
     *)
         echo "> Error!! --> Command not find"
         echo "> Run of default!! --> window"
-        setup_config simple_switch window 16 commands_window debug sswitch_CLI
+        setup_config simple_switch chainsample 16 commands_chainsample debug sswitch_CLI
         ;;
     esac
     echo "> Ready!!"
