@@ -210,7 +210,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {  
  
     action test_port(){
-    	 hdr.ipv4.options = 32w1024;
          hdr.ipv4.ttl = 8w1;
     }
 

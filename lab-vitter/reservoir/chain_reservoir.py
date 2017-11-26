@@ -9,7 +9,7 @@ class ChainSample():
 
     def __init__(self, sampleArray, queueList, dictDeadline, t):
         self.sampleArray = sampleArray
-        self.queueList = dict()
+        self.queueList = queueList
         self.dictDeadline = dictDeadline
         self.t = t
     
@@ -33,16 +33,23 @@ class ChainSample():
         indexExpired = self.getdictDeadline[deadline]
         self.sampleArray[indexExpired] = self.getQueueList.get()
 
-    def printQueueList():
+    def printQueueList(self):
         tmp = Queue()
         print("=====================================================")
-        while not (self.getQueueList().empty()) :
+        while not (self.getQueueList().empty()):
             tup = self.getQueueList().get()
             tmp.put(tup)
             print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
         print("=====================================================")
         self.setQueueList(tmp)
-
+        
+    def printSampleArray(self):
+        print("*****************************************************")
+        for tup in self.sampleArray:
+            if tup is not None:
+                print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
+        print("*****************************************************")
+        
     def getSampleArray(self):
         return self.sampleArray
 
@@ -72,6 +79,8 @@ def packet_callback(packet):
     global chain
     if packet[TCP].payload:
         chain.insert(packet)
+        chain.printQueueList()
+        chain.printSampleArray()
 
 
 def main(size):
