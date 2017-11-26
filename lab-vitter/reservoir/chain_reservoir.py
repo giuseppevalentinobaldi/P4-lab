@@ -7,17 +7,16 @@ import datetime, time, sys
 
 class ChainSample():
 
-    def __init__(sampleSize, sampleArray, queueList, dictDeadline, t):
-        self.sampleSize = sampleSize
+    def __init__(self, sampleArray, queueList, dictDeadline, t):
         self.sampleArray = sampleArray
-        self.queueList = queueList
+        self.queueList = dict()
         self.dictDeadline = dictDeadline
         self.t = t
     
     def insert(self, packet):
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
-        if self.t < self.sampleSize:
+        if self.t < len(self.sampleArray):
             self.sampleArray[self.t] = (st, packet);
             self.dictDeadline.update({'pktDeadline': self.t})  # devi passargli la scadenza
             self.t += 1
@@ -40,9 +39,6 @@ class ChainSample():
             print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
         print("=====================================================")
         self.setQueueList(tmp)
-        
-    def getSampleSize(self):
-        return self.sampleSize
 
     def getSampleArray(self):
         return self.sampleArray
@@ -55,9 +51,6 @@ class ChainSample():
 
     def getT(self):
         return selft.t
-    
-    def setSampleSize(self, sampleSize):
-        self.sampleSize = sampleSize
     
     def setSampleArray(self, sampleArray):
         self.sampleArray = sampleArray
@@ -78,12 +71,13 @@ def packet_callback(packet):
         chain.insert(packet)
 
 
-def main():
+def main(size):
     global chain
-    chain = ChainSample(3, array(), Queue(), dict(), 0)
+    sampleArray = [None] * size
+    chain = ChainSample(sampleArray, Queue(), dict(), 0)
     print ("> Chain Sample Ready!!")
     sniff(iface="eth0", filter="tcp", prn=packet_callback, store=0)
 
 
 if __name__ == "__main__":
-        main()
+        main(int(sys.argv[1]))
