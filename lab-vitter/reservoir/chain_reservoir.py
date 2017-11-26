@@ -20,15 +20,18 @@ class ChainSample():
             self.sampleArray[self.t] = (st, packet);
             self.dictDeadline.update({'pktDeadline': self.t})  # devi passargli la scadenza
             self.t += 1
+            if self.t == len(self.sampleArray):
+                self.t = 0
         else:
             self.queueList.put((st, packet))
-            self.t += delta  # devi passargli il lasso di tempo delta ed incrementarlo per ottenere il t totale
-            self.dictDeadline.update({'pktDeadline': index})  # devi passargli la scadenza
+            self.t += 1  # devi passargli il lasso di tempo delta ed incrementarlo per ottenere il t totale
+            if self.t == len(self.sampleArray):
+                self.t = 0
+            self.dictDeadline.update({'pktDeadline': self.t})  # devi passargli la scadenza
             
     def deadline(self, deadline):
         indexExpired = self.getdictDeadline[deadline]
         self.sampleArray[indexExpired] = self.getQueueList.get()
-        self.t += delta  # devi passargli il lasso di tempo delta ed incrementarlo per ottenere il t totale
 
     def printQueueList():
         tmp = Queue()
