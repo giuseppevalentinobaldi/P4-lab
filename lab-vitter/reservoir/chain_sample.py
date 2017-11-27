@@ -31,7 +31,7 @@ class ChainSample():
                 self.t = 0
             self.dictDeadline.update({'pktDeadline': self.t})  # devi passargli la scadenza
             
-    def deadline(self, deadline):
+    def expired(self, deadline):
         indexExpired = self.getdictDeadline[deadline]
         self.sampleArray[indexExpired] = self.getQueueList.get()
 
@@ -41,7 +41,7 @@ class ChainSample():
         while not (self.queueList.empty()):
             tup = self.queueList.get()
             tmp.put(tup)
-            print("{}\n{} ----HTTP----> {}:{}:\n{}\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload)), tup[1][IP].frag))
+            print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
         print("=====================================================")
         self.setQueueList(tmp)
         
@@ -49,7 +49,7 @@ class ChainSample():
         print("*****************************************************")
         for tup in self.sampleArray:
             if tup is not None:
-                print("{}\n{} ----HTTP----> {}:{}:\n{}\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload)), tup[1][IP].frag))
+                print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
         print("*****************************************************")
         
     def getSampleArray(self):
@@ -80,9 +80,27 @@ chain = None
 def packet_callback(packet):
     global chain
     if packet[TCP].payload:
-        chain.insert(packet)
-        chain.printQueueList()
-        chain.printSampleArray()
+        # packet insert
+        if packet[IP].tos == 1 :
+            chain.insert(packet)
+            chain.printQueueList()
+            chain.printSampleArray()
+        # packet expired
+        elif packet[IP].tos == 2 :
+            chain.expired(packet[IP].id)
+            chain.printQueueList()
+            chain.printSampleArray()
+        # packet insert + packet expired
+        elif packet[IP].tos == 3 :
+            chain.insert(packet)
+            chain.expired(packet[IP].id)
+            chain.printQueueList()
+            chain.printSampleArray()
+        # other action
+        else:
+            print ("> No defined action!!")
+            chain.printQueueList()
+            chain.printSampleArray()
 
 
 def main(size):
