@@ -41,7 +41,7 @@ class ChainSample():
         while not (self.queueList.empty()):
             tup = self.queueList.get()
             tmp.put(tup)
-            print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
+            print("{}\n{} ----HTTP----> {}:{}:\n{}\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload)), tup[1][IP].frag))
         print("=====================================================")
         self.setQueueList(tmp)
         
@@ -49,7 +49,7 @@ class ChainSample():
         print("*****************************************************")
         for tup in self.sampleArray:
             if tup is not None:
-                print("{}\n{} ----HTTP----> {}:{}:\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload))))
+                print("{}\n{} ----HTTP----> {}:{}:\n{}\n{}".format(tup[0], tup[1][IP].src, tup[1][IP].dst, tup[1][IP].dport, str(bytes(tup[1][TCP].payload)), tup[1][IP].frag))
         print("*****************************************************")
         
     def getSampleArray(self):

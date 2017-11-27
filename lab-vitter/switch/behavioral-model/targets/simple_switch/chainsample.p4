@@ -2,24 +2,32 @@
 #include <core.p4>
 #include <v1model.p4>
 
-#define c (W / N)
-#define wj (t - W)
+/*************************************************************************
+*********************** C O N S T  &  T Y P E  ***************************
+*************************************************************************/
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
-const int<32> N = 90;
-const int<32> W = 900;
-
-/*************************************************************************
-*********************** H E A D E R S  ***********************************
-*************************************************************************/
+const bit<32> N = 3;
+const bit<32> W = 9;
 
 typedef bit<9>	egressSpec_t;
 typedef bit<48>	macAddr_t;
 typedef bit<32>	ip4Addr_t;
-typedef int<32>	value_t;
+typedef bit<32>	value_t;
 typedef bit<32>	index_t;
 typedef bit<1>	boolean_t;
+
+/*************************************************************************
+*********************** G L O B A L  R E G I S T E R  ********************
+*************************************************************************/
+
+register<value_t>((index_t) 2) reg;
+
+
+/*************************************************************************
+*********************** H E A D E R S  ***********************************
+*************************************************************************/
 
 struct intrinsic_metadata_t {
     bit<1> 	resubmit_flag;
@@ -152,6 +160,8 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+    value_t t;		//reg[0] 
+    value_t tw;		//reg[1]
     
     action drop() {
         mark_to_drop();
@@ -197,6 +207,15 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     apply {
     	check_src.apply();
     	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
+	    reg.read(t, 32w0);
+            reg.read(tw, 32w1);
+            t = t + 1;
+            tw = tw + 1;
+            if(tw == W) {
+                tw = 0;
+            }
+            reg.write(32w0, t);
+            reg.write(32w1, tw);		
 	    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
         }
         ipv4_lpm.apply();
@@ -208,9 +227,12 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 *************************************************************************/
 
 control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {  
- 
+    value_t t;		//reg[0] 
+    value_t tw;		//reg[1]
+   
     action test_port(){
-         hdr.ipv4.ttl = 8w1;
+         reg.read(tw, 32w1);
+         hdr.ipv4.fragOffset = (bit<13>)tw;
     }
 
     table test {
