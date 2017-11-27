@@ -19,17 +19,17 @@ class ChainSample():
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
         if self.check:
             self.sampleArray[self.t] = (st, packet);
-            self.dictDeadline.update({'pktDeadline': self.t})  # devi passargli la scadenza
+            self.dictDeadline.update({'pktDeadline': self.t})  
             self.t += 1
             if self.t == len(self.sampleArray):
                 self.t = 0
                 self.check = False
         else:
             self.queueList.put((st, packet))
-            self.t += 1  # devi passargli il lasso di tempo delta ed incrementarlo per ottenere il t totale
+            self.t += 1  
             if self.t == len(self.sampleArray):
                 self.t = 0
-            self.dictDeadline.update({'pktDeadline': self.t})  # devi passargli la scadenza
+            self.dictDeadline.update({'pktDeadline': self.t})
             
     def expired(self, deadline):
         indexExpired = self.getdictDeadline[deadline]
@@ -57,9 +57,6 @@ class ChainSample():
 
     def getQueueList(self):
         return self.queueList
-
-    def getDictDeadline(self):
-        return self.dictDeadline
 
     def getT(self):
         return selft.t
