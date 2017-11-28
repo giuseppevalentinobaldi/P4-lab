@@ -17,6 +17,7 @@ typedef bit<32>	ip4Addr_t;
 typedef bit<32>	value_t;
 typedef bit<32>	index_t;
 typedef bit<1>	boolean_t;
+typedef bit<8>  tos_t;
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -38,11 +39,6 @@ struct intrinsic_metadata_t {
     bit<16>	egress_rid;
     bit<32>	lf_field_list;
     bit<3>	priority;
-}
-
-struct mymeta_t {
-    boolean_t srcCorrect;
-    bit<13> temp;
 }
 
 header ethernet_t {
@@ -81,8 +77,10 @@ header tcp_t {
 }
 
 struct metadata {
-	mymeta_t mymeta;
 	intrinsic_metadata_t intrinsic_metadata;
+	boolean_t srcCorrect;
+	value_t index_pkt_expired;
+	tos_t tos;
 }
 
 struct headers {
@@ -154,15 +152,28 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    register<value_t>((index_t) 2) reg;
-    value_t tw;
+    // register
+    register<value_t>((index_t) 5) reg;
+    register<value_t>((index_t) N) reg_successor;
+    register<value_t>((index_t) W) reg_expiry;
+    register<value_t>((index_t) W) reg_index;
+
+    bit<32> t; // reg index 0
+    bit<32> i; // reg index 1
+    bit<32> tw; // reg index 2
+    bit<32> successor; // reg index 3
+    bit<32> flag_clone; // reg index 4
+
+    bit<32> next_successor;
+    bit<32> next_expiry;
+    bit<32> index;
 
     action drop() {
         mark_to_drop();
     }
     
     action set_check(boolean_t check){
-    	meta.mymeta.srcCorrect = check;
+    	meta.srcCorrect = check;
     }
     
     action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {  	
@@ -200,14 +211,108 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     apply {
     	check_src.apply();
-    	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
-            reg.read(tw,32w1);
-            tw = tw + 1;
-            reg.write(32w1,tw);
-	    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
-        }
+    	if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1){
+            // chain sample algorithm
+	        reg.read(t, 32w0); // read t
+	        t = t + 1;
+	        reg.write(32w0, t); // write t
+
+	        // initial sampling
+	        if(t <= N){
+		        // clone
+		        clone3(CloneType.I2E, 32w100, { standard_metadata });
+
+		        // write expiry and index in the registers
+		        reg.read(tw, 32w2); // read tw
+		        reg_expiry.write(tw, t+W); // write packet expiry
+		        reg.read(i, 32w1); // read i
+		        reg_index.write(tw, i); // write index
+
+		        // control successor
+		        reg.read(successor, 32w3); // read successor
+		        if(successor == 0){
+			        successor = N;
+		        }
+		        random(successor, successor+1, t+W);
+		        reg.write(32w3, successor); // write successor
+
+		        // write successor in the register
+		        reg_successor.write(i, successor); // write successor in reg_successor
+		        i = i+1;
+		        if(i == N){
+			        i = 0;
+		        }
+		        reg.write(32w1, i); // write i
+	        }
+	        else{
+		        // expiry
+		        reg.read(tw, 32w2); // read tw
+		        reg_expiry.read(next_expiry, tw);
+		        if(next_expiry != 0){
+			        reg.write(32w4, 1); // write flag_clone true
+
+			        // write index in metadata
+			        reg_index.read(index, tw);
+			        meta.index_pkt_expired = index;
+
+			        reg_expiry.write(tw, 0); // reset reg expiry in position tw
+			        reg_index.write(tw, 0); // reset reg index in position tw (unnecessary)
+			        meta.tos = 2 
+		        }
+
+		        // sampling
+		        reg.read(i, 32w1); // read i
+		        reg_successor.read(next_successor, i); // read next_successor
+		        if(t == next_successor){
+			        // clone
+			        clone3(CloneType.I2E, 32w100, { standard_metadata });
+
+			        reg.write(32w4, 0); // write flag_clone false
+
+			        // write expiry and index in the registers
+			        reg.read(tw, 32w2); // read tw
+			        reg_expiry.write(tw, t+W); // write packet expiry
+			        reg.read(i, 32w1); // read i
+			        reg_index.write(tw, i); // write index
+
+			        // successor
+			        reg.read(successor, 32w3); // read successor
+			        random(successor, successor+1, t+W);
+			        reg.write(32w3, successor); // write successor
+
+			        // write successor in the register
+			        reg_successor.write(i, successor); // write successor in reg_successor
+			        i = i+1;
+			        if(i == N){
+				        i = 0;
+			        }
+			        reg.write(32w1, i); // write i
+			        if (meta.tos == 2){
+			           meta.tos = 3
+			        }
+			        else{
+			           meta.tos = 1
+			        }
+		        }
+
+		        // control flag_clone
+		        reg.read(flag_clone, 32w4);
+		        if(flag_clone == 1){
+			        // clone
+			        clone3(CloneType.I2E, 32w100, { standard_metadata });
+
+			        reg.write(32w4, 0); // write flag_clone false
+		        }
+	        }
+	        reg.read(tw, 32w2); // read tw
+	        tw = tw+1;
+	        if(tw == W){
+		        tw = 0;
+	        }
+	        reg.write(32w2, tw);
+        }// tcp condidiotn end
         ipv4_lpm.apply();
-    }
+    }// apply end
 }
 
 /*************************************************************************
@@ -218,8 +323,8 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
     value_t temp;
 
     action test_port(){
-        hdr.ipv4.diffserv = 1;
-        hdr.ipv4.identification = 10;
+        hdr.ipv4.diffserv = meta.tos;
+        hdr.ipv4.identification = (bit<16>)meta.index_pkt_expired;
     }
 
     table test {

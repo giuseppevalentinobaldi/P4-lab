@@ -10,7 +10,6 @@ class ChainSample():
     def __init__(self, sampleArray):
         self.sampleArray = sampleArray
         self.queueList = Queue()
-        self.dictDeadline = dict()
         self.t = 0
         self.check = True
     
@@ -18,8 +17,7 @@ class ChainSample():
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
         if self.check:
-            self.sampleArray[self.t] = (st, packet);
-            self.dictDeadline.update({'pktDeadline': self.t})  
+            self.sampleArray[self.t] = (st, packet); 
             self.t += 1
             if self.t == len(self.sampleArray):
                 self.t = 0
@@ -29,11 +27,9 @@ class ChainSample():
             self.t += 1  
             if self.t == len(self.sampleArray):
                 self.t = 0
-            self.dictDeadline.update({'pktDeadline': self.t})
             
     def expired(self, deadline):
-        indexExpired = self.getdictDeadline[deadline]
-        self.sampleArray[indexExpired] = self.getQueueList.get()
+        self.sampleArray[deadline] = self.getQueueList.get()
 
     def printQueueList(self):
         tmp = Queue()
