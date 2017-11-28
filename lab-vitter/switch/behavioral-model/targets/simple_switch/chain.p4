@@ -90,7 +90,7 @@ struct headers {
 }
 
 /*************************************************************************
-*********************** P A R S E R  ***********************************
+*********************** P A R S E R  *************************************
 *************************************************************************/
 
 parser ParserImpl(packet_in packet,
@@ -125,7 +125,7 @@ parser ParserImpl(packet_in packet,
 }
 
 /*************************************************************************
-************   C H E C K S U M    V E R I F I C A T I O N   *************
+************   C H E C K S U M    V E R I F I C A T I O N   **************
 *************************************************************************/
 
 control verifyChecksum(inout headers hdr, inout metadata meta) {   
@@ -148,7 +148,7 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 }
 
 /*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
+**************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
@@ -210,106 +210,107 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-    	check_src.apply();
-    	if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1){
+        check_src.apply();
+        if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1){
             // chain sample algorithm
-	        reg.read(t, 32w0); // read t
-	        t = t + 1;
-	        reg.write(32w0, t); // write t
+            reg.read(t, 32w0); // read t
+            t = t + 1;
+            reg.write(32w0, t); // write t
 
-	        // initial sampling
-	        if(t <= N){
-		        // clone
-		        clone3(CloneType.I2E, 32w100, { standard_metadata });
+            // initial sampling
+            if(t <= N){
+                // clone
+                meta.tos = 1;
+                clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
-		        // write expiry and index in the registers
-		        reg.read(tw, 32w2); // read tw
-		        reg_expiry.write(tw, t+W); // write packet expiry
-		        reg.read(i, 32w1); // read i
-		        reg_index.write(tw, i); // write index
+                // write expiry and index in the registers
+                reg.read(tw, 32w2); // read tw
+                reg_expiry.write(tw, t+W); // write packet expiry
+                reg.read(i, 32w1); // read i
+                reg_index.write(tw, i); // write index
 
-		        // control successor
-		        reg.read(successor, 32w3); // read successor
-		        if(successor == 0){
-			        successor = N;
-		        }
-		        random(successor, successor+1, t+W);
-		        reg.write(32w3, successor); // write successor
+                // control successor
+                reg.read(successor, 32w3); // read successor
+                if(successor == 0){
+                    successor = N;
+                }
+                random(successor, successor+1, t+W);
+                reg.write(32w3, successor); // write successor
 
-		        // write successor in the register
-		        reg_successor.write(i, successor); // write successor in reg_successor
-		        i = i+1;
-		        if(i == N){
-			        i = 0;
-		        }
-		        reg.write(32w1, i); // write i
-	        }
-	        else{
-		        // expiry
-		        reg.read(tw, 32w2); // read tw
-		        reg_expiry.read(next_expiry, tw);
-		        if(next_expiry != 0){
-			        reg.write(32w4, 1); // write flag_clone true
+                // write successor in the register
+                reg_successor.write(i, successor); // write successor in reg_successor
+                i = i+1;
+                if(i == N){
+                    i = 0;
+                }
+                reg.write(32w1, i); // write i
+            }
+            else{
+                // expiry
+                reg.read(tw, 32w2); // read tw
+                reg_expiry.read(next_expiry, tw);
+                if(next_expiry != 0){
+                    reg.write(32w4, 1); // write flag_clone true
 
-			        // write index in metadata
-			        reg_index.read(index, tw);
-			        meta.index_pkt_expired = index;
+                    // write index in metadata
+                    reg_index.read(index, tw);
+                    meta.index_pkt_expired = index;
 
-			        reg_expiry.write(tw, 0); // reset reg expiry in position tw
-			        reg_index.write(tw, 0); // reset reg index in position tw (unnecessary)
-			        meta.tos = 2;
-		        }
+                    reg_expiry.write(tw, 0); // reset reg expiry in position tw
+                    reg_index.write(tw, 0); // reset reg index in position tw (unnecessary)
+                    meta.tos = 2;
+                }
 
-		        // sampling
-		        reg.read(i, 32w1); // read i
-		        reg_successor.read(next_successor, i); // read next_successor
-		        if(t == next_successor){
-			        // clone
-			        clone3(CloneType.I2E, 32w100, { standard_metadata });
+                // sampling
+                reg.read(i, 32w1); // read i
+                reg_successor.read(next_successor, i); // read next_successor
+                if(t == next_successor){
+                    if (meta.tos == 2){
+                        meta.tos = 3;
+                    }
+                    else{
+                        meta.tos = 1;
+                    }
+                    // clone
+                    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
-			        reg.write(32w4, 0); // write flag_clone false
+                    reg.write(32w4, 0); // write flag_clone false
 
-			        // write expiry and index in the registers
-			        reg.read(tw, 32w2); // read tw
-			        reg_expiry.write(tw, t+W); // write packet expiry
-			        reg.read(i, 32w1); // read i
-			        reg_index.write(tw, i); // write index
+                    // write expiry and index in the registers
+                    reg.read(tw, 32w2); // read tw
+                    reg_expiry.write(tw, t+W); // write packet expiry
+                    reg.read(i, 32w1); // read i
+                    reg_index.write(tw, i); // write index
 
-			        // successor
-			        reg.read(successor, 32w3); // read successor
-			        random(successor, successor+1, t+W);
-			        reg.write(32w3, successor); // write successor
+                    // successor
+                    reg.read(successor, 32w3); // read successor
+                    random(successor, successor+1, t+W);
+                    reg.write(32w3, successor); // write successor
 
-			        // write successor in the register
-			        reg_successor.write(i, successor); // write successor in reg_successor
-			        i = i+1;
-			        if(i == N){
-				        i = 0;
-			        }
-			        reg.write(32w1, i); // write i
-			        if (meta.tos == 2){
-			           meta.tos = 3;
-			        }
-			        else{
-			           meta.tos = 1;
-			        }
-		        }
+                    // write successor in the register
+                    reg_successor.write(i, successor); // write successor in reg_successor
+                    i = i+1;
+                    if(i == N){
+                        i = 0;
+                    }
+                    reg.write(32w1, i); // write i
+                }
 
-		        // control flag_clone
-		        reg.read(flag_clone, 32w4);
-		        if(flag_clone == 1){
-			        // clone
-			        clone3(CloneType.I2E, 32w100, { standard_metadata });
+                // control flag_clone
+                reg.read(flag_clone, 32w4);
+                if(flag_clone == 1){
+                    // clone
+                    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
-			        reg.write(32w4, 0); // write flag_clone false
-		        }
-	        }
-	        reg.read(tw, 32w2); // read tw
-	        tw = tw+1;
-	        if(tw == W){
-		        tw = 0;
-	        }
-	        reg.write(32w2, tw);
+                    reg.write(32w4, 0); // write flag_clone false
+                }
+            }
+            reg.read(tw, 32w2); // read tw
+            tw = tw+1;
+            if(tw == W){
+                tw = 0;
+            }
+            reg.write(32w2, tw);
         }// tcp condidiotn end
         ipv4_lpm.apply();
     }// apply end
@@ -370,7 +371,7 @@ control computeChecksum(
 }
 
 /*************************************************************************
-***********************  D E P A R S E R  *******************************
+***********************  D E P A R S E R  ********************************
 *************************************************************************/
 
 control DeparserImpl(packet_out packet, in headers hdr) {
@@ -382,7 +383,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
 }
 
 /*************************************************************************
-***********************  S W I T C H  *******************************
+***********************  S W I T C H  ************************************
 *************************************************************************/
 
 V1Switch(
