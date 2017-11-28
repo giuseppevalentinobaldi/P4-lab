@@ -27,7 +27,7 @@ function run(){
     echo "2 - to run r"
     echo "3 - to run x"
     echo "4 - to run window"
-    echo "5 - to run chainsample"
+    echo "5 - to run chain sample"
     read -p 'What do you want to do ?: ' dovar
     sudo nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
     sleep 15
