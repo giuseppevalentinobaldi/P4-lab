@@ -72,7 +72,7 @@ chain = None
 
 def packet_callback(packet):
     global chain
-    print ("TypeOfService: "+packet[IP].tos)
+    print ("TypeOfService: {}".format(packet[IP].tos) )
     if packet[TCP].payload:
         # packet insert
         if packet[IP].tos == 1 :
