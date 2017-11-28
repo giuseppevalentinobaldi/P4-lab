@@ -77,10 +77,10 @@ header tcp_t {
 }
 
 struct metadata {
-	intrinsic_metadata_t intrinsic_metadata;
-	boolean_t srcCorrect;
-	value_t index_pkt_expired;
-	tos_t tos;
+    intrinsic_metadata_t intrinsic_metadata;
+    boolean_t srcCorrect;
+    value_t index_pkt_expired;
+    tos_t tos;
 }
 
 struct headers {
@@ -320,14 +320,13 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 *************************************************************************/
 
 control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {  
-    value_t temp;
 
-    action test_port(){
+    action clone_assignments(){
         hdr.ipv4.diffserv = meta.tos;
         hdr.ipv4.identification = (bit<16>)meta.index_pkt_expired;
     }
 
-    table test {
+    table clone {
         key = {
             standard_metadata.instance_type: exact;
         }
@@ -340,8 +339,8 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
     }
 
     apply {
-        test.apply();
-     }
+        clone.apply();
+    }
 }
 
 /*************************************************************************

@@ -8,4 +8,4 @@ table_add ipv4_lpm ipv4_forward 10.0.0.2 20.0.0.1 => 02:42:ac:12:00:02 02:42:ac:
 table_add ipv4_lpm ipv4_forward 20.0.0.2 10.0.0.1 => 02:42:ac:14:00:03 02:42:ac:14:00:02 1
 table_add check_src set_check 10.0.0.2/32 => 1
 table_add check_src set_check 0.0.0.0/0 => 0
-table_add test test_port 1 =>
+table_add clone clone_assignments 1 =>
