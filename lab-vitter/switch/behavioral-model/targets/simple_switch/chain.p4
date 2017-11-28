@@ -8,8 +8,8 @@
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
-const bit<32> N = 3;
-const bit<32> W = 9;
+const bit<32> N = 100;
+const bit<32> W = 1000;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -155,15 +155,15 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     register<value_t>((index_t) W) reg_expiry;
     register<value_t>((index_t) W) reg_index;
 
-    bit<32> t; // reg index 0
-    bit<32> i; // reg index 1
-    bit<32> tw; // reg index 2
-    bit<32> successor; // reg index 3
+    value_t t; // reg index 0
+    value_t i; // reg index 1
+    value_t tw; // reg index 2
+    value_t successor; // reg index 3
     
     boolean_t flag_clone = 0;
-    bit<32> next_successor;
-    bit<32> next_expiry;
-    bit<32> index;
+    value_t next_successor;
+    value_t next_expiry;
+    value_t index;
 
     action drop() {
         mark_to_drop();
@@ -217,7 +217,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             // initial sampling
             if(t <= N){
                 // clone
-                meta.tos = 1;
+                meta.tos = 1; // sample
                 clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
                 // write expiry and index in the registers
@@ -255,7 +255,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 
                     reg_expiry.write(tw, 0); // reset reg expiry in position tw
                     reg_index.write(tw, 0); // reset reg index in position tw (unnecessary)
-                    meta.tos = 2;
+                    meta.tos = 2; // expired
                 }
 
                 // sampling
@@ -263,10 +263,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg_successor.read(next_successor, i); // read next_successor
                 if(t == next_successor){
                     if (meta.tos == 2){
-                        meta.tos = 3;
+                        meta.tos = 3; // sample & expired
                     }
                     else{
-                        meta.tos = 1;
+                        meta.tos = 1; // sample
                     }
                     // clone
                     clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
