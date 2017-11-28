@@ -153,7 +153,7 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
  
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
     // register
-    register<value_t>((index_t) 5) reg;
+    register<value_t>((index_t) 4) reg;
     register<value_t>((index_t) N) reg_successor;
     register<value_t>((index_t) W) reg_expiry;
     register<value_t>((index_t) W) reg_index;
@@ -162,8 +162,8 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     bit<32> i; // reg index 1
     bit<32> tw; // reg index 2
     bit<32> successor; // reg index 3
-    bit<32> flag_clone; // reg index 4
-
+    
+    boolean_t flag_clone = 0;
     bit<32> next_successor;
     bit<32> next_expiry;
     bit<32> index;
@@ -250,7 +250,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg.read(tw, 32w2); // read tw
                 reg_expiry.read(next_expiry, tw);
                 if(next_expiry != 0){
-                    reg.write(32w4, 1); // write flag_clone true
+                    flag_clone = 1; // write flag_clone true
 
                     // write index in metadata
                     reg_index.read(index, tw);
@@ -274,7 +274,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                     // clone
                     clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
-                    reg.write(32w4, 0); // write flag_clone false
+                    flag_clone = 0; // write flag_clone false
 
                     // write expiry and index in the registers
                     reg.read(tw, 32w2); // read tw
@@ -297,12 +297,11 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 }
 
                 // control flag_clone
-                reg.read(flag_clone, 32w4);
                 if(flag_clone == 1){
                     // clone
                     clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
-                    reg.write(32w4, 0); // write flag_clone false
+                    flag_clone = 0; // write flag_clone false
                 }
             }
             reg.read(tw, 32w2); // read tw
