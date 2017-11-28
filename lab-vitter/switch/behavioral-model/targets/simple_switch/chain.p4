@@ -257,7 +257,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 
 			        reg_expiry.write(tw, 0); // reset reg expiry in position tw
 			        reg_index.write(tw, 0); // reset reg index in position tw (unnecessary)
-			        meta.tos = 2 
+			        meta.tos = 2;
 		        }
 
 		        // sampling
@@ -288,10 +288,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 			        }
 			        reg.write(32w1, i); // write i
 			        if (meta.tos == 2){
-			           meta.tos = 3
+			           meta.tos = 3;
 			        }
 			        else{
-			           meta.tos = 1
+			           meta.tos = 1;
 			        }
 		        }
 
@@ -326,12 +326,12 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
         hdr.ipv4.identification = (bit<16>)meta.index_pkt_expired;
     }
 
-    table clone {
+    table packet_clone {
         key = {
             standard_metadata.instance_type: exact;
         }
         actions = {
-            test_port;
+            clone_assignments;
             NoAction;
         }
         size = 1024;
@@ -339,7 +339,7 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
     }
 
     apply {
-        clone.apply();
+        packet_clone.apply();
     }
 }
 
