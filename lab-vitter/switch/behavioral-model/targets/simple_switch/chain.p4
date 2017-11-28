@@ -11,12 +11,12 @@ const bit<8> TYPE_TCP = 6;
 const bit<32> N = 3;
 const bit<32> W = 9;
 
-typedef bit<9>	egressSpec_t;
-typedef bit<48>	macAddr_t;
-typedef bit<32>	ip4Addr_t;
-typedef bit<32>	value_t;
-typedef bit<32>	index_t;
-typedef bit<1>	boolean_t;
+typedef bit<9>  egressSpec_t;
+typedef bit<48> macAddr_t;
+typedef bit<32> ip4Addr_t;
+typedef bit<32> value_t;
+typedef bit<32> index_t;
+typedef bit<1>  boolean_t;
 typedef bit<8>  tos_t;
 
 /*************************************************************************
@@ -24,21 +24,21 @@ typedef bit<8>  tos_t;
 *************************************************************************/
 
 struct intrinsic_metadata_t {
-    bit<1> 	resubmit_flag;
-    bit<48>	ingress_global_tstamp;
-    bit<16>	mcast_grp;
-    bit<1>	deflection_flag;
-    bit<1>	deflect_on_drop;
-    bit<19>	enq_qdepth;
-    bit<32>	enq_tstamp;
-    bit<2>	enq_congest_stat;
-    bit<19>	deq_qdepth;
-    bit<2>	deq_congest_stat;
-    bit<32>	deq_timedelta;
-    bit<13>	mcast_hash;
-    bit<16>	egress_rid;
-    bit<32>	lf_field_list;
-    bit<3>	priority;
+    bit<1>  resubmit_flag;
+    bit<48> ingress_global_tstamp;
+    bit<16> mcast_grp;
+    bit<1>  deflection_flag;
+    bit<1>  deflect_on_drop;
+    bit<19> enq_qdepth;
+    bit<32> enq_tstamp;
+    bit<2>  enq_congest_stat;
+    bit<19> deq_qdepth;
+    bit<2>  deq_congest_stat;
+    bit<32> deq_timedelta;
+    bit<13> mcast_hash;
+    bit<16> egress_rid;
+    bit<32> lf_field_list;
+    bit<3>  priority;
 }
 
 header ethernet_t {
@@ -48,18 +48,18 @@ header ethernet_t {
 }
 
 header ipv4_t {
-    bit<4>	version;
-    bit<4>	ihl;
-    bit<8>	diffserv;
-    bit<16>	totalLen;
-    bit<16>	identification;
-    bit<3>	flags;
-    bit<13>	fragOffset;
-    bit<8>	ttl;
-    bit<8>	protocol;
-    bit<16>	hdrChecksum;
-    ip4Addr_t	srcAddr;
-    ip4Addr_t	dstAddr;
+    bit<4>    version;
+    bit<4>    ihl;
+    bit<8>    diffserv;
+    bit<16>   totalLen;
+    bit<16>   identification;
+    bit<3>    flags;
+    bit<13>   fragOffset;
+    bit<8>    ttl;
+    bit<8>    protocol;
+    bit<16>   hdrChecksum;
+    ip4Addr_t srcAddr;
+    ip4Addr_t dstAddr;
 }
 
 header tcp_t {
@@ -78,25 +78,22 @@ header tcp_t {
 
 struct metadata {
     intrinsic_metadata_t intrinsic_metadata;
-    boolean_t srcCorrect;
-    value_t index_pkt_expired;
-    tos_t tos;
+    boolean_t            srcCorrect;
+    value_t              index_pkt_expired;
+    tos_t                tos;
 }
 
 struct headers {
-    ethernet_t	ethernet;
-    ipv4_t	ipv4;
-    tcp_t 	tcp;
+    ethernet_t ethernet;
+    ipv4_t     ipv4;
+    tcp_t      tcp;
 }
 
 /*************************************************************************
 *********************** P A R S E R  *************************************
 *************************************************************************/
 
-parser ParserImpl(packet_in packet,
-                  out headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
+parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
@@ -173,7 +170,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     action set_check(boolean_t check){
-    	meta.srcCorrect = check;
+        meta.srcCorrect = check;
     }
     
     action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {  	
