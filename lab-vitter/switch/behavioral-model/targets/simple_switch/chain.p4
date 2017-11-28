@@ -221,7 +221,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             if(t <= N){
                 // clone
                 meta.tos = 1;
-                clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
                 // write expiry and index in the registers
                 reg.read(tw, 32w2); // read tw
@@ -272,7 +272,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         meta.tos = 1;
                     }
                     // clone
-                    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                    clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
                     reg.write(32w4, 0); // write flag_clone false
 
@@ -300,7 +300,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg.read(flag_clone, 32w4);
                 if(flag_clone == 1){
                     // clone
-                    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                    clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
                     reg.write(32w4, 0); // write flag_clone false
                 }
