@@ -29,7 +29,7 @@ class ChainSample():
                 self.t = 0
             
     def expired(self, deadline):
-        self.sampleArray[deadline] = self.getQueueList.get()
+        self.sampleArray[deadline] = self.queueList.get()
 
     def printQueueList(self):
         tmp = Queue()
