@@ -105,14 +105,14 @@ def packet_callback(packet):
         # packet expired
         elif packet[IP].tos == 2 :
             chain.restore(packet)
-            chain.expired(packet[IP].id)
+            chain.expired()
             chain.printQueueList()
             chain.printSampleArray()
         # packet insert + packet expired
         elif packet[IP].tos == 3 :
             chain.restore(packet)
             chain.insert(packet)
-            chain.expired(packet[IP].id)
+            chain.expired()
             chain.printQueueList()
             chain.printSampleArray()
         # other action
