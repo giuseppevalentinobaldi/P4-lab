@@ -2,11 +2,10 @@
 
 from scapy.all import *
 from queue import Queue
-#from cStringIO import StringIO
+# from cStringIO import StringIO
 import datetime, time, sys
 
-
-#class Capturing(list):
+# class Capturing(list):
 #
 #    def __enter__(self):
 #        self._stdout = sys.stdout
@@ -94,7 +93,7 @@ chain = None
 
 def packet_callback(packet):
     global chain
-    print ("TypeOfService: {}, checksum: {}".format(packet[IP].tos, packet[IP].chksum))
+    print ("TypeOfService: {}".format(packet[IP].tos))
     if packet[TCP].payload:
         # packet insert
         if packet[IP].tos == 1 :
@@ -120,7 +119,7 @@ def packet_callback(packet):
             print ("> No defined action!!")
             chain.printQueueList()
             chain.printSampleArray()
-        print ("TypeOfService: {}, checksum: {}".format(packet[IP].tos, packet[IP].chksum))
+        # print ("TypeOfService: {}, checksum: {}".format(packet[IP].tos, packet[IP].chksum))
 
 
 def main(size):
