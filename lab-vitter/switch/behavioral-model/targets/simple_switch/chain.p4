@@ -308,7 +308,6 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
 
     action clone_assignments(){
         hdr.ipv4.diffserv = meta.tos;
-        hdr.ipv4.identification = (bit<16>)meta.index_pkt_expired;
     }
 
     table packet_clone {
