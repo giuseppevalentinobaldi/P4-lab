@@ -79,7 +79,6 @@ header tcp_t {
 struct metadata {
     intrinsic_metadata_t intrinsic_metadata;
     boolean_t            srcCorrect;
-    value_t              index_pkt_expired;
     tos_t                tos;
 }
 
@@ -153,7 +152,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     register<value_t>((index_t) 4) reg;
     register<value_t>((index_t) N) reg_successor;
     register<value_t>((index_t) W) reg_expiry;
-    register<value_t>((index_t) W) reg_index;
 
     value_t t; // reg index 0
     value_t i; // reg index 1
@@ -163,7 +161,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     boolean_t flag_clone = 0;
     value_t next_successor;
     value_t next_expiry;
-    value_t index;
 
     action drop() {
         mark_to_drop();
@@ -224,7 +221,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg.read(tw, 32w2); // read tw
                 reg_expiry.write(tw, t+W); // write packet expiry
                 reg.read(i, 32w1); // read i
-                reg_index.write(tw, i); // write index
 
                 // control successor
                 reg.read(successor, 32w3); // read successor
@@ -248,13 +244,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg_expiry.read(next_expiry, tw);
                 if(next_expiry != 0){
                     flag_clone = 1; // write flag_clone true
-
-                    // write index in metadata
-                    reg_index.read(index, tw);
-                    meta.index_pkt_expired = index;
-
                     reg_expiry.write(tw, 0); // reset reg expiry in position tw
-                    reg_index.write(tw, 0); // reset reg index in position tw (unnecessary)
                     meta.tos = 2; // expired
                 }
 
@@ -273,11 +263,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 
                     flag_clone = 0; // write flag_clone false
 
-                    // write expiry and index in the registers
+                    // write expiry in the registers
                     reg.read(tw, 32w2); // read tw
                     reg_expiry.write(tw, t+W); // write packet expiry
                     reg.read(i, 32w1); // read i
-                    reg_index.write(tw, i); // write index
 
                     // successor
                     reg.read(successor, 32w3); // read successor
@@ -297,7 +286,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 if(flag_clone == 1){
                     // clone
                     clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
-
                     flag_clone = 0; // write flag_clone false
                 }
             }
