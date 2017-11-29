@@ -8,8 +8,8 @@
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
-const bit<32> N = 100;
-const bit<32> W = 1000;
+const bit<32> N = 5;
+const bit<32> W = 50;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;

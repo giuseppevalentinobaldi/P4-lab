@@ -2,7 +2,21 @@
 
 from scapy.all import *
 from queue import Queue
+from cStringIO import StringIO
 import datetime, time, sys
+
+
+class Capturing(list):
+
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
+
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio  # free up some memory
+        sys.stdout = self._stdout
 
 
 class ChainSample():
@@ -10,26 +24,34 @@ class ChainSample():
     def __init__(self, sampleArray):
         self.sampleArray = sampleArray
         self.queueList = Queue()
-        self.t = 0
+        self.i = 0
         self.check = True
     
     def insert(self, packet):
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
         if self.check:
-            self.sampleArray[self.t] = (st, packet); 
-            self.t += 1
-            if self.t == len(self.sampleArray):
-                self.t = 0
+            self.sampleArray[self.i] = (st, packet); 
+            self.i += 1
+            if self.i == len(self.sampleArray):
+                self.i = 0
                 self.check = False
         else:
             self.queueList.put((st, packet))
-            self.t += 1  
-            if self.t == len(self.sampleArray):
-                self.t = 0
             
-    def expired(self, deadline):
-        self.sampleArray[deadline] = self.queueList.get()
+    def expired(self):
+        self.sampleArray[self.i] = self.queueList.get()
+        self.i += 1  
+        if self.i == len(self.sampleArray):
+            self.i = 0
+            
+    def restore(self, packet):
+        packet[IP].tos = 0  # default tos
+        # del packet[IP].chksum
+        # del packet[TCP].chksum
+        # stdout, null = sys.stdout, open('/dev/null', 'w'); sys.stdout = null
+        # packet.show2()
+        # sys.stdout = stdout
 
     def printQueueList(self):
         tmp = Queue()
@@ -54,8 +76,8 @@ class ChainSample():
     def getQueueList(self):
         return self.queueList
 
-    def getT(self):
-        return selft.t
+    def getI(self):
+        return selft.i
     
     def setSampleArray(self, sampleArray):
         self.sampleArray = sampleArray
@@ -63,8 +85,8 @@ class ChainSample():
     def setQueueList(self, queueList):
         self.queueList = queueList
     
-    def setT(self, t):
-        self.t = t
+    def setI(self, i):
+        self.i = i
 
 
 chain = None
@@ -72,20 +94,23 @@ chain = None
 
 def packet_callback(packet):
     global chain
-    print ("TypeOfService: {}".format(packet[IP].tos) )
+    print ("TypeOfService: {}, checksum: {}".format(packet[IP].tos, packet[IP].chksum))
     if packet[TCP].payload:
         # packet insert
         if packet[IP].tos == 1 :
+            chain.restore(packet)
             chain.insert(packet)
             chain.printQueueList()
             chain.printSampleArray()
         # packet expired
         elif packet[IP].tos == 2 :
+            chain.restore(packet)
             chain.expired(packet[IP].id)
             chain.printQueueList()
             chain.printSampleArray()
         # packet insert + packet expired
         elif packet[IP].tos == 3 :
+            chain.restore(packet)
             chain.insert(packet)
             chain.expired(packet[IP].id)
             chain.printQueueList()
@@ -95,6 +120,7 @@ def packet_callback(packet):
             print ("> No defined action!!")
             chain.printQueueList()
             chain.printSampleArray()
+        print ("TypeOfService: {}, checksum: {}".format(packet[IP].tos, packet[IP].chksum))
 
 
 def main(size):
