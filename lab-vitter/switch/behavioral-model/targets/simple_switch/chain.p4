@@ -217,7 +217,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 meta.tos = 1; // sample
                 clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
 
-                // write expiry and index in the registers
+                // write expiry in the registers
                 reg.read(tw, 32w2); // read tw
                 reg_expiry.write(tw, t+W); // write packet expiry
                 reg.read(i, 32w1); // read i
