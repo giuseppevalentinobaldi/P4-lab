@@ -7,6 +7,8 @@
 *************************************************************************/
 
 #define delta ( p - t )
+#define lower ( N + t)
+#define upper ( W + t)
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
@@ -228,7 +230,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg_expiry.write(tw, t+W); // write packet expiry
                 
                 // calculate probability
-                random(p, N+t, W+t);
+                random(p, lower, upper);
                 
                 // write successor in the registers
                 if(tw + delta < W){
@@ -272,7 +274,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         reg_expiry.write(tw, t+W); // write packet expiry
                         
                         // calculate probability
-                        random(p, N+t, W+t);
+                        random(p, lower, upper);
                         
                         // write successor in the registers
                         if(tw + delta < W){
@@ -296,7 +298,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         reg_expiry.write(tw, t+W); // write packet expiry
                         
                         // calculate probability
-                        random(p, N+t, W+t);
+                        random(p, lower, upper);
                         
                         // write successor in the registers
                         if(tw + delta < W){
