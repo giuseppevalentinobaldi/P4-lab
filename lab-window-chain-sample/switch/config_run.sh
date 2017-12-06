@@ -37,6 +37,9 @@ function configure_machine(){
     2)
         setup_config simple_switch chain 16 commands_chain nodebug sswitch_CLI
         ;;
+    3)
+        setup_config simple_switch chain_uniform 16 commands_chain_uniform nodebug sswitch_CLI
+        ;;
     *)
         echo "> Error!! --> Command not find"
         echo "> Run of default!! --> chain"

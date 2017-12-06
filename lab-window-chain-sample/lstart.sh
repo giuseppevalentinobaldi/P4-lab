@@ -25,6 +25,7 @@ function run(){
     echo "> Run switch configuration!!"
     echo "1 - to run window"
     echo "2 - to run chain sample"
+    echo "3 - to run chain sample uniform"
     read -p 'What do you want to do ?: ' dovar
     sudo nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
     sleep 15
