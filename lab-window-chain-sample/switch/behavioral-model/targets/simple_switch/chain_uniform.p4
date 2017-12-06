@@ -7,8 +7,8 @@
 *************************************************************************/
 
 #define delta ( p - t )
-#define lower ( N + t)
-#define upper ( W + t)
+#define lower ( N + t )
+#define upper ( W + t )
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
@@ -19,7 +19,6 @@ typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 typedef bit<32> value_t;
-typedef int<32> int_value_t;
 typedef bit<32> index_t;
 typedef bit<1>  boolean_t;
 typedef bit<8>  tos_t;
@@ -227,7 +226,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 meta.tos = 1; // sample
                 
                 // write expiry in the registers
-                reg_expiry.write(tw, t+W); // write packet expiry
+                reg_expiry.write(tw, t + W); // write packet expiry
                 
                 // calculate probability
                 random(p, lower, upper);
@@ -271,7 +270,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
                         
                         // write expiry in the registers
-                        reg_expiry.write(tw, t+W); // write packet expiry
+                        reg_expiry.write(tw, t + W); // write packet expiry
                         
                         // calculate probability
                         random(p, lower, upper);
@@ -295,7 +294,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
                         
                         // write expiry in the registers
-                        reg_expiry.write(tw, t+W); // write packet expiry
+                        reg_expiry.write(tw, t + W); // write packet expiry
                         
                         // calculate probability
                         random(p, lower, upper);
