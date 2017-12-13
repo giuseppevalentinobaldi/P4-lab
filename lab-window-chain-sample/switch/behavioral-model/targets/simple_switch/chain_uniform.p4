@@ -7,8 +7,11 @@
 *************************************************************************/
 
 #define delta ( p - t )
-#define lower ( N + t )
+#define lower_cool ( N + t )
+#define lower ( t + 1)
 #define upper ( W + t )
+#define front (tw + delta)
+#define behind (tw + delta - W)
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
@@ -229,23 +232,23 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 reg_expiry.write(tw, t + W); // write packet expiry
                 
                 // calculate probability
-                random(p, lower, upper);
+                random(p, lower_cool, upper);
                 
                 // write successor in the registers
                 if(tw + delta < W){
-                    reg_successor.read(successor, tw + delta);
-                    reg_successor.write(tw + delta, successor); 
+                    reg_successor.read(successor, front);
+                    reg_successor.write(front, successor + 1); 
                 }
                 else{
-                    reg_successor.read(successor, tw + delta - W);
-                    reg_successor.write(tw + delta - W, successor); 
+                    reg_successor.read(successor, behind);
+                    reg_successor.write(behind, successor + 1); 
                 }
             }
             else{
                 reg.read(tw, 32w2); // read tw
                 reg.read(emergency,32w1); // read emergency
                 reg_expiry.read(next_expiry, tw); // read expired
-                reg_expiry.read(next_successor, tw); // read successor
+                reg_successor.read(next_successor, tw); // read successor
                 
                 // expiry
                 if(next_expiry != 0){
@@ -275,23 +278,43 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         // calculate probability
                         random(p, lower, upper);
                         
+                        // decremente emergency
+                        emergency = emergency - 1;
+                        reg.write(32w1, emergency);
+                        
                         // write successor in the registers
                         if(tw + delta < W){
-                            reg_successor.read(successor, tw + delta);
-                            reg_successor.write(tw + delta, successor); 
+                            reg_successor.read(successor, front);
+                            reg_successor.write(front, successor + 1); 
                         }
                         else{
-                            reg_successor.read(successor, tw + delta - W);
-                            reg_successor.write(tw + delta - W, successor); 
+                            reg_successor.read(successor, behind);
+                            reg_successor.write(behind, successor + 1); 
                         }
                     }
                     if(flag_emergency == 1 && next_successor > 0){
-                        emergency = emergency + next_successor;
-                        reg.write(32w1, emergency);
+                        
+                        if(behind != tw){
+                            emergency = emergency + next_successor;
+                            reg.write(32w1, emergency);
+                            reg_successor.write(tw , 0); //reset successor
+                        }
+                        else{
+                            emergency = emergency + next_successor;
+                            reg.write(32w1, emergency);
+                            reg_successor.write(tw , 1); //reset successor
+                        }
                     }
                     else if(next_successor > 0){
                         // clone
                         clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                        
+                        //reset successor
+                        next_successor = next_successor - 1;
+                        if (next_successor > 0){
+                            reg.write(32w1, next_successor); // new emergency
+                        }
+                        reg_successor.write(tw , 0);
                         
                         // write expiry in the registers
                         reg_expiry.write(tw, t + W); // write packet expiry
@@ -301,17 +324,12 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         
                         // write successor in the registers
                         if(tw + delta < W){
-                            reg_successor.read(successor, tw + delta);
-                            reg_successor.write(tw + delta, successor); 
+                            reg_successor.read(successor, front);
+                            reg_successor.write(front, successor + 1); 
                         }
                         else{
-                            reg_successor.read(successor, tw + delta - W);
-                            reg_successor.write(tw + delta - W, successor); 
-                        }
-                        
-                        next_successor = next_successor - 1;
-                        if (next_successor > 0){
-                            reg.write(32w1, next_successor); // new emergency
+                            reg_successor.read(successor, behind);
+                            reg_successor.write(behind, successor + 1); 
                         }
                     }
                 }
