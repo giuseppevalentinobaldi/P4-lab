@@ -1,0 +1,5730 @@
+{
+  "program" : "chain_uniform_sre.p4",
+  "__meta__" : {
+    "version" : [2, 7],
+    "compiler" : "https://github.com/p4lang/p4c"
+  },
+  "header_types" : [
+    {
+      "name" : "scalars_0",
+      "id" : 0,
+      "fields" : [
+        ["tmp", 32, false],
+        ["tmp_0", 32, false],
+        ["tmp_1", 8, false],
+        ["tmp_2", 32, false],
+        ["tmp_3", 32, false],
+        ["tmp_4", 8, false],
+        ["tmp_5", 32, false],
+        ["tmp_6", 32, false],
+        ["tmp_7", 8, false],
+        ["tmp_8", 32, false],
+        ["tmp_9", 32, false],
+        ["tmp_10", 8, false],
+        ["tmp_11", 32, false],
+        ["tmp_12", 32, false],
+        ["tmp_13", 8, false],
+        ["tmp_14", 32, false],
+        ["tmp_15", 32, false],
+        ["tmp_16", 8, false],
+        ["tmp_17", 32, false],
+        ["tmp_18", 32, false],
+        ["tmp_19", 32, false],
+        ["tmp_20", 8, false],
+        ["tmp_21", 32, false],
+        ["tmp_22", 32, false],
+        ["tmp_23", 8, false],
+        ["tmp_24", 32, false],
+        ["tmp_25", 32, false],
+        ["tmp_26", 8, false],
+        ["t", 32, false],
+        ["emergency", 32, false],
+        ["tw", 32, false],
+        ["flag_clone", 1, false],
+        ["flag_emergency", 1, false],
+        ["se", 8, false],
+        ["current_se", 8, false],
+        ["p_1", 32, false],
+        ["metadata.srcCorrect", 1, false],
+        ["metadata.tos", 8, false],
+        ["_padding_1", 5, false]
+      ]
+    },
+    {
+      "name" : "ethernet_t",
+      "id" : 1,
+      "fields" : [
+        ["dstAddr", 48, false],
+        ["srcAddr", 48, false],
+        ["etherType", 16, false]
+      ]
+    },
+    {
+      "name" : "ipv4_t",
+      "id" : 2,
+      "fields" : [
+        ["version", 4, false],
+        ["ihl", 4, false],
+        ["diffserv", 8, false],
+        ["totalLen", 16, false],
+        ["identification", 16, false],
+        ["flags", 3, false],
+        ["fragOffset", 13, false],
+        ["ttl", 8, false],
+        ["protocol", 8, false],
+        ["hdrChecksum", 16, false],
+        ["srcAddr", 32, false],
+        ["dstAddr", 32, false]
+      ]
+    },
+    {
+      "name" : "tcp_t",
+      "id" : 3,
+      "fields" : [
+        ["srcPort", 16, false],
+        ["dstPort", 16, false],
+        ["seqNo", 32, false],
+        ["ackNo", 32, false],
+        ["dataOffset", 4, false],
+        ["res", 3, false],
+        ["ecn", 3, false],
+        ["ctrl", 6, false],
+        ["window", 16, false],
+        ["checksum", 16, false],
+        ["urgentPtr", 16, false]
+      ]
+    },
+    {
+      "name" : "intrinsic_metadata_t",
+      "id" : 4,
+      "fields" : [
+        ["resubmit_flag", 1, false],
+        ["ingress_global_tstamp", 48, false],
+        ["mcast_grp", 16, false],
+        ["deflection_flag", 1, false],
+        ["deflect_on_drop", 1, false],
+        ["enq_qdepth", 19, false],
+        ["enq_tstamp", 32, false],
+        ["enq_congest_stat", 2, false],
+        ["deq_qdepth", 19, false],
+        ["deq_congest_stat", 2, false],
+        ["deq_timedelta", 32, false],
+        ["mcast_hash", 13, false],
+        ["egress_rid", 16, false],
+        ["lf_field_list", 32, false],
+        ["priority", 3, false],
+        ["_padding", 3, false]
+      ]
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 5,
+      "fields" : [
+        ["ingress_port", 9, false],
+        ["egress_spec", 9, false],
+        ["egress_port", 9, false],
+        ["clone_spec", 32, false],
+        ["instance_type", 32, false],
+        ["drop", 1, false],
+        ["recirculate_port", 16, false],
+        ["packet_length", 32, false],
+        ["enq_timestamp", 32, false],
+        ["enq_qdepth", 19, false],
+        ["deq_timedelta", 32, false],
+        ["deq_qdepth", 19, false],
+        ["ingress_global_timestamp", 48, false],
+        ["lf_field_list", 32, false],
+        ["mcast_grp", 16, false],
+        ["resubmit_flag", 1, false],
+        ["egress_rid", 16, false],
+        ["checksum_error", 1, false],
+        ["_padding_0", 4, false]
+      ]
+    }
+  ],
+  "headers" : [
+    {
+      "name" : "scalars",
+      "id" : 0,
+      "header_type" : "scalars_0",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "header_type" : "standard_metadata",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ethernet",
+      "id" : 2,
+      "header_type" : "ethernet_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ipv4",
+      "id" : 3,
+      "header_type" : "ipv4_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "tcp",
+      "id" : 4,
+      "header_type" : "tcp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "intrinsic_metadata",
+      "id" : 5,
+      "header_type" : "intrinsic_metadata_t",
+      "metadata" : true,
+      "pi_omit" : true
+    }
+  ],
+  "header_stacks" : [],
+  "header_union_types" : [],
+  "header_unions" : [],
+  "header_union_stacks" : [],
+  "field_lists" : [
+    {
+      "id" : 0,
+      "name" : "fl",
+      "elements" : [
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "clone_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "instance_type"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "recirculate_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "packet_length"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_global_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "checksum_error"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "ingress_global_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflection_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflect_on_drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_hash"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "priority"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.srcCorrect"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.tos"]
+        }
+      ]
+    },
+    {
+      "id" : 1,
+      "name" : "fl_0",
+      "elements" : [
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "clone_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "instance_type"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "recirculate_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "packet_length"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_global_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "checksum_error"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "ingress_global_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflection_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflect_on_drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_hash"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "priority"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.srcCorrect"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.tos"]
+        }
+      ]
+    },
+    {
+      "id" : 2,
+      "name" : "fl_1",
+      "elements" : [
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "clone_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "instance_type"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "recirculate_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "packet_length"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_global_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "checksum_error"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "ingress_global_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflection_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflect_on_drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_hash"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "priority"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.srcCorrect"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.tos"]
+        }
+      ]
+    },
+    {
+      "id" : 3,
+      "name" : "fl_2",
+      "elements" : [
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "clone_spec"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "instance_type"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "recirculate_port"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "packet_length"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "ingress_global_timestamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["standard_metadata", "checksum_error"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "resubmit_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "ingress_global_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_grp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflection_flag"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deflect_on_drop"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_tstamp"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "enq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_qdepth"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_congest_stat"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "deq_timedelta"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "mcast_hash"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "egress_rid"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "lf_field_list"]
+        },
+        {
+          "type" : "field",
+          "value" : ["intrinsic_metadata", "priority"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.srcCorrect"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.tos"]
+        }
+      ]
+    }
+  ],
+  "errors" : [
+    ["NoError", 1],
+    ["PacketTooShort", 2],
+    ["NoMatch", 3],
+    ["StackOutOfBounds", 4],
+    ["HeaderTooShort", 5],
+    ["ParserTimeout", 6]
+  ],
+  "enums" : [],
+  "parsers" : [
+    {
+      "name" : "parser",
+      "id" : 0,
+      "init_state" : "start",
+      "parse_states" : [
+        {
+          "name" : "parse_ipv4",
+          "id" : 0,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ipv4"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "value" : "0x06",
+              "mask" : null,
+              "next_state" : "parse_tcp"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "protocol"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_tcp",
+          "id" : 1,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "tcp"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        },
+        {
+          "name" : "start",
+          "id" : 2,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ethernet"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "value" : "0x0800",
+              "mask" : null,
+              "next_state" : "parse_ipv4"
+            },
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ethernet", "etherType"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "deparsers" : [
+    {
+      "name" : "deparser",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 418,
+        "column" : 8,
+        "source_fragment" : "DeparserImpl"
+      },
+      "order" : ["ethernet", "ipv4", "tcp"]
+    }
+  ],
+  "meter_arrays" : [],
+  "counter_arrays" : [],
+  "register_arrays" : [
+    {
+      "name" : "reg",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 160,
+        "column" : 35,
+        "source_fragment" : "reg"
+      },
+      "size" : 3,
+      "bitwidth" : 32
+    },
+    {
+      "name" : "reg_se",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 161,
+        "column" : 39,
+        "source_fragment" : "reg_se"
+      },
+      "size" : 4,
+      "bitwidth" : 8
+    }
+  ],
+  "calculations" : [
+    {
+      "name" : "calc",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 137,
+        "column" : 4,
+        "source_fragment" : "verify_checksum(true, ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ipv4", "version"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ihl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "diffserv"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "totalLen"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "identification"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "flags"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "fragOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ttl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "dstAddr"]
+        }
+      ]
+    },
+    {
+      "name" : "calc_0",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 397,
+        "column" : 8,
+        "source_fragment" : "update_checksum(true, ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ipv4", "version"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ihl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "diffserv"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "totalLen"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "identification"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "flags"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "fragOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "ttl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "dstAddr"]
+        }
+      ]
+    }
+  ],
+  "learn_lists" : [],
+  "actions" : [
+    {
+      "name" : "NoAction",
+      "id" : 0,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "NoAction",
+      "id" : 1,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "drop",
+      "id" : 2,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "drop",
+          "parameters" : [],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 174,
+            "column" : 8,
+            "source_fragment" : "mark_to_drop()"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "set_check",
+      "id" : 3,
+      "runtime_data" : [
+        {
+          "name" : "check",
+          "bitwidth" : 1
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.srcCorrect"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 178,
+            "column" : 8,
+            "source_fragment" : "meta.srcCorrect = check"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "ipv4_forward",
+      "id" : 4,
+      "runtime_data" : [
+        {
+          "name" : "srcAddr",
+          "bitwidth" : 48
+        },
+        {
+          "name" : "dstAddr",
+          "bitwidth" : 48
+        },
+        {
+          "name" : "port",
+          "bitwidth" : 9
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "egress_spec"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 2
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 182,
+            "column" : 8,
+            "source_fragment" : "standard_metadata.egress_spec = port"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ethernet", "srcAddr"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 183,
+            "column" : 8,
+            "source_fragment" : "hdr.ethernet.srcAddr = srcAddr"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ethernet", "dstAddr"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 1
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 184,
+            "column" : 8,
+            "source_fragment" : "hdr.ethernet.dstAddr = dstAddr"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "ttl"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["ipv4", "ttl"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xff"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 185,
+            "column" : 8,
+            "source_fragment" : "hdr.ipv4.ttl = hdr.ipv4.ttl - 1"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act",
+      "id" : 5,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "flag_clone"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 167,
+            "column" : 4,
+            "source_fragment" : "boolean_t flag_clone = 0;"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "flag_emergency"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 168,
+            "column" : 4,
+            "source_fragment" : "boolean_t flag_emergency = 0;"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_0",
+      "id" : 6,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 235,
+            "column" : 20,
+            "source_fragment" : "reg_se.read(se, (tw + ( p - t )))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_0"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_1"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_0"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_1"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 236,
+            "column" : 20,
+            "source_fragment" : "reg_se.write((tw + ( p - t )), se + 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_1",
+      "id" : 7,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_2"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_2"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 239,
+            "column" : 20,
+            "source_fragment" : "reg_se.read(se, (tw + ( p - t ) - W))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_3"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_4"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_3"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_4"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 240,
+            "column" : 20,
+            "source_fragment" : "reg_se.write((tw + ( p - t ) - W), se + 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_2",
+      "id" : 8,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "clone_ingress_pkt_to_egress",
+          "parameters" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000064"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x0"
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000002"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 227,
+            "column" : 16,
+            "source_fragment" : "reg.read(tw, 32w2)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.tos"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x01"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 228,
+            "column" : 16,
+            "source_fragment" : "meta.tos = 1"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_5"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000002"
+                      },
+                      "right" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_6"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000004"
+                      },
+                      "right" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "modify_field_rng_uniform",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "p_1"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_5"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_6"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name" : "act_3",
+      "id" : 9,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 244,
+            "column" : 16,
+            "source_fragment" : "reg_se.read(se, tw)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_7"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x64"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_7"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 245,
+            "column" : 16,
+            "source_fragment" : "reg_se.write(tw, (se + 100))"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_4",
+      "id" : 10,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "current_se"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 255,
+            "column" : 24,
+            "source_fragment" : "current_se = 0"
+          }
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 256,
+            "column" : 24,
+            "source_fragment" : "reg_se.write(tw, current_se)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_5",
+      "id" : 11,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "current_se"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "current_se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x9c"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 259,
+            "column" : 24,
+            "source_fragment" : "current_se = current_se - 100"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_6",
+      "id" : 12,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "flag_clone"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x01"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 261,
+            "column" : 20,
+            "source_fragment" : "flag_clone = 1"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.tos"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x02"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 262,
+            "column" : 20,
+            "source_fragment" : "meta.tos = 2"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_7",
+      "id" : 13,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000002"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 249,
+            "column" : 16,
+            "source_fragment" : "reg.read(tw, 32w2)"
+          }
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "emergency"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000001"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 250,
+            "column" : 16,
+            "source_fragment" : "reg.read(emergency, 32w1)"
+          }
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "current_se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 251,
+            "column" : 16,
+            "source_fragment" : "reg_se.read(current_se, tw)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_8",
+      "id" : 14,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.tos"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x03"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 268,
+            "column" : 24,
+            "source_fragment" : "meta.tos = 3"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_9",
+      "id" : 15,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.tos"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x01"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 271,
+            "column" : 24,
+            "source_fragment" : "meta.tos = 1"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_10",
+      "id" : 16,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_8"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_8"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 285,
+            "column" : 28,
+            "source_fragment" : "reg_se.read(se, (tw + ( p - t )))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_9"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_10"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_9"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_10"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 286,
+            "column" : 28,
+            "source_fragment" : "reg_se.write((tw + ( p - t )), se + 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_11",
+      "id" : 17,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_11"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_11"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 289,
+            "column" : 28,
+            "source_fragment" : "reg_se.read(se, (tw + ( p - t ) - W))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_12"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_13"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_12"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_13"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 290,
+            "column" : 28,
+            "source_fragment" : "reg_se.write((tw + ( p - t ) - W), se + 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_12",
+      "id" : 18,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "flag_emergency"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x01"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 276,
+            "column" : 24,
+            "source_fragment" : "flag_emergency = 1"
+          }
+        },
+        {
+          "op" : "clone_ingress_pkt_to_egress",
+          "parameters" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000064"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x1"
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_14"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000001"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_15"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000004"
+                      },
+                      "right" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "modify_field_rng_uniform",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "p_1"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_14"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_15"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name" : "act_13",
+      "id" : 19,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 294,
+            "column" : 24,
+            "source_fragment" : "reg_se.read(se, tw)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_16"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x64"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_16"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 295,
+            "column" : 24,
+            "source_fragment" : "reg_se.write(tw, (se + 100))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "emergency"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "emergency"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xffffffff"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 298,
+            "column" : 24,
+            "source_fragment" : "emergency = emergency - 1"
+          }
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000001"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "emergency"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 299,
+            "column" : 24,
+            "source_fragment" : "reg.write(32w1, emergency)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_14",
+      "id" : 20,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "flag_clone"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 273,
+            "column" : 20,
+            "source_fragment" : "flag_clone = 0"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_15",
+      "id" : 21,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000001"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "emergency"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 305,
+            "column" : 28,
+            "source_fragment" : "reg.write(32w1, emergency)"
+          }
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x64"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 306,
+            "column" : 28,
+            "source_fragment" : "reg_se.write(tw , 100)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_16",
+      "id" : 22,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000001"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "emergency"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 309,
+            "column" : 28,
+            "source_fragment" : "reg.write(32w1, emergency)"
+          }
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x65"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 310,
+            "column" : 28,
+            "source_fragment" : "reg_se.write(tw , 101)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_17",
+      "id" : 23,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "emergency"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "emergency"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "field",
+                            "value" : ["scalars", "current_se"]
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 303,
+            "column" : 24,
+            "source_fragment" : "emergency = emergency + (bit<32>)current_se"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_18",
+      "id" : 24,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_17"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["scalars", "current_se"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000001"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_17"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 320,
+            "column" : 28,
+            "source_fragment" : "reg.write(32w1, (bit<32>)current_se)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_19",
+      "id" : 25,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "clone_ingress_pkt_to_egress",
+          "parameters" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000064"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x2"
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "current_se"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "current_se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xff"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 318,
+            "column" : 24,
+            "source_fragment" : "current_se = current_se - 1"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_20",
+      "id" : 26,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_18"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_18"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 329,
+            "column" : 28,
+            "source_fragment" : "reg_se.read(se, (tw + ( p - t )))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_19"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_20"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_19"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_20"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 330,
+            "column" : 28,
+            "source_fragment" : "reg_se.write((tw + ( p - t )), se + 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_21",
+      "id" : 27,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_21"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_21"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 333,
+            "column" : 28,
+            "source_fragment" : "reg_se.read(se, (tw + ( p - t ) - W))"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_22"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_23"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x01"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_22"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_23"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 334,
+            "column" : 28,
+            "source_fragment" : "reg_se.write((tw + ( p - t ) - W), se + 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_22",
+      "id" : 28,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 322,
+            "column" : 24,
+            "source_fragment" : "reg_se.write(tw , 0)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_24"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000001"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_25"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000004"
+                      },
+                      "right" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "modify_field_rng_uniform",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "p_1"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_24"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_25"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name" : "act_23",
+      "id" : 29,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "se"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 338,
+            "column" : 24,
+            "source_fragment" : "reg_se.read(se, tw)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_26"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "se"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x64"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xff"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg_se"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp_26"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 339,
+            "column" : 24,
+            "source_fragment" : "reg_se.write(tw, (se + 100))"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_24",
+      "id" : 30,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "clone_ingress_pkt_to_egress",
+          "parameters" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000064"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name" : "act_25",
+      "id" : 31,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "t"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 218,
+            "column" : 12,
+            "source_fragment" : "reg.read(t, 32w0)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "t"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "t"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000001"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 219,
+            "column" : 12,
+            "source_fragment" : "t = t + 1"
+          }
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "t"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 220,
+            "column" : 12,
+            "source_fragment" : "reg.write(32w0, t)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_26",
+      "id" : 32,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 353,
+            "column" : 16,
+            "source_fragment" : "tw = 0"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_27",
+      "id" : 33,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000002"
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 350,
+            "column" : 12,
+            "source_fragment" : "reg.read(tw, 32w2)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000001"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 351,
+            "column" : 12,
+            "source_fragment" : "tw = tw+1"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_28",
+      "id" : 34,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "reg"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000002"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tw"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 355,
+            "column" : 12,
+            "source_fragment" : "reg.write(32w2, tw)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "NoAction",
+      "id" : 35,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "clone_assignments",
+      "id" : 36,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "diffserv"]
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.tos"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 368,
+            "column" : 8,
+            "source_fragment" : "hdr.ipv4.diffserv = meta.tos"
+          }
+        }
+      ]
+    }
+  ],
+  "pipelines" : [
+    {
+      "name" : "ingress",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 158,
+        "column" : 8,
+        "source_fragment" : "ingress"
+      },
+      "init_table" : "tbl_act",
+      "tables" : [
+        {
+          "name" : "tbl_act",
+          "id" : 0,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [5],
+          "actions" : ["act"],
+          "base_default_next" : "check_src",
+          "next_tables" : {
+            "act" : "check_src"
+          },
+          "default_entry" : {
+            "action_id" : 5,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "check_src",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 188,
+            "column" : 10,
+            "source_fragment" : "check_src"
+          },
+          "key" : [
+            {
+              "match_type" : "lpm",
+              "target" : ["ipv4", "srcAddr"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "lpm",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [3, 0],
+          "actions" : ["set_check", "NoAction"],
+          "base_default_next" : "node_4",
+          "next_tables" : {
+            "set_check" : "node_4",
+            "NoAction" : "node_4"
+          },
+          "default_entry" : {
+            "action_id" : 0,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "tbl_act_0",
+          "id" : 2,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [31],
+          "actions" : ["act_25"],
+          "base_default_next" : "node_6",
+          "next_tables" : {
+            "act_25" : "node_6"
+          },
+          "default_entry" : {
+            "action_id" : 31,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_1",
+          "id" : 3,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [8],
+          "actions" : ["act_2"],
+          "base_default_next" : "node_8",
+          "next_tables" : {
+            "act_2" : "node_8"
+          },
+          "default_entry" : {
+            "action_id" : 8,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_2",
+          "id" : 4,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [6],
+          "actions" : ["act_0"],
+          "base_default_next" : "tbl_act_4",
+          "next_tables" : {
+            "act_0" : "tbl_act_4"
+          },
+          "default_entry" : {
+            "action_id" : 6,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_3",
+          "id" : 5,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [7],
+          "actions" : ["act_1"],
+          "base_default_next" : "tbl_act_4",
+          "next_tables" : {
+            "act_1" : "tbl_act_4"
+          },
+          "default_entry" : {
+            "action_id" : 7,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_4",
+          "id" : 6,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [9],
+          "actions" : ["act_3"],
+          "base_default_next" : "tbl_act_26",
+          "next_tables" : {
+            "act_3" : "tbl_act_26"
+          },
+          "default_entry" : {
+            "action_id" : 9,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_5",
+          "id" : 7,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [13],
+          "actions" : ["act_7"],
+          "base_default_next" : "node_13",
+          "next_tables" : {
+            "act_7" : "node_13"
+          },
+          "default_entry" : {
+            "action_id" : 13,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_6",
+          "id" : 8,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [10],
+          "actions" : ["act_4"],
+          "base_default_next" : "tbl_act_8",
+          "next_tables" : {
+            "act_4" : "tbl_act_8"
+          },
+          "default_entry" : {
+            "action_id" : 10,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_7",
+          "id" : 9,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [11],
+          "actions" : ["act_5"],
+          "base_default_next" : "tbl_act_8",
+          "next_tables" : {
+            "act_5" : "tbl_act_8"
+          },
+          "default_entry" : {
+            "action_id" : 11,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_8",
+          "id" : 10,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [12],
+          "actions" : ["act_6"],
+          "base_default_next" : "node_18",
+          "next_tables" : {
+            "act_6" : "node_18"
+          },
+          "default_entry" : {
+            "action_id" : 12,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_9",
+          "id" : 11,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [14],
+          "actions" : ["act_8"],
+          "base_default_next" : "tbl_act_11",
+          "next_tables" : {
+            "act_8" : "tbl_act_11"
+          },
+          "default_entry" : {
+            "action_id" : 14,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_10",
+          "id" : 12,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [15],
+          "actions" : ["act_9"],
+          "base_default_next" : "tbl_act_11",
+          "next_tables" : {
+            "act_9" : "tbl_act_11"
+          },
+          "default_entry" : {
+            "action_id" : 15,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_11",
+          "id" : 13,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [20],
+          "actions" : ["act_14"],
+          "base_default_next" : "node_23",
+          "next_tables" : {
+            "act_14" : "node_23"
+          },
+          "default_entry" : {
+            "action_id" : 20,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_12",
+          "id" : 14,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [18],
+          "actions" : ["act_12"],
+          "base_default_next" : "node_25",
+          "next_tables" : {
+            "act_12" : "node_25"
+          },
+          "default_entry" : {
+            "action_id" : 18,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_13",
+          "id" : 15,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [16],
+          "actions" : ["act_10"],
+          "base_default_next" : "tbl_act_15",
+          "next_tables" : {
+            "act_10" : "tbl_act_15"
+          },
+          "default_entry" : {
+            "action_id" : 16,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_14",
+          "id" : 16,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [17],
+          "actions" : ["act_11"],
+          "base_default_next" : "tbl_act_15",
+          "next_tables" : {
+            "act_11" : "tbl_act_15"
+          },
+          "default_entry" : {
+            "action_id" : 17,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_15",
+          "id" : 17,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [19],
+          "actions" : ["act_13"],
+          "base_default_next" : "node_29",
+          "next_tables" : {
+            "act_13" : "node_29"
+          },
+          "default_entry" : {
+            "action_id" : 19,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_16",
+          "id" : 18,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [23],
+          "actions" : ["act_17"],
+          "base_default_next" : "node_31",
+          "next_tables" : {
+            "act_17" : "node_31"
+          },
+          "default_entry" : {
+            "action_id" : 23,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_17",
+          "id" : 19,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [21],
+          "actions" : ["act_15"],
+          "base_default_next" : "node_43",
+          "next_tables" : {
+            "act_15" : "node_43"
+          },
+          "default_entry" : {
+            "action_id" : 21,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_18",
+          "id" : 20,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [22],
+          "actions" : ["act_16"],
+          "base_default_next" : "node_43",
+          "next_tables" : {
+            "act_16" : "node_43"
+          },
+          "default_entry" : {
+            "action_id" : 22,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_19",
+          "id" : 21,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [25],
+          "actions" : ["act_19"],
+          "base_default_next" : "node_36",
+          "next_tables" : {
+            "act_19" : "node_36"
+          },
+          "default_entry" : {
+            "action_id" : 25,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_20",
+          "id" : 22,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [24],
+          "actions" : ["act_18"],
+          "base_default_next" : "tbl_act_21",
+          "next_tables" : {
+            "act_18" : "tbl_act_21"
+          },
+          "default_entry" : {
+            "action_id" : 24,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_21",
+          "id" : 23,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [28],
+          "actions" : ["act_22"],
+          "base_default_next" : "node_39",
+          "next_tables" : {
+            "act_22" : "node_39"
+          },
+          "default_entry" : {
+            "action_id" : 28,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_22",
+          "id" : 24,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [26],
+          "actions" : ["act_20"],
+          "base_default_next" : "tbl_act_24",
+          "next_tables" : {
+            "act_20" : "tbl_act_24"
+          },
+          "default_entry" : {
+            "action_id" : 26,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_23",
+          "id" : 25,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [27],
+          "actions" : ["act_21"],
+          "base_default_next" : "tbl_act_24",
+          "next_tables" : {
+            "act_21" : "tbl_act_24"
+          },
+          "default_entry" : {
+            "action_id" : 27,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_24",
+          "id" : 26,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [29],
+          "actions" : ["act_23"],
+          "base_default_next" : "node_43",
+          "next_tables" : {
+            "act_23" : "node_43"
+          },
+          "default_entry" : {
+            "action_id" : 29,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_25",
+          "id" : 27,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [30],
+          "actions" : ["act_24"],
+          "base_default_next" : "tbl_act_26",
+          "next_tables" : {
+            "act_24" : "tbl_act_26"
+          },
+          "default_entry" : {
+            "action_id" : 30,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_26",
+          "id" : 28,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [33],
+          "actions" : ["act_27"],
+          "base_default_next" : "node_46",
+          "next_tables" : {
+            "act_27" : "node_46"
+          },
+          "default_entry" : {
+            "action_id" : 33,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_27",
+          "id" : 29,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [32],
+          "actions" : ["act_26"],
+          "base_default_next" : "tbl_act_28",
+          "next_tables" : {
+            "act_26" : "tbl_act_28"
+          },
+          "default_entry" : {
+            "action_id" : 32,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_act_28",
+          "id" : 30,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [34],
+          "actions" : ["act_28"],
+          "base_default_next" : "ipv4_lpm",
+          "next_tables" : {
+            "act_28" : "ipv4_lpm"
+          },
+          "default_entry" : {
+            "action_id" : 34,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "ipv4_lpm",
+          "id" : 31,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 200,
+            "column" : 10,
+            "source_fragment" : "ipv4_lpm"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "target" : ["ipv4", "srcAddr"],
+              "mask" : null
+            },
+            {
+              "match_type" : "exact",
+              "target" : ["ipv4", "dstAddr"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [4, 2, 1],
+          "actions" : ["ipv4_forward", "drop", "NoAction"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "ipv4_forward" : null,
+            "drop" : null,
+            "NoAction" : null
+          },
+          "default_entry" : {
+            "action_id" : 1,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : [
+        {
+          "name" : "node_4",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 216,
+            "column" : 11,
+            "source_fragment" : "hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "and",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : ">=",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["ipv4", "totalLen"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x0190"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "==",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["scalars", "metadata.srcCorrect"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x01"
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "tbl_act_0",
+          "false_next" : "ipv4_lpm"
+        },
+        {
+          "name" : "node_6",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 223,
+            "column" : 15,
+            "source_fragment" : "t <= N"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "<=",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "t"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000002"
+              }
+            }
+          },
+          "true_next" : "tbl_act_1",
+          "false_next" : "tbl_act_5"
+        },
+        {
+          "name" : "node_8",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 234,
+            "column" : 19,
+            "source_fragment" : "tw + ( p - t ) < W"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "<",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000004"
+              }
+            }
+          },
+          "true_next" : "tbl_act_2",
+          "false_next" : "tbl_act_3"
+        },
+        {
+          "name" : "node_13",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 253,
+            "column" : 19,
+            "source_fragment" : "current_se >= 100"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : ">=",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "current_se"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x64"
+              }
+            }
+          },
+          "true_next" : "node_14",
+          "false_next" : "node_18"
+        },
+        {
+          "name" : "node_14",
+          "id" : 4,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 254,
+            "column" : 23,
+            "source_fragment" : "current_se == 100"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "current_se"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x64"
+              }
+            }
+          },
+          "true_next" : "tbl_act_6",
+          "false_next" : "tbl_act_7"
+        },
+        {
+          "name" : "node_18",
+          "id" : 5,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 266,
+            "column" : 19,
+            "source_fragment" : "current_se > 0 || emergency >0"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "or",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : ">",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["scalars", "current_se"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x00"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : ">",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["scalars", "emergency"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x00000000"
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "node_19",
+          "false_next" : "node_43"
+        },
+        {
+          "name" : "node_19",
+          "id" : 6,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 267,
+            "column" : 24,
+            "source_fragment" : "meta.tos == 2"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "metadata.tos"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x02"
+              }
+            }
+          },
+          "true_next" : "tbl_act_9",
+          "false_next" : "tbl_act_10"
+        },
+        {
+          "name" : "node_23",
+          "id" : 7,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 275,
+            "column" : 23,
+            "source_fragment" : "emergency > 0"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : ">",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "emergency"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000000"
+              }
+            }
+          },
+          "true_next" : "tbl_act_12",
+          "false_next" : "node_29"
+        },
+        {
+          "name" : "node_25",
+          "id" : 8,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 284,
+            "column" : 27,
+            "source_fragment" : "tw + ( p - t ) < W"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "<",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000004"
+              }
+            }
+          },
+          "true_next" : "tbl_act_13",
+          "false_next" : "tbl_act_14"
+        },
+        {
+          "name" : "node_29",
+          "id" : 9,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 302,
+            "column" : 23,
+            "source_fragment" : "flag_emergency == 1 && current_se > 0"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "and",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "==",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["scalars", "flag_emergency"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x01"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : ">",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["scalars", "current_se"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x00"
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "tbl_act_16",
+          "false_next" : "node_34"
+        },
+        {
+          "name" : "node_31",
+          "id" : 10,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 304,
+            "column" : 27,
+            "source_fragment" : "(tw + ( p - t ) - W) != tw"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "!=",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "+",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "tw"]
+                              },
+                              "right" : {
+                                "type" : "expression",
+                                "value" : {
+                                  "op" : "&",
+                                  "left" : {
+                                    "type" : "expression",
+                                    "value" : {
+                                      "op" : "-",
+                                      "left" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "p_1"]
+                                      },
+                                      "right" : {
+                                        "type" : "field",
+                                        "value" : ["scalars", "t"]
+                                      }
+                                    }
+                                  },
+                                  "right" : {
+                                    "type" : "hexstr",
+                                    "value" : "0xffffffff"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xfffffffc"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "field",
+                "value" : ["scalars", "tw"]
+              }
+            }
+          },
+          "true_next" : "tbl_act_17",
+          "false_next" : "tbl_act_18"
+        },
+        {
+          "name" : "node_34",
+          "id" : 11,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 313,
+            "column" : 28,
+            "source_fragment" : "current_se > 0"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : ">",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "current_se"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00"
+              }
+            }
+          },
+          "true_next" : "tbl_act_19",
+          "false_next" : "node_43"
+        },
+        {
+          "name" : "node_36",
+          "id" : 12,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 319,
+            "column" : 28,
+            "source_fragment" : "current_se > 0"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : ">",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "current_se"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00"
+              }
+            }
+          },
+          "true_next" : "tbl_act_20",
+          "false_next" : "tbl_act_21"
+        },
+        {
+          "name" : "node_39",
+          "id" : 13,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 328,
+            "column" : 27,
+            "source_fragment" : "tw + ( p - t ) < W"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "<",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tw"]
+                      },
+                      "right" : {
+                        "type" : "expression",
+                        "value" : {
+                          "op" : "&",
+                          "left" : {
+                            "type" : "expression",
+                            "value" : {
+                              "op" : "-",
+                              "left" : {
+                                "type" : "field",
+                                "value" : ["scalars", "p_1"]
+                              },
+                              "right" : {
+                                "type" : "field",
+                                "value" : ["scalars", "t"]
+                              }
+                            }
+                          },
+                          "right" : {
+                            "type" : "hexstr",
+                            "value" : "0xffffffff"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000004"
+              }
+            }
+          },
+          "true_next" : "tbl_act_22",
+          "false_next" : "tbl_act_23"
+        },
+        {
+          "name" : "node_43",
+          "id" : 14,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 344,
+            "column" : 19,
+            "source_fragment" : "flag_clone == 1"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "flag_clone"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x01"
+              }
+            }
+          },
+          "true_next" : "tbl_act_25",
+          "false_next" : "tbl_act_26"
+        },
+        {
+          "name" : "node_46",
+          "id" : 15,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 352,
+            "column" : 15,
+            "source_fragment" : "tw == W"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "tw"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000004"
+              }
+            }
+          },
+          "true_next" : "tbl_act_27",
+          "false_next" : "tbl_act_28"
+        }
+      ]
+    },
+    {
+      "name" : "egress",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "chain_uniform_sre.p4",
+        "line" : 365,
+        "column" : 8,
+        "source_fragment" : "egress"
+      },
+      "init_table" : "packet_clone",
+      "tables" : [
+        {
+          "name" : "packet_clone",
+          "id" : 32,
+          "source_info" : {
+            "filename" : "chain_uniform_sre.p4",
+            "line" : 371,
+            "column" : 10,
+            "source_fragment" : "packet_clone"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "target" : ["standard_metadata", "instance_type"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [36, 35],
+          "actions" : ["clone_assignments", "NoAction"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "clone_assignments" : null,
+            "NoAction" : null
+          },
+          "default_entry" : {
+            "action_id" : 35,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : []
+    }
+  ],
+  "checksums" : [
+    {
+      "name" : "cksum",
+      "id" : 0,
+      "target" : ["ipv4", "hdrChecksum"],
+      "type" : "generic",
+      "calculation" : "calc"
+    },
+    {
+      "name" : "cksum_0",
+      "id" : 1,
+      "target" : ["ipv4", "hdrChecksum"],
+      "type" : "generic",
+      "calculation" : "calc_0"
+    }
+  ],
+  "force_arith" : [],
+  "extern_instances" : [],
+  "field_aliases" : [
+    [
+      "queueing_metadata.enq_timestamp",
+      ["standard_metadata", "enq_timestamp"]
+    ],
+    [
+      "queueing_metadata.enq_qdepth",
+      ["standard_metadata", "enq_qdepth"]
+    ],
+    [
+      "queueing_metadata.deq_timedelta",
+      ["standard_metadata", "deq_timedelta"]
+    ],
+    [
+      "queueing_metadata.deq_qdepth",
+      ["standard_metadata", "deq_qdepth"]
+    ],
+    [
+      "intrinsic_metadata.ingress_global_timestamp",
+      ["standard_metadata", "ingress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.lf_field_list",
+      ["standard_metadata", "lf_field_list"]
+    ],
+    [
+      "intrinsic_metadata.mcast_grp",
+      ["standard_metadata", "mcast_grp"]
+    ],
+    [
+      "intrinsic_metadata.resubmit_flag",
+      ["standard_metadata", "resubmit_flag"]
+    ],
+    [
+      "intrinsic_metadata.egress_rid",
+      ["standard_metadata", "egress_rid"]
+    ]
+  ]
+}

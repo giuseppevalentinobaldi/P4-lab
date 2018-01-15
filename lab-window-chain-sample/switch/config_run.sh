@@ -35,15 +35,21 @@ function configure_machine(){
         setup_config simple_switch window 16 commands_window nodebug sswitch_CLI
         ;;
     2)
-        setup_config simple_switch chain 16 commands_chain nodebug sswitch_CLI
+        setup_config simple_switch chain_succ_ordered 16 commands_chain_sample nodebug sswitch_CLI
         ;;
     3)
-        setup_config simple_switch chain_uniform 16 commands_chain_uniform debug sswitch_CLI
+        setup_config simple_switch chain_uniform_dre 16 commands_chain_sample debug sswitch_CLI
+        ;;
+    4)
+        setup_config simple_switch chain_uniform_sre 16 commands_chain_sample debug sswitch_CLI
+        ;;
+    5)
+        setup_config simple_switch chain_uniform_srr 16 commands_chain_sample debug sswitch_CLI
         ;;
     *)
         echo "> Error!! --> Command not find"
         echo "> Run of default!! --> chain"
-        setup_config simple_switch copy_to_cpu 16 commands nodebug sswitch_CLI
+        setup_config simple_switch copy_to_cpu 16 commands debug sswitch_CLI
         ;;
     esac
     echo "> Ready!!"

@@ -1,16 +1,21 @@
+/* -*- P4_16 -*- */
 #include <core.p4>
 #include <v1model.p4>
+
+/*************************************************************************
+*********************** G L O B A L  *************************************
+*************************************************************************/
 
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<8> TYPE_TCP = 6;
 
+typedef bit<48> macAddr_t;
+typedef bit<32> ip4Addr_t;
+typedef bit<9>  egressSpec_t;
+
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
-
-typedef bit<9>  egressSpec_t;
-typedef bit<48> macAddr_t;
-typedef bit<32> ip4Addr_t;
 
 struct intrinsic_metadata_t {
     bit<1>  resubmit_flag;
@@ -27,7 +32,7 @@ struct intrinsic_metadata_t {
     bit<13> mcast_hash;
     bit<16> egress_rid;
     bit<32> lf_field_list;
-    bit<3> priority;
+    bit<3>  priority;
 }
 
 header ethernet_t {
@@ -52,17 +57,17 @@ header ipv4_t {
 }
 
 header tcp_t {
-    bit<16>   srcPort;
-    bit<16>   dstPort;
-    bit<32>   seqNo;
-    bit<32>   ackNo;
-    bit<4>    dataOffset;
-    bit<3>    res;
-    bit<3>    ecn;
-    bit<6>    ctrl;
-    bit<16>   window;
-    bit<16>   checksum;
-    bit<16>   urgentPtr;
+    bit<16> srcPort;
+    bit<16> dstPort;
+    bit<32> seqNo;
+    bit<32> ackNo;
+    bit<4>  dataOffset;
+    bit<3>  res;
+    bit<3>  ecn;
+    bit<6>  ctrl;
+    bit<16> window;
+    bit<16> checksum;
+    bit<16> urgentPtr;
 }
 
 struct metadata {
@@ -70,23 +75,16 @@ struct metadata {
 }
 
 struct headers {
-    ethernet_t   ethernet;
-    ipv4_t       ipv4;
-    tcp_t        tcp;
+    ethernet_t ethernet;
+    ipv4_t     ipv4;
+    tcp_t      tcp;
 }
 
 /*************************************************************************
-*********************** P A R S E R  ***********************************
+*********************** P A R S E R  *************************************
 *************************************************************************/
 
-parser ParserImpl(packet_in packet,
-                  out headers hdr,
-                  inout metadata meta,
-                  inout standard_metadata_t standard_metadata) {
-
-    state start {
-        transition parse_ethernet;
-    }
+parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
@@ -95,7 +93,7 @@ parser ParserImpl(packet_in packet,
             default: accept;
         }
     }
-
+    
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
@@ -103,16 +101,19 @@ parser ParserImpl(packet_in packet,
             default: accept;
         }
     }
-
+    
     state parse_tcp {
         packet.extract(hdr.tcp);
         transition accept;
     }
-
+    
+    state start {
+        transition parse_ethernet;
+    }
 }
 
 /*************************************************************************
-************   C H E C K S U M    V E R I F I C A T I O N   *************
+************   C H E C K S U M    V E R I F I C A T I O N   **************
 *************************************************************************/
 
 control verifyChecksum(inout headers hdr, inout metadata meta) {   
@@ -135,12 +136,13 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 }
 
 /*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
+**************  I N G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
-
+ 
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    action do_copy_to_cpu() {
-        clone3(CloneType.I2E, 32w250, { standard_metadata });
+      
+    action drop() {
+        mark_to_drop();
     }
     
     action ipv4_forward(macAddr_t srcAddr, macAddr_t dstAddr, egressSpec_t port) {  	
@@ -148,17 +150,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         hdr.ethernet.srcAddr = srcAddr;
         hdr.ethernet.dstAddr = dstAddr;
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-    }
-    
-    table copy_to_cpu {
-        actions = {
-            do_copy_to_cpu;
-        }
-        size = 1;
-    }
-    
-    action drop() {
-        mark_to_drop();
     }
     
     table ipv4_lpm {
@@ -176,21 +167,25 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-        copy_to_cpu.apply();
+        if(hdr.ipv4.totalLen >= 16w400){
+            clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w250, { standard_metadata, meta });
+         }
         ipv4_lpm.apply();
     }
 }
 
 /*************************************************************************
-****************  E G R E S S   P R O C E S S I N G   *******************
+****************  E G R E S S   P R O C E S S I N G   ********************
 *************************************************************************/
 
-control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    apply {  }
+control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {  
+
+    apply {
+    }
 }
 
 /*************************************************************************
-*************   C H E C K S U M    C O M P U T A T I O N   **************
+*************   C H E C K S U M    C O M P U T A T I O N   ***************
 *************************************************************************/
 
 control computeChecksum(
@@ -216,7 +211,7 @@ control computeChecksum(
 }
 
 /*************************************************************************
-***********************  D E P A R S E R  *******************************
+***********************  D E P A R S E R  ********************************
 *************************************************************************/
 
 control DeparserImpl(packet_out packet, in headers hdr) {
@@ -228,12 +223,15 @@ control DeparserImpl(packet_out packet, in headers hdr) {
 }
 
 /*************************************************************************
-***********************  S W I T C H  *******************************
+***********************  S W I T C H  ************************************
 *************************************************************************/
 
-V1Switch(ParserImpl(), 
-verifyChecksum(), 
-ingress(), 
-egress(), 
-computeChecksum(), 
-DeparserImpl()) main;
+V1Switch(
+ParserImpl(),
+verifyChecksum(),
+ingress(),
+egress(),
+computeChecksum(),
+DeparserImpl()
+) main;
+

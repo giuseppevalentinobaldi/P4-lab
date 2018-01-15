@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-import socket
+#!/usr/bin/python3
+import socket,time
 
  
 class Server():
@@ -17,6 +17,7 @@ class Server():
             data = conn.recv(self.buffer)
             if not data:
                 break
+            time.sleep(.15)
             conn.send(bytes("ack", "utf-8"))
         conn.close()
     

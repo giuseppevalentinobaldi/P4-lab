@@ -24,8 +24,10 @@ function run(){
     wait
     echo "> Run switch configuration!!"
     echo "1 - to run window"
-    echo "2 - to run chain sample"
-    echo "3 - to run chain sample uniform"
+    echo "2 - to run chain successor ordered"
+    echo "3 - to run chain sample uniform with emergency and double register"
+    echo "4 - to run chain sample uniform with emergency and single register"
+    echo "5 - to run chain sample uniform random and single register"
     read -p 'What do you want to do ?: ' dovar
     sudo nohup docker exec netkit_1000_switch /config_run.sh $dovar </dev/null &>/dev/null &
     sleep 15
