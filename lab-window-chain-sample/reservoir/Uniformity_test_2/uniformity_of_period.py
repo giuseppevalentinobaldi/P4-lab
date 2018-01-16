@@ -18,7 +18,6 @@ class UniformityOfPeriod():
         
     def uniformPeriodIncrementChain(self, i):
         t = self.collectorChain[i].get()
-        W = len(self.uniform)
         self.uniformPeriod[t] = self.uniformPeriod[t] + 1
         
     def printUniformPeriod(self):
