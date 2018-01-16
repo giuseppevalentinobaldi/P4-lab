@@ -59,12 +59,12 @@ class ChainSampleO():
             if((self.tw + delta) < self.W):
                 if(self.arraySuccessor[self.tw + delta] == -1):
                     self.arraySuccessor[self.tw + delta] = index
-                    self.uniform.uniformPeriodCollectChain(p - self.N, index)
+                    self.uniform.uniformPeriodCollectChain(p - self.N - 1, index)
                     break
             else:
                 if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                     self.arraySuccessor[(self.tw + delta) - self.W] = index
-                    self.uniform.uniformPeriodCollectChain(p - self.N, index)
+                    self.uniform.uniformPeriodCollectChain(p - self.N - 1, index)
                     break
         
         # set Expiry
@@ -88,12 +88,12 @@ class ChainSampleO():
                 if((self.tw + delta) < self.W):
                     if(self.arraySuccessor[self.tw + delta] == -1):
                         self.arraySuccessor[self.tw + delta] = index
-                        self.uniform.uniformPeriodCollectChain(p - self.N, index)
+                        self.uniform.uniformPeriodCollectChain(p - self.N - 1, index)
                         break
                 else:
                     if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                         self.arraySuccessor[(self.tw + delta) - self.W] = index
-                        self.uniform.uniformPeriodCollectChain(p - self.N , index)
+                        self.uniform.uniformPeriodCollectChain(p - self.N - 1 , index)
                         break
         # expiry packet
         if self.expiry[0] == self.t:

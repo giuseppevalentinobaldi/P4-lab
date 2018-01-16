@@ -6,9 +6,11 @@ from queue import Queue
 class UniformityOfPeriod():
     
     def __init__(self, T, N):
-        self.uniformPeriod = [0] * T
+        self.N = N
+        self.T = T
+        self.uniformPeriod = [0] * self.T
         self.collector = Queue()
-        self.collectorChain = [Queue()] * N
+        self.collectorChain = [Queue()] * self.N
         
     #def uniformPeriodIncrement(self, t):
     #    self.uniformPeriod[t] = self.uniformPeriod[t] + 1
@@ -22,7 +24,7 @@ class UniformityOfPeriod():
         self.uniformPeriod[t] = self.uniformPeriod[t] + 1
         
     def uniformPeriodReset(self):
-        self.collectorChain = [Queue()] * N
+        self.collectorChain = [Queue()] * self.N
         
     def printUniformPeriod(self):
         for e in self.uniformPeriod:
