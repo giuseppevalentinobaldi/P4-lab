@@ -46,7 +46,7 @@ class ChainSampleO():
             self.arraySuccessor = [-1] * self.W
             self.queueExpiry = PriorityQueue()
             self.expiry = ()
-            self.uniform.uniformPeriodReset()
+            self.uniform.uniformPeriodChainReset()
         
     def coolStart(self, packet):
         self.reservoir[self.t] = packet
