@@ -20,21 +20,22 @@ class ChainSampleGM():
         self.arraySuccessor = [-1] * W
         self.queueExpiry = PriorityQueue()
         self.expiry = 0
-        self.uniform = UniformityOfPeriod(self.T-self.N)
+        self.uniform = UniformityOfPeriod(self.T - self.N, self.N)
         
     def execute(self, packet):
         if self.getT() < self.getN():
             self.coolStart(packet)
+            print("t: {}".format(self.getT()))
         else:
             self.regime(packet)
             print("t: {}".format(self.getT()))
-            #self.print_chain()
-            #self.print_resevoir()
-            #print("current Successor {}".format(self.successor))
-            #self.printQueue(self.queueSuccessor)
-            #print("current Expiry {}".format(self.expiry))
-            #self.printQueue(self.queueExpiry)
-            #if self.getT() % 800 == 0:
+            # self.print_chain()
+            # self.print_resevoir()
+            # print("current Successor {}".format(self.successor))
+            # self.printQueue(self.queueSuccessor)
+            # print("current Expiry {}".format(self.expiry))
+            # self.printQueue(self.queueExpiry)
+            # if self.getT() % 800 == 0:
             #    self.uniform.writeUniform()
             #    self.uniform.printUniform()
         if self.getT() == self.T:
@@ -52,46 +53,50 @@ class ChainSampleGM():
         self.reservoir[self.t] = packet
         self.t += 1
         # set Successor
+        self.print_arraySuccessor()
         while True:
             p = random.randint(self.N + self.t, self.W + self.t)
+            print(p)
             delta = p - self.t
             if((self.tw + delta) < self.W):
                 if(self.arraySuccessor[self.tw + delta] == -1):
                     self.arraySuccessor[self.tw + delta] = 1
-                    self.uniform.uniformPeriodCollect(p - self.N - 1, index)
+                    self.uniform.uniformPeriodCollect(p - self.N - 1)
                     break
             else:
                 if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                     self.arraySuccessor[(self.tw + delta) - self.W] = 1
-                    self.uniform.uniformPeriodCollect(p - self.N - 1, index)
+                    self.uniform.uniformPeriodCollect(p - self.N - 1)
                     break
                 
         # set Expiry
         self.queueExpiry.put(self.t + self.W)
-        
         self.tw += 1
         if self.t == self.N:
             self.expiry = self.queueExpiry.get()
     
     def regime(self, packet):
         self.t += 1
- 
+        print('test_1')
         if self.arraySuccessor[self.tw] != -1:
+            print('test_2')
             self.chain.put(packet)
             self.arraySuccessor[self.tw] = -1
             # set Successor
+            self.print_arraySuccessor()
             while True:
-                p = random.randint(self.N + self.t, self.W + self.t)
+                p = random.randint(self.t + 1, self.W + self.t)
                 delta = p - self.t
+                print(p)
                 if((self.tw + delta) < self.W):
                     if(self.arraySuccessor[self.tw + delta] == -1):
                         self.arraySuccessor[self.tw + delta] = 1
-                        self.uniform.uniformPeriodCollect(p - self.N - 1, index)
+                        self.uniform.uniformPeriodCollect(p - self.N - 1)
                         break
                 else:
                     if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                         self.arraySuccessor[(self.tw + delta) - self.W] = 1
-                        self.uniform.uniformPeriodCollect(p - self.N - 1, index)
+                        self.uniform.uniformPeriodCollect(p - self.N - 1)
                         break
         # expiry packet
         if self.t == self.expiry:
@@ -101,6 +106,7 @@ class ChainSampleGM():
             self.i += 1
             if self.i == self.N:
                 self.i = 0
+        print('test_4')
         self.tw += 1
         if self.tw == self.W :
             self.tw = 0
@@ -108,6 +114,12 @@ class ChainSampleGM():
     def is_in_queue(self, x, q):
         with q.mutex:
             return x in q.queue
+        
+    def print_arraySuccessor(self):
+        print("=====================================================")
+        for succ in self.arraySuccessor :
+            print("{} ".format(succ))
+        print("=====================================================")
         
     def print_resevoir(self):
         print("=====================================================")

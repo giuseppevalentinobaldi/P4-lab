@@ -26,7 +26,7 @@ while count <= MAX_PACKET_SEND:
 
 	#data = s.recv(BUFFER_SIZE)
 	#print "received data: ", data
-	sleep(0.007)
+	sleep(0.010)
 
 print "Close connection!"
 

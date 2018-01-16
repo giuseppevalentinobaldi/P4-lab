@@ -83,7 +83,7 @@ class ChainSampleO():
             self.chain[index].put((self.t + self.W, packet))
             # set Successor
             while True:
-                p = random.randint(self.N + self.t, self.W + self.t)
+                p = random.randint(self.t + 1 , self.W + self.t)
                 delta = p - self.t
                 if((self.tw + delta) < self.W):
                     if(self.arraySuccessor[self.tw + delta] == -1):
