@@ -167,9 +167,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-        if(hdr.ipv4.totalLen >= 16w400){
-            clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w250, { standard_metadata, meta });
-         }
+        if(hdr.ethernet.etherType == 0x800)
+            if(hdr.ipv4.totalLen >= 16w50 && hdr.ipv4.protocol == 6){
+                clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w250, { standard_metadata, meta });
+            }
         ipv4_lpm.apply();
     }
 }
