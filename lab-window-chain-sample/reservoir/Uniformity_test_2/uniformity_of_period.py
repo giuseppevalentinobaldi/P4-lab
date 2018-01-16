@@ -10,15 +10,19 @@ class UniformityOfPeriod():
         self.collector = Queue()
         self.collectorChain = [Queue()] * N
         
-    def uniformPeriodIncrement(self, t):
-        self.uniformPeriod[t] = self.uniformPeriod[t] + 1
+    #def uniformPeriodIncrement(self, t):
+    #    self.uniformPeriod[t] = self.uniformPeriod[t] + 1
         
     def uniformPeriodCollectChain(self, t, i):
         self.collectorChain[i].put(t)
         
     def uniformPeriodIncrementChain(self, i):
         t = self.collectorChain[i].get()
+        print("incremente packet{} ".format(t))
         self.uniformPeriod[t] = self.uniformPeriod[t] + 1
+        
+    def uniformPeriodReset(self):
+        self.collectorChain = [Queue()] * N
         
     def printUniformPeriod(self):
         for e in self.uniformPeriod:
