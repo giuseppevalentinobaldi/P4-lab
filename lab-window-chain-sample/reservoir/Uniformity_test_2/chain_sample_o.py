@@ -20,7 +20,7 @@ class ChainSampleO():
         self.arraySuccessor = [-1] * W
         self.queueExpiry = PriorityQueue()
         self.expiry = ()
-        self.uniform = UniformityOfPeriod(self.T - self.N)
+        self.uniform = UniformityOfPeriod(self.T - self.N, self.N)
         
     def execute(self, packet):
         if self.getT() < self.getN():

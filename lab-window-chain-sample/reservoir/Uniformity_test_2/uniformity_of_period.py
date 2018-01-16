@@ -13,10 +13,10 @@ class UniformityOfPeriod():
     def uniformPeriodIncrement(self, t):
         self.uniformPeriod[t] = self.uniformPeriod[t] + 1
         
-    def uniformCollectChain(self, t, i):
+    def uniformPeriodCollectChain(self, t, i):
         self.collectorChain[i].put(t)
         
-    def uniformIncrementChain(self, i):
+    def uniformPeriodIncrementChain(self, i):
         t = self.collectorChain[i].get()
         W = len(self.uniform)
         self.uniformPeriod[t] = self.uniformPeriod[t] + 1
