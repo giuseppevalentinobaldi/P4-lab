@@ -69,7 +69,7 @@ class ChainSampleGM():
     
     def regime(self, packet):
         self.t += 1
-        # add element in chain[i-th]
+        # check successor
         if self.arraySuccessor[self.tw] == 1:
             self.chain.put((self.t - self.N - 1, packet))
             self.arraySuccessor[self.tw] = -1
@@ -88,10 +88,10 @@ class ChainSampleGM():
             self.queueExpiry.put(self.t + self.W)
         # expiry packet
         if self.t == self.expiry:
-            tup_t_pack = self.chain.get()
-            self.reservoir[self.i] = tup_t_pack[1]
+            tup_t_packet = self.chain.get()
+            self.reservoir[self.i] = tup_t_packet[1]
             self.expiry = self.queueExpiry.get()
-            self.uniform.uniformPeriodIncrement(tup_t_pack[0])
+            self.uniform.uniformPeriodIncrement(tup_t_packet[0])
             self.i += 1
             if self.i == self.N:
                 self.i = 0
