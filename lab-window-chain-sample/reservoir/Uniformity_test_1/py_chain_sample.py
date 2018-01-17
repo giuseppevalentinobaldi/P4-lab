@@ -27,11 +27,12 @@ def main():
     global cs
     N = 10  # sample
     W = 100  # windows
+    STAMP = 800 #
     choice = input("1 - chain sample original\n2 - chain sample gm\n what do you want run? ")
     if int(choice) == 1:
-        cs = ChainSampleO(N, W)
+        cs = ChainSampleO(N, W, STAMP)
     else:
-        cs = ChainSampleGM(N, W)
+        cs = ChainSampleGM(N, W, STAMP)
     sniff(iface="eth0", filter="tcp", prn=chan_sample_callback, store=0)
 
 

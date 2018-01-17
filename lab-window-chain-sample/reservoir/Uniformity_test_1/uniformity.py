@@ -8,38 +8,17 @@ class Uniformity():
     
     def __init__(self, N, W):
         self.uniform = [0] * W
-        self.collector = Queue()
         self.collectorChain = [Queue()] * N
         
-    def uniformCollect(self, p):
-        self.collector.put(p)
-        
-    def uniformIncrement(self, t):
-        p = self.collector.get()
-        W = len(self.uniform)
-        delta = p - t
-        tw = t - 1 - (int(t / W)) * W
-        if tw + delta < W:
-            i = tw + delta
-            self.uniform[i] = self.uniform[i] + 1
-        else:
-            i = tw + delta - W
-            self.uniform[i] = self.uniform[i] + 1
+    def uniformIncrement(self, tw):
+        self.uniform[tw] = self.uniform[tw] + 1
             
-    def uniformCollectChain(self, p, i):
-        self.collectorChain[i].put(p)
+    def uniformCollectChain(self, tw, i):
+        self.collectorChain[i].put(tw)
         
-    def uniformIncrementChain(self, t, i):
-        p = self.collectorChain[i].get()
-        W = len(self.uniform)
-        delta = p - t
-        tw = t - 1 - (int(t / W)) * W
-        if tw + delta < W:
-            i = tw + delta
-            self.uniform[i] = self.uniform[i] + 1
-        else:
-            i = tw + delta - W
-            self.uniform[i] = self.uniform[i] + 1
+    def uniformIncrementChain(self, i):
+        tw = self.collectorChain[i].get()
+        self.uniform[tw] = self.uniform[tw] + 1
 
     def printUniform(self):
         for e in self.uniform:
@@ -47,7 +26,7 @@ class Uniformity():
         print("")
     
     def writeUniform(self):
-        with open('/hosthome/git/P4-lab/lab-window-chain-sample/uniform.csv', 'a', newline='') as f:
+        with open('/hosthome/git/P4-lab/lab-window-chain-sample/reservoir/TempTest1/uniform.csv', 'a', newline='') as f:
             writer = csv.writer(f, delimiter=',', lineterminator="\n")
             writer.writerow(self.uniform);   
 

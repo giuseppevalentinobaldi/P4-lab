@@ -8,72 +8,84 @@ import random
 
 class ChainSampleGM():
     
-    def __init__(self, N, W):
+    def __init__(self, N, W, STAMP):
         self.N = N
         self.W = W
+        self.STAMP = STAMP
         self.t = 0
+        self.tw = 0
         self.reservoir = [None] * N
         self.i = 0
         self.chain = Queue()
-        self.queueSuccessor = PriorityQueue()
+        self.arraySuccessor = [-1] * W
         self.queueExpiry = PriorityQueue()
-        self.successor = 0
         self.expiry = 0
         self.uniform = Uniformity(self.N, self.W)
         
     def execute(self, packet):
         if self.getT() < self.getN():
-            self.coolStart(packet)
+            self.coldStart(packet)
         else:
             self.regime(packet)
-            print("t: {}".format(self.getT()))
             #self.print_chain()
             #self.print_resevoir()
-            #print("current Successor {}".format(self.successor))
-            #self.printQueue(self.queueSuccessor)
             #print("current Expiry {}".format(self.expiry))
             #self.printQueue(self.queueExpiry)
-            if self.getT() % 800 == 0:
-                self.uniform.writeUniform()
+            if self.getT() % self.STAMP == 0:
+                #self.uniform.writeUniform()
                 self.uniform.printUniform()
         
-    def coolStart(self, packet):
+    def coldStart(self, packet):
         self.reservoir[self.t] = packet
         self.t += 1
-        p = random.randint(self.N + self.t, self.W + self.t)
-        while self.is_in_queue(p, self.queueSuccessor):
+        # set Successor
+        while True:
             p = random.randint(self.N + self.t, self.W + self.t)
-        self.queueSuccessor.put(p)
-        self.uniform.uniformCollect(p)
+            delta = p - self.t
+            if((self.tw + delta) < self.W):
+                if(self.arraySuccessor[self.tw + delta] == -1):
+                    self.arraySuccessor[self.tw + delta] = 1
+                    break
+            else:
+                if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
+                    self.arraySuccessor[(self.tw + delta) - self.W] = 1
+                    break
         self.queueExpiry.put(self.t + self.W)
+        self.tw += 1
         if self.t == self.N:
-            self.successor = self.queueSuccessor.get()
             self.expiry = self.queueExpiry.get()
     
     def regime(self, packet):
         self.t += 1
-        # add element in chain[i-th]
-        if self.t == self.successor:
-            self.chain.put(packet)
-            p = random.randint(self.t + 1, self.W + self.t)
-            while self.is_in_queue(p, self.queueSuccessor):
-                p = random.randint(self.t + 1, self.W + self.t)
-            self.queueSuccessor.put(p)
-            self.uniform.uniformCollect(p)
+        # check successor
+        if self.arraySuccessor[self.tw] == 1:
+            self.chain.put((self.tw, packet))
+            self.arraySuccessor[self.tw] = -1
+            # set Successor
+            while True:
+                p = random.randint(self.t + 1 , self.W + self.t)
+                delta = p - self.t
+                if((self.tw + delta) < self.W):
+                    if(self.arraySuccessor[self.tw + delta] == -1):
+                        self.arraySuccessor[self.tw + delta] = 1
+                        break
+                else:
+                    if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
+                        self.arraySuccessor[(self.tw + delta) - self.W] = 1
+                        break
             self.queueExpiry.put(self.t + self.W)
-            self.successor = self.queueSuccessor.get()
         # expiry packet
         if self.t == self.expiry:
-            self.reservoir[self.i] = self.chain.get()
+            tup_t_packet = self.chain.get()
+            self.reservoir[self.i] = tup_t_packet[1]
             self.expiry = self.queueExpiry.get()
-            self.uniform.uniformIncrement(self.t)
+            self.uniform.uniformIncrement(tup_t_packet[0])
             self.i += 1
             if self.i == self.N:
                 self.i = 0
-
-    def is_in_queue(self, x, q):
-        with q.mutex:
-            return x in q.queue
+        self.tw += 1
+        if self.tw == self.W:
+            self.tw = 0
         
     def print_resevoir(self):
         print("=====================================================")
