@@ -205,7 +205,8 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     apply {
         check_src.apply();
-        if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1){
+        if(hdr.ethernet.etherType == 0x800)
+        if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect ==  && hdr.ipv4.protocol == 6){
             // chain sample algorithm
             reg.read(t, 32w0); // read t
             t = t + 1;

@@ -202,7 +202,8 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     apply {
 	//verify src
 	check_src.apply();
-	if(hdr.ipv4.totalLen >= 16w400 && meta.mymeta.srcCorrect == 1){
+	if(hdr.ethernet.etherType == 0x800)
+    if(hdr.ipv4.totalLen >= 16w400 && hdr.ipv4.protocol == 6 && meta.mymeta.srcCorrect == 1){
 	    reg.read(t, 32w0); // read from register index 0 (t)
 	    if(t < N){
 	        t = t + 32w1;
