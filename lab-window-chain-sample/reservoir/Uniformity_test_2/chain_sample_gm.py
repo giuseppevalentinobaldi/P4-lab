@@ -25,7 +25,7 @@ class ChainSampleGM():
         
     def execute(self, packet):
         if self.getT() < self.getN():
-            self.coolStart(packet)
+            self.coldStart(packet)
         else:
             self.regime(packet)
             #self.print_chain()
@@ -34,10 +34,10 @@ class ChainSampleGM():
             #self.printQueue(self.queueSuccessor)
             #print("current Expiry {}".format(self.expiry))
             #self.printQueue(self.queueExpiry)
-            if self.getT() % 1000 == 0:
+            if self.getT() % 10000 == 0:
                 print("t: {}".format(self.getT()))
                 self.tTotal += self.getT()
-                if self.tTotal == 10000 :
+                if self.tTotal == 1000000 :
                     self.uniform.writeUniformPeriod()
         if self.getT() == self.T:
             self.t = 0
@@ -49,7 +49,7 @@ class ChainSampleGM():
             self.queueExpiry = PriorityQueue()
             self.expiry = 0
             
-    def coolStart(self, packet):
+    def coldStart(self, packet):
         self.reservoir[self.t] = packet
         self.t += 1
         # set Successor

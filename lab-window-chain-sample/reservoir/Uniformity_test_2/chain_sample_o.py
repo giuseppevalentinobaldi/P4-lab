@@ -24,7 +24,7 @@ class ChainSampleO():
         
     def execute(self, packet):
         if self.getT() < self.getN():
-            self.coolStart(packet)
+            self.coldStart(packet)
             print("t: {}".format(self.getT()))
         else:
             self.regime(packet)
@@ -47,7 +47,7 @@ class ChainSampleO():
             self.expiry = ()
             self.uniform.uniformPeriodChainReset()
         
-    def coolStart(self, packet):
+    def coldStart(self, packet):
         self.reservoir[self.t] = packet
         self.t += 1
         index = self.t - 1

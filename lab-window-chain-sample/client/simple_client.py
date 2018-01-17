@@ -7,7 +7,7 @@ from time import sleep
 TCP_IP = '20.0.0.2'
 TCP_PORT = 5005
 BUFFER_SIZE = 20
-MAX_PACKET_SEND = 10000
+MAX_PACKET_SEND = 1000000
 count = 1
 
 # creazione socket
