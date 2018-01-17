@@ -27,7 +27,7 @@ def main():
     global cs
     N = 10  # sample
     W = 100  # windows
-    STAMP = 800 #
+    STAMP = 800 #STAMP*ps > 5 (ps = 1/W) pratical condition
     choice = input("1 - chain sample original\n2 - chain sample gm\n what do you want run? ")
     if int(choice) == 1:
         cs = ChainSampleO(N, W, STAMP)
