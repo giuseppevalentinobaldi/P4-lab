@@ -139,7 +139,7 @@ def print_array(array):
 
 # write on file
 def writeOnFile(array):
-        with open('/hosthome/netkit_temp/labs/Test_Chain_Sample/uniform.csv', 'a', newline='') as f:
+        with open('/hosthome/netkit_temp/labs/Test_Chain_Sample/uniform.csv', 'w', newline='') as f:
             writer = csv.writer(f, delimiter=',', lineterminator="\n")
             writer.writerow(array);
 

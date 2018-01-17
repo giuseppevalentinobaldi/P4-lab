@@ -22,7 +22,7 @@ t_tot = 0
 
 
 # max packets send
-MAX_PACKET_SEND = 100000
+MAX_PACKET_SEND = 1000000
 # number of test
 NUMBER_TEST = 100
 # limit single test
@@ -148,7 +148,7 @@ def print_array(array):
 
 # write on file
 def writeOnFile(array):
-        with open('/hosthome/netkit_temp/labs/Test_Chain_Sample/uniform.csv', 'a', newline='') as f:
+        with open('/hosthome/netkit_temp/labs/Test_Chain_Sample/uniform.csv', 'w', newline='') as f:
             writer = csv.writer(f, delimiter=',', lineterminator="\n")
             writer.writerow(array);
 
