@@ -25,9 +25,9 @@ def chan_sample_callback(packet):
    
 def main():
     global cs
-    N = 2 # sample
-    W = 4 # windows
-    T = 8 # period
+    N = 10 # sample
+    W = 100 # windows
+    T = 1000 # period
     choice = input("1 - chain sample original\n2 - chain sample gm\n what do you want run? ")
     if int(choice) == 1:
         cs = ChainSampleO(N, W, T)
