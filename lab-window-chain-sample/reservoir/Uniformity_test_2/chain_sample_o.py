@@ -35,9 +35,8 @@ class ChainSampleO():
             # self.printQueue(self.queueSuccessor)
             # print("current Expiry {} with index {}".format(self.expiry[0], self.expiry[1]))
             # self.printQueue(self.queueExpiry)
-            # if self.getT() % 4000 == 0:
-            #   self.uniform.writeUniformPeriod()
-            #   self.uniform.printUniformPeriod()
+            if self.getT() % 10000 == 0:
+                self.uniform.writeUniformPeriod()
         if self.getT() == self.T:
             self.t = 0
             self.tw = 0
