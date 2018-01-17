@@ -6,7 +6,7 @@ from scapy.all import *
 import random
 
 
-class ChainSampleGM():
+class ChainSampleGMIncrementSuccessor():
     
     def __init__(self, N, W, T):
         self.N = N
@@ -57,10 +57,12 @@ class ChainSampleGM():
             if((self.tw + delta) < self.W):
                 if(self.arraySuccessor[self.tw + delta] == -1):
                     self.arraySuccessor[self.tw + delta] = 1
+                    self.uniform.uniformPeriodIncrement(p-self.N-1)
                     break
             else:
                 if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                     self.arraySuccessor[(self.tw + delta) - self.W] = 1
+                    self.uniform.uniformPeriodIncrement(p-self.N-1)
                     break
         self.queueExpiry.put(self.t + self.W)
         self.tw +=1
@@ -71,7 +73,7 @@ class ChainSampleGM():
         self.t += 1
         # add element in chain[i-th]
         if self.arraySuccessor[self.tw] == 1:
-            self.chain.put((self.t-self.N-1,packet))
+            self.chain.put(packet)
             self.arraySuccessor[self.tw] = -1
             # set Successor
             while True:
@@ -80,18 +82,18 @@ class ChainSampleGM():
                 if((self.tw + delta) < self.W):
                     if(self.arraySuccessor[self.tw + delta] == -1):
                         self.arraySuccessor[self.tw + delta] = 1
+                        self.uniform.uniformPeriodIncrement(p-self.N-1)
                         break
                 else:
                     if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                         self.arraySuccessor[(self.tw + delta) - self.W] = 1
+                        self.uniform.uniformPeriodIncrement(p-self.N-1)
                         break
             self.queueExpiry.put(self.t + self.W)
         # expiry packet
         if self.t == self.expiry:
-            tup_t_pack = self.chain.get()
-            self.reservoir[self.i] = tup_t_pack[1]
+            self.reservoir[self.i] = self.chain.get()
             self.expiry = self.queueExpiry.get()
-            self.uniform.uniformPeriodIncrement(tup_t_pack[0])
             self.i += 1
             if self.i == self.N:
                 self.i = 0
@@ -133,7 +135,7 @@ class ChainSampleGM():
 
 
 def main():
-    print("ChainSampleGM")
+    print("ChainSampleGMIncrementSucessor")
 
 
 if __name__ == "__main__":

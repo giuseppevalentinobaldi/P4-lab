@@ -28,11 +28,11 @@ def main():
     N = 100 # sample
     W = 1000 # windows
     T = 10000 # period
-    choice = input("1 - chain sample original\n2 - chain sample gm\n what do you want run? ")
+    choice = input("1 - chain sample gm\n2 - chain sample gm increase directly from the successor \n what do you want run? ")
     if int(choice) == 1:
-        cs = ChainSampleO(N, W, T)
-    else:
         cs = ChainSampleGM(N, W, T)
+    else:
+        cs = ChainSampleGMIncrementSuccessor(N, W, T)
     sniff(iface="eth0", filter="tcp", prn=chan_sample_callback, store=0)
 
 
