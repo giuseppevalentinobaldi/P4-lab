@@ -8,10 +8,11 @@ import random
 
 class ChainSampleGM():
     
-    def __init__(self, N, W, T):
+    def __init__(self, N, W, T, totalPacket):
         self.N = N
         self.W = W
         self.T = T
+        self.totalPacket = totalPacket
         self.tTotal = 0
         self.t = 0
         self.tw = 0
@@ -28,14 +29,13 @@ class ChainSampleGM():
             self.coldStart(packet)
         else:
             self.regime(packet)
-            #self.print_chain()
-            #self.print_resevoir()
-            #print("current Expiry {}".format(self.expiry))
-            #self.printQueue(self.queueExpiry)
-            if self.getT() % 10000 == 0:
-                print("t: {}".format(self.getT()))
+            # self.print_chain()
+            # self.print_resevoir()
+            # print("current Expiry {}".format(self.expiry))
+            # self.printQueue(self.queueExpiry)
+            if self.getT() % self.T == 0:
                 self.tTotal += self.getT()
-                if self.tTotal == 1000000 :
+                if self.tTotal == self.totalPacket:
                     self.uniform.writeUniformPeriod()
         if self.getT() == self.T:
             self.t = 0
@@ -63,7 +63,7 @@ class ChainSampleGM():
                     self.arraySuccessor[(self.tw + delta) - self.W] = 1
                     break
         self.queueExpiry.put(self.t + self.W)
-        self.tw +=1
+        self.tw += 1
         if self.t == self.N:
             self.expiry = self.queueExpiry.get()
     
@@ -71,7 +71,7 @@ class ChainSampleGM():
         self.t += 1
         # add element in chain[i-th]
         if self.arraySuccessor[self.tw] == 1:
-            self.chain.put((self.t-self.N-1,packet))
+            self.chain.put((self.t - self.N - 1, packet))
             self.arraySuccessor[self.tw] = -1
             # set Successor
             while True:

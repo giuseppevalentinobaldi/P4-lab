@@ -8,10 +8,11 @@ import random
 
 class ChainSampleGMIncrementSuccessor():
     
-    def __init__(self, N, W, T):
+    def __init__(self, N, W, T, totalPacket):
         self.N = N
         self.W = W
         self.T = T
+        self.totalPacket = totalPacket
         self.tTotal = 0
         self.t = 0
         self.tw = 0
@@ -28,14 +29,13 @@ class ChainSampleGMIncrementSuccessor():
             self.coldStart(packet)
         else:
             self.regime(packet)
-            #self.print_chain()
-            #self.print_resevoir()
-            #print("current Expiry {}".format(self.expiry))
-            #self.printQueue(self.queueExpiry)
-            if self.getT() % 10000 == 0:
-                print("t: {}".format(self.getT()))
+            # self.print_chain()
+            # self.print_resevoir()
+            # print("current Expiry {}".format(self.expiry))
+            # self.printQueue(self.queueExpiry)
+            if self.getT() % self.T == 0:
                 self.tTotal += self.getT()
-                if self.tTotal == 1000000 :
+                if self.tTotal == self.totalPacketa :
                     self.uniform.writeUniformPeriod()
         if self.getT() == self.T:
             self.t = 0
@@ -57,15 +57,15 @@ class ChainSampleGMIncrementSuccessor():
             if((self.tw + delta) < self.W):
                 if(self.arraySuccessor[self.tw + delta] == -1):
                     self.arraySuccessor[self.tw + delta] = 1
-                    self.uniform.uniformPeriodIncrement(p-self.N-1)
+                    self.uniform.uniformPeriodIncrement(p - self.N - 1)
                     break
             else:
                 if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                     self.arraySuccessor[(self.tw + delta) - self.W] = 1
-                    self.uniform.uniformPeriodIncrement(p-self.N-1)
+                    self.uniform.uniformPeriodIncrement(p - self.N - 1)
                     break
         self.queueExpiry.put(self.t + self.W)
-        self.tw +=1
+        self.tw += 1
         if self.t == self.N:
             self.expiry = self.queueExpiry.get()
     
@@ -82,12 +82,12 @@ class ChainSampleGMIncrementSuccessor():
                 if((self.tw + delta) < self.W):
                     if(self.arraySuccessor[self.tw + delta] == -1):
                         self.arraySuccessor[self.tw + delta] = 1
-                        self.uniform.uniformPeriodIncrement(p-self.N-1)
+                        self.uniform.uniformPeriodIncrement(p - self.N - 1)
                         break
                 else:
                     if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                         self.arraySuccessor[(self.tw + delta) - self.W] = 1
-                        self.uniform.uniformPeriodIncrement(p-self.N-1)
+                        self.uniform.uniformPeriodIncrement(p - self.N - 1)
                         break
             self.queueExpiry.put(self.t + self.W)
         # expiry packet
