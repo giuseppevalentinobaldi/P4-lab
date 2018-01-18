@@ -19,7 +19,7 @@ class UniformityOfPeriod():
         print("")
     
     def writeUniformPeriod(self):
-        with open('/hosthome/git/P4-lab/lab-window-chain-sample/reservoir/TempTest/uniformPeriod.csv', 'w', newline='') as f:
+        with open('/hosthome/git/P4-lab/lab-window-chain-sample/reservoir/TempTest2/uniformPeriod.csv', 'w', newline='') as f:
             writer = csv.writer(f, delimiter=',', lineterminator="\n")
             writer.writerow(self.uniformPeriod);   
 

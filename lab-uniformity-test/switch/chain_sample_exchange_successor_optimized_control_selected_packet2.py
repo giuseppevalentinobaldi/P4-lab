@@ -4,7 +4,7 @@ import random, math, csv
 
 # size of sample and window
 N = 5
-W = 100
+W = 1000
 
 # sample variable
 sample = [None] * N
@@ -22,7 +22,7 @@ t_tot = 0
 
 
 # max packets send
-MAX_PACKET_SEND = 1000000
+MAX_PACKET_SEND = 10000000
 # number of test
 NUMBER_TEST = 100
 # limit single test

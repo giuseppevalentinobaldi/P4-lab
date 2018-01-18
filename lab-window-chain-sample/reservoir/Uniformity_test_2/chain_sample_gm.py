@@ -22,7 +22,7 @@ class ChainSampleGM():
         self.arraySuccessor = [-1] * W
         self.queueExpiry = PriorityQueue()
         self.expiry = 0
-        self.uniform = UniformityOfPeriod(self.T - self.N, self.N)
+        self.uniform = UniformityOfPeriod(self.T - self.N)
         
     def execute(self, packet):
         if self.getT() < self.getN():
@@ -37,6 +37,8 @@ class ChainSampleGM():
                 self.tTotal += self.getT()
                 if self.tTotal == self.totalPacket:
                     self.uniform.writeUniformPeriod()
+                    print("Exit!")
+                    exit()
         if self.getT() == self.T:
             self.t = 0
             self.tw = 0

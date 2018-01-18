@@ -22,7 +22,7 @@ class ChainSampleGMIncrementSuccessor():
         self.arraySuccessor = [-1] * W
         self.queueExpiry = PriorityQueue()
         self.expiry = 0
-        self.uniform = UniformityOfPeriod(self.T - self.N, self.N)
+        self.uniform = UniformityOfPeriod(self.T - self.N)
         
     def execute(self, packet):
         if self.getT() < self.getN():
@@ -35,8 +35,10 @@ class ChainSampleGMIncrementSuccessor():
             # self.printQueue(self.queueExpiry)
             if self.getT() % self.T == 0:
                 self.tTotal += self.getT()
-                if self.tTotal == self.totalPacketa :
+                if self.tTotal == self.totalPacket :
                     self.uniform.writeUniformPeriod()
+                    print("Exit!")
+                    exit()
         if self.getT() == self.T:
             self.t = 0
             self.tw = 0
@@ -57,12 +59,14 @@ class ChainSampleGMIncrementSuccessor():
             if((self.tw + delta) < self.W):
                 if(self.arraySuccessor[self.tw + delta] == -1):
                     self.arraySuccessor[self.tw + delta] = 1
-                    self.uniform.uniformPeriodIncrement(p - self.N - 1)
+                    if p < self.T :
+                        self.uniform.uniformPeriodIncrement(p - self.N)
                     break
             else:
                 if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                     self.arraySuccessor[(self.tw + delta) - self.W] = 1
-                    self.uniform.uniformPeriodIncrement(p - self.N - 1)
+                    if p < self.T :
+                        self.uniform.uniformPeriodIncrement(p - self.N)
                     break
         self.queueExpiry.put(self.t + self.W)
         self.tw += 1
@@ -82,12 +86,14 @@ class ChainSampleGMIncrementSuccessor():
                 if((self.tw + delta) < self.W):
                     if(self.arraySuccessor[self.tw + delta] == -1):
                         self.arraySuccessor[self.tw + delta] = 1
-                        self.uniform.uniformPeriodIncrement(p - self.N - 1)
+                        if p < self.T :
+                            self.uniform.uniformPeriodIncrement(p - self.N)
                         break
                 else:
                     if(self.arraySuccessor[(self.tw + delta) - self.W] == -1):
                         self.arraySuccessor[(self.tw + delta) - self.W] = 1
-                        self.uniform.uniformPeriodIncrement(p - self.N - 1)
+                        if p < self.T :
+                            self.uniform.uniformPeriodIncrement(p - self.N)
                         break
             self.queueExpiry.put(self.t + self.W)
         # expiry packet

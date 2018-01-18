@@ -11,7 +11,7 @@ Brian Babcock, Mayur Datar, Rajeev Motwani
 '''
 
 from scapy.all import *
-from chain_sample_o import ChainSampleO
+from chain_sample_gm_increment_successor import ChainSampleGMIncrementSuccessor
 from chain_sample_gm import ChainSampleGM
 cs = None
 import sys
@@ -31,9 +31,9 @@ def main():
     totalPacket = 100000 #packet in total (x10 timess)
     choice = input("1 - chain sample gm\n2 - chain sample gm increase directly from the successor \n what do you want run? ")
     if int(choice) == 1:
-        cs = ChainSampleGM(N, W, T)
+        cs = ChainSampleGM(N, W, T, totalPacket)
     else:
-        cs = ChainSampleGMIncrementSuccessor(N, W, T)
+        cs = ChainSampleGMIncrementSuccessor(N, W, T, totalPacket)
     sniff(iface="eth0", filter="tcp", prn=chan_sample_callback, store=0)
 
 
