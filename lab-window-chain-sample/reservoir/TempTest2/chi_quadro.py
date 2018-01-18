@@ -1,9 +1,5 @@
 #!/usr/bin/python3
 '''
-Random Sampling with a Reservoir
-JEFFREY SCOTT VITTER
-@see: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.138.784&rep=rep1&type=pdf
-
 @authors: Giuseppe Valentino Baldi, Marco Lorini
 @contact: giuseppevalentinobaldi@gmail.com, marck_91@hotmail.it 
 @version: 1.0.0
