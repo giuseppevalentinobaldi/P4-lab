@@ -20,9 +20,13 @@ def main():
         threshold = 0
         hypothesis = 0
         pValue = 0.05
+        transitory = input("Inserisci il tuo transitorio:")
+        W = int(transitory)
         for row in reader:
             threshold += 1
             desired_array = [int(numeric_string) for numeric_string in row]
+            slice_obj = slice(0,W-1)
+            array_without_transitory = desired_array[slice_obj]
             chi = chisquare(desired_array)
             print("chi-square: {} \t p-value: {}".format(chi[0], chi[1]))
             if chi[1] < 0.05:
