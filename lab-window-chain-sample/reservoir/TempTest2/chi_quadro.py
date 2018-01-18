@@ -25,7 +25,7 @@ def main():
         for row in reader:
             threshold += 1
             desired_array = [int(numeric_string) for numeric_string in row]
-            slice_obj = slice(W-1,len(desired_array)-1)
+            slice_obj = slice(W - 1, len(desired_array) - 1)
             array_without_transitory = desired_array[slice_obj]
             chi = chisquare(array_without_transitory)
             print("chi-square: {} \t p-value: {}".format(chi[0], chi[1]))
