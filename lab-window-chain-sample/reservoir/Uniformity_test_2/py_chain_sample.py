@@ -28,7 +28,7 @@ def main():
     N = 100 # sample
     W = 1000 # windows
     T = 100000 # period
-    totalPacket = 10000000 #packet in total (x10 timess)
+    totalPacket = 1000000 #packet in total (x10 timess)
     choice = input("1 - chain sample gm\n2 - chain sample gm increase directly from the successor \n what do you want run? ")
     if int(choice) == 1:
         cs = ChainSampleGM(N, W, T, totalPacket)
