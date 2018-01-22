@@ -32,7 +32,7 @@ class ChainSampleGM():
             #print("current Expiry {}".format(self.expiry))
             #self.printQueue(self.queueExpiry)
             if self.getT() % self.STAMP == 0:
-                #self.uniform.writeUniform()
+                self.uniform.writeUniform()
                 self.uniform.printUniform()
         
     def coldStart(self, packet):
