@@ -33,7 +33,7 @@ class ChainSampleGM():
             #self.printQueue(self.queueExpiry)
             if self.getT() % self.STAMP == 0:
                 self.uniform.writeUniform()
-                self.uniform.printUniform()
+                print("t: {}".format(self.getT()))
         
     def coldStart(self, packet):
         self.reservoir[self.t] = packet

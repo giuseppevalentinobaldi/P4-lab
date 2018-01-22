@@ -32,7 +32,8 @@ class ChainSampleO():
             # print("current Expiry {} with index {}".format(self.expiry[0], self.expiry[1]))
             # self.printQueue(self.queueExpiry)
             if self.getT() % self.STAMP == 0:
-                self.uniform.printUniform()
+                self.uniform.writeUniform()
+                print("t: {}".format(self.getT()))
         
     def coldStart(self, packet):
         self.reservoir[self.t] = packet
