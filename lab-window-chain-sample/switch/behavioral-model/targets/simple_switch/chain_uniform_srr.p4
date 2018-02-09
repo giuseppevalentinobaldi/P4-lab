@@ -161,7 +161,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 
     value_t t; // reg index 0
     value_t tw; // reg index 1
-	value_t count_clone; // reg index 2
+    value_t count_clone; // reg index 2
 
     value_t index;
     value_t successor;
@@ -214,7 +214,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         check_src.apply();
         if(hdr.ethernet.etherType == 0x800){
             if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1 && hdr.ipv4.protocol == 6){
-                // chain sample exchange successor algorithm
                 reg.read(t, 32w0); // read t
                 reg.read(tw, 32w1); // read tw
                 // sample not full (cold start)
