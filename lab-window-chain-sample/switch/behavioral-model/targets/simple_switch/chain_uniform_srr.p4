@@ -212,38 +212,28 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     apply {
         check_src.apply();
-        if(hdr.ethernet.etherType == 0x800)
-        if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect ==  && hdr.ipv4.protocol == 6){
-            // chain sample algorithm
-            reg.read(t, 32w0); // read t
-            t = t + 1;
-            reg.write(32w0, t); // write t
-            value_t idx;
-            
-            // initial sampling
-            if(t <= N){
-                // clone
-                clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
+        if(hdr.ethernet.etherType == 0x800){
+            if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1 && hdr.ipv4.protocol == 6){
+                // chain sample algorithm
+                reg.read(t, 32w0); // read t
+                t = t + 1;
+                reg.write(32w0, t); // write t
+                value_t idx;
                 
-                reg.read(tw, 32w1); // read tw
-                meta.tos = 1; // sample
-                
-                // write expiry in the registers
-                reg_se.write(tw, 2); // write packet expiry
-                
-                // write successor in the registers
-                random(p, lower_cool, upper);
-                
-                if(tw + delta < W){
-                    idx= front;
-                }
-                else{
-                    idx= behind;
-                }
-                reg_se.read(se, idx);
-                if(se == 1 || se == 3){
+                // initial sampling
+                if(t <= N){
+                    // clone
+                    clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                    
+                    reg.read(tw, 32w1); // read tw
+                    meta.tos = 1; // sample
+                    
+                    // write expiry in the registers
+                    reg_se.write(tw, 2); // write packet expiry
+                    
+                    // write successor in the registers
                     random(p, lower_cool, upper);
-                
+                    
                     if(tw + delta < W){
                         idx= front;
                     }
@@ -253,7 +243,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                     reg_se.read(se, idx);
                     if(se == 1 || se == 3){
                         random(p, lower_cool, upper);
-                
+                        
                         if(tw + delta < W){
                             idx= front;
                         }
@@ -262,97 +252,13 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                         }
                         reg_se.read(se, idx);
                         if(se == 1 || se == 3){
-                            reg_se.write(tw, 3);
-                        }
-                        else{
-                            if(se == 2){
-                                reg_se.write(idx, 3); 
-                            }
-                            else{
-                                reg_se.write(idx, 1);
-                            }
-                        }
-                    }
-                    else{
-                        if(se == 2){
-                            reg_se.write(idx, 3); 
-                        }
-                        else{
-                            reg_se.write(idx, 1);
-                        }
-                    }
-                }
-                else{
-                    if(se == 2){
-                        reg_se.write(idx, 3); 
-                    }
-                    else{
-                        reg_se.write(idx, 1);
-                    }
-                }
-                
-            }
-            else{
-                reg.read(tw, 32w1); // read tw
-                reg_se.read(current_se, tw); // read expired
-                // expiry
-                if(current_se >= 2){
-                    if(current_se == 2){
-                        current_se = 0;
-                        reg_se.write(tw, current_se); // reset reg expiry in position tw;
-                    }
-                    else{
-                        current_se = 1;
-                    }
-                    flag_clone = 1; // write flag_clone true
-                    meta.tos = 2; // expired
-                }
-                
-                // sampling
-                if(current_se == 1){
-                    //clone
-                    clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
-                    
-                    if (meta.tos == 2){
-                        meta.tos = 3; // sample & expired
-                    }
-                    else{
-                        meta.tos = 1; // sample
-                    }
-                    flag_clone = 0; // write flag_clone false
-                    
-                    // write expiry in the registers
-                    reg_se.write(tw, 2); // write packet expiry
-                    
-                
-                    // write successor in the registers
-                    random(p, lower_cool, upper);
-                
-                    if(tw + delta < W){
-                        idx = front;
-                    }
-                    else{
-                        idx = behind;
-                    }
-                    reg_se.read(se, idx);
-                    if(se == 1 || se == 3){
-                        random(p, lower_cool, upper);
-                
-                        if(tw + delta < W){
-                            idx = front;
-                        }
-                        else{
-                            idx = behind;
-                        }
-                        reg_se.read(se, idx);
-                        if(se == 1 || se == 3){
                             random(p, lower_cool, upper);
-                
+                            
                             if(tw + delta < W){
-                                idx = front;
+                                idx= front;
                             }
                             else{
-                                idx = behind;
+                                idx= behind;
                             }
                             reg_se.read(se, idx);
                             if(se == 1 || se == 3){
@@ -386,21 +292,116 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                     }
                     
                 }
-                
-                // control flag_clone
-                if(flag_clone == 1){
-                    // clone
-                    clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
-                    flag_clone = 0; // write flag_clone false
+                else{
+                    reg.read(tw, 32w1); // read tw
+                    reg_se.read(current_se, tw); // read expired
+                    // expiry
+                    if(current_se >= 2){
+                        if(current_se == 2){
+                            current_se = 0;
+                            reg_se.write(tw, current_se); // reset reg expiry in position tw;
+                        }
+                        else{
+                            current_se = 1;
+                        }
+                        flag_clone = 1; // write flag_clone true
+                        meta.tos = 2; // expired
+                    }
+                    
+                    // sampling
+                    if(current_se == 1){
+                        //clone
+                        clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                        
+                        if (meta.tos == 2){
+                            meta.tos = 3; // sample & expired
+                        }
+                        else{
+                            meta.tos = 1; // sample
+                        }
+                        flag_clone = 0; // write flag_clone false
+                        
+                        // write expiry in the registers
+                        reg_se.write(tw, 2); // write packet expiry
+                        
+                        
+                        // write successor in the registers
+                        random(p, lower_cool, upper);
+                        
+                        if(tw + delta < W){
+                            idx = front;
+                        }
+                        else{
+                            idx = behind;
+                        }
+                        reg_se.read(se, idx);
+                        if(se == 1 || se == 3){
+                            random(p, lower_cool, upper);
+                            
+                            if(tw + delta < W){
+                                idx = front;
+                            }
+                            else{
+                                idx = behind;
+                            }
+                            reg_se.read(se, idx);
+                            if(se == 1 || se == 3){
+                                random(p, lower_cool, upper);
+                                
+                                if(tw + delta < W){
+                                    idx = front;
+                                }
+                                else{
+                                    idx = behind;
+                                }
+                                reg_se.read(se, idx);
+                                if(se == 1 || se == 3){
+                                    reg_se.write(tw, 3);
+                                }
+                                else{
+                                    if(se == 2){
+                                        reg_se.write(idx, 3); 
+                                    }
+                                    else{
+                                        reg_se.write(idx, 1);
+                                    }
+                                }
+                            }
+                            else{
+                                if(se == 2){
+                                    reg_se.write(idx, 3); 
+                                }
+                                else{
+                                    reg_se.write(idx, 1);
+                                }
+                            }
+                        }
+                        else{
+                            if(se == 2){
+                                reg_se.write(idx, 3); 
+                            }
+                            else{
+                                reg_se.write(idx, 1);
+                            }
+                        }
+                        
+                    }
+                    
+                    // control flag_clone
+                    if(flag_clone == 1){
+                        // clone
+                        clone3<tuple<standard_metadata_t, metadata >>(CloneType.I2E, 32w100, { standard_metadata, meta });
+                        flag_clone = 0; // write flag_clone false
+                    }
                 }
-            }
-            reg.read(tw, 32w1); // read tw
-            tw = tw+1;
-            if(tw == W){
-                tw = 0;
-            }
-            reg.write(32w1, tw);
-        }// tcp condidiotn end
+                reg.read(tw, 32w1); // read tw
+                tw = tw+1;
+                if(tw == W){
+                    tw = 0;
+                }
+                reg.write(32w1, tw);
+            }// tcp condidiotn end
+        }
         ipv4_lpm.apply();
     }// apply end
 }
