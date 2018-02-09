@@ -200,45 +200,45 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-	    //verify src
-	    check_src.apply();
-	    if(hdr.ethernet.etherType == 0x800){
+        //verify src
+        check_src.apply();
+        if(hdr.ethernet.etherType == 0x800){
             if(hdr.ipv4.totalLen >= 16w400 && hdr.ipv4.protocol == 6 && meta.mymeta.srcCorrect == 1){
-	            reg.read(t, 32w0); // read from register index 0 (t)
-	            if(t < N){
-	                t = t + 32w1;
-		            reg.write(32w0, t);
-		            clone3(CloneType.I2E, 32w100, { standard_metadata });
-		            if(t == N){
-		                t = t + 32w1;
-		                random(v, 32w0, t * NUM);
-		                quot = (2 * t - NUM);
-		                reg.write(32w1, quot);
-			            reg.write(32w2, v);
-		            }
-	            }
-	            else{
-		            t = t + 32w1;
-		            reg.write(32w0, t);
-		            reg.read(quot, 32w1); // read from register index 1 (quot)
-		            reg.read(v, 32w2); // read from register index 2 (v)
-		            if(quot > v){
-			            clone3(CloneType.I2E, 32w100, { standard_metadata });
-			            t = t + 32w1;
-		                random(v, 32w0, t * NUM);
-		                quot = (2*t - NUM);
-		                reg.write(32w1, quot);
-			            reg.write(32w2, v);
-		            }
-		            else{
-		                quot = quot + (2 * t - NUM);
-			            reg.write(32w1, quot);
-		            }
-	            }
-	        }
-	    }
-	    // apply table ipv4_lpm
-    	ipv4_lpm.apply();
+                reg.read(t, 32w0); // read from register index 0 (t)
+                if(t < N){
+                    t = t + 32w1;
+                    reg.write(32w0, t);
+                    clone3(CloneType.I2E, 32w100, { standard_metadata });
+                    if(t == N){
+                        t = t + 32w1;
+                        random(v, 32w0, t * NUM);
+                        quot = (2 * t - NUM);
+                        reg.write(32w1, quot);
+                        reg.write(32w2, v);
+                    }
+                }
+                else{
+                    t = t + 32w1;
+                    reg.write(32w0, t);
+                    reg.read(quot, 32w1); // read from register index 1 (quot)
+                    reg.read(v, 32w2); // read from register index 2 (v)
+                    if(quot > v){
+                        clone3(CloneType.I2E, 32w100, { standard_metadata });
+                        t = t + 32w1;
+                        random(v, 32w0, t * NUM);
+                        quot = (2*t - NUM);
+                        reg.write(32w1, quot);
+                        reg.write(32w2, v);
+                    }
+                    else{
+                        quot = quot + (2 * t - NUM);
+                        reg.write(32w1, quot);
+                    }
+                }
+            }
+        }
+        // apply table ipv4_lpm
+        ipv4_lpm.apply();
     }
 }
 

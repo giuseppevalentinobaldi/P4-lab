@@ -194,22 +194,22 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     
     apply {
-    	check_src.apply();
-    	if(hdr.ethernet.etherType == 0x800){
+        check_src.apply();
+        if(hdr.ethernet.etherType == 0x800){
             if(hdr.ipv4.totalLen >= 16w400 && hdr.ipv4.protocol == 6 && meta.mymeta.srcCorrect == 1){
                 reg.read(t, 32w0);
                 if(t < N){
                     t = t + 32w1;
-        	    reg.write(32w0, t);
-		    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
+                    reg.write(32w0, t);
+                    clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
                 }
                 else{
-        	    random(M, 32w0, t);
-        	    t = t + 32w1;
-        	    reg.write(32w0, t);
-        	    if(M < N){
-		        clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
-        	    }
+                    random(M, 32w0, t);
+                    t = t + 32w1;
+                    reg.write(32w0, t);
+                    if(M < N){
+                        clone3<tuple<standard_metadata_t, mymeta_t>>(CloneType.I2E, 32w50,{ standard_metadata, meta.mymeta });
+                    }
                 }
             }
         }
