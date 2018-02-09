@@ -5,7 +5,7 @@ import threading
 
 def main():
     users = ["giuseppe", "marco", "fabio", "nicola"]
-    msg = 12000000
+    msg = 1000
     
     for user in users:
         client = Client(user + "-firefox", "20.0.0.2", 5005, 1024, None)

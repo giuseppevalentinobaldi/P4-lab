@@ -81,21 +81,21 @@ def packet_callback(packet):
         if packet[IP].tos == 1 :
             chain.restore(packet)
             chain.insert(packet)
-            chain.printQueueList()
-            chain.printSampleArray()
+            #chain.printQueueList()
+            #chain.printSampleArray()
         # packet expired
         elif packet[IP].tos == 2 :
             chain.restore(packet)
             chain.expired()
-            chain.printQueueList()
-            chain.printSampleArray()
+            #chain.printQueueList()
+            #chain.printSampleArray()
         # packet insert + packet expired
         elif packet[IP].tos == 3 :
             chain.restore(packet)
             chain.insert(packet)
             chain.expired()
-            chain.printQueueList()
-            chain.printSampleArray()
+            #chain.printQueueList()
+            #chain.printSampleArray()
         # other action
         else:
             print ("> No defined action!!")
