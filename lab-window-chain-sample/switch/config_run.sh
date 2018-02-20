@@ -48,8 +48,6 @@ function configure_machine(){
         ;;
     *)
         echo "> Error!! --> Command not find"
-        echo "> Run of default!! --> chain"
-        setup_config simple_switch copy_to_cpu 16 commands debug sswitch_CLI
         ;;
     esac
     echo "> Ready!!"

@@ -14,8 +14,8 @@ typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 
 //window and sample size
-const bit<32> N = 100;
-const bit<32> W = 1000;
+const bit<32> N = 10000;
+const bit<32> W = 20000000;
 
 //type of register
 typedef bit<32> value_t;
@@ -213,7 +213,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     apply {
         check_src.apply();
         if(hdr.ethernet.etherType == 0x800){
-            if(hdr.ipv4.totalLen >= 16w400 && meta.srcCorrect == 1 && hdr.ipv4.protocol == 6){
+            if(hdr.ipv4.totalLen >= 16w256 && meta.srcCorrect == 1 && hdr.ipv4.protocol == 6){
                 reg.read(t, 32w0); // read t
                 reg.read(tw, 32w1); // read tw
                 // sample not full (cold start)

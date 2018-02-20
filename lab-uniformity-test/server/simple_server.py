@@ -2,8 +2,7 @@
 
 import socket
 
-
-print "Startup Server..."
+print("Startup Server...")
 
 # dichiarazione variabili
 TCP_IP = '20.0.0.2'
@@ -18,32 +17,31 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
 s.listen(1)
 
-print "Server run!"
+print ("Server run!")
 
 # accettazione connessione dal client
 while 1:
-	print "Waiting for connections..."
+	print("Waiting for connections...")
 
 	conn, addr = s.accept()
 
-	print "Connection address:", addr
+	print ("Connection address:", addr)
 
 	# ricezione messaggi dal client
 	while 1:
 		data = conn.recv(BUFFER_SIZE)
 		if not data: break
 
-		#print "received data: ", data
+		# print "received data: ", data
 
-		#ack = "ACK "+ str(count)
-		#conn.send(ack)  # ack
-		#count += 1
-		#print "send :", ack
+		# ack = "ACK "+ str(count)
+		# conn.send(ack)  # ack
+		# count += 1
+		# print "send :", ack
 
-	#count = 0
-	print "Close connection with: ", addr
+	# count = 0
+	print ("Close connection with: ", addr)
 
-
-print "Stop Server!"
+print ("Stop Server!")
 
 conn.close()
